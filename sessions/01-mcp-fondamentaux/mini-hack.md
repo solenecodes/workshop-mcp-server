@@ -1,6 +1,6 @@
 # Cas pratique guide (mini-hack) : qui peut modifier mon service ?
 
-Exercice participant de la [session 1 - Serveur MCP : les fondamentaux](../README.md#session-1---serveur-mcp--les-fondamentaux),
+Exercice participant de la [session 1 - Serveur MCP : les fondamentaux](README.md),
 a realiser apres les deux demonstrations. Il ne s'agit pas du hands-on de
 securisation de l'apres-midi.
 
@@ -81,7 +81,7 @@ de desactiver les protections du client.
 
 ### 1. Se connecter
 
-Suivre les [instructions du README](../README.md#connexion-au-futur-serveur-datelier)
+Suivre les [instructions du README](README.md#connexion-au-futur-serveur-datelier)
 avec l'URL distribuee pendant la session. Ne pas reutiliser l'URL d'exemple.
 
 ### 2. Decouvrir et lire

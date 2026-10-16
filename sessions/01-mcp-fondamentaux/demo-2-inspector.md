@@ -1,6 +1,6 @@
 # Demo 2 : voir les echanges MCP
 
-Support de la [session 1 - Serveur MCP : les fondamentaux](../README.md#session-1---serveur-mcp--les-fondamentaux).
+Support de la [session 1 - Serveur MCP : les fondamentaux](README.md).
 
 **Duree : 5 minutes.** Utiliser le futur serveur fictif du mini-hack, pas les
 ressources Azure de la premiere demo.

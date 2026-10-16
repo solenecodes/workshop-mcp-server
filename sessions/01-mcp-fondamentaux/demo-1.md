@@ -1,6 +1,6 @@
 # Demo 1 : de l'intention a l'appel d'outil
 
-Support de la [session 1 - Serveur MCP : les fondamentaux](../README.md#session-1---serveur-mcp--les-fondamentaux).
+Support de la [session 1 - Serveur MCP : les fondamentaux](README.md).
 
 **Duree : 5 minutes.** GitHub Copilot + Azure MCP Server, en lecture seule.
 
