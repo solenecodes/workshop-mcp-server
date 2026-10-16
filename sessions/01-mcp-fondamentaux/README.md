@@ -11,6 +11,16 @@ pratique fait partie de la session 1 ; il est distinct du hands-on de l'apres-mi
 Objectif a 10:20 : savoir expliquer le role d'un serveur MCP, avoir observe un
 echange reel et avoir appele un outil.
 
+## Serveur fil rouge
+
+Le serveur utilise dans Inspector et le mini-hack sert aussi de base aux
+[sessions 2](../02-architecture/README.md) et [6](../06-hands-on/README.md).
+On conserve les outils et les donnees fictives ; les sessions suivantes ajoutent
+leurs briques autour de ce socle, sans demander de reconstruire le cas pratique.
+
+La demo 1 avec Azure MCP Server est une introduction distincte. Elle n'est pas
+le serveur pedagogique a faire evoluer.
+
 ## Deroule
 
 Le decoupage ci-dessous est une **proposition d'animation** dans le creneau de

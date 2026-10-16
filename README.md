@@ -9,8 +9,9 @@ d'entreprise n'est necessaire pour le mini-hack propose.
 
 ## Etat du depot
 
-Ce depot contient le programme et une proposition de supports pour la session 1,
-« Serveur MCP : les fondamentaux ». Il ne contient pas encore de serveur executable ni de deploiement.
+Ce depot contient les supports proposes pour la session 1 et le cadrage des
+sessions 2 et 6 autour d'un meme serveur MCP fil rouge. Il ne contient pas encore
+de serveur executable ni de deploiement.
 Le mini-hack necessite donc la preparation d'un serveur et la communication de
 son URL par l'equipe d'animation. Les noms d'outils presentes sont un contrat
 pedagogique propose, pas des outils deja disponibles.
@@ -26,8 +27,8 @@ Programme de reference ; les sequences optionnelles peuvent etre adaptees.
 | 09:00–09:20 | 20 min | Accueil et objectifs | Tour de table |
 | **09:20–10:20** | **60 min** | [**1 · Serveur MCP : les fondamentaux**](sessions/01-mcp-fondamentaux/README.md) | **2 démos + cas pratique** |
 | 10:20–10:35 | 15 min | *Pause* | — |
-| **10:35–11:10** | **35 min** | [**2 · Architecture d'entreprise**](sessions/02-architecture/README.md) | **Démo API REST → MCP** |
-| **11:10–11:45** | **35 min** | [**3 · Sécurité et gouvernance**](sessions/03-securite-gouvernance/README.md) | **Démo de lecture d'un jeton** |
+| **10:35–11:10** | **35 min** | [**2 · Architecture d'entreprise**](sessions/02-architecture/README.md) | **Démo sur le serveur fil rouge (ex. APIM)** |
+| 11:10–11:45 | 35 min | 3 · Sécurité et gouvernance | Séquence indépendante |
 | 11:45–12:30 | 45 min | 4 · Gouvernance des agents | Présentation · **optionnel** |
 
 **12:30–13:30 — Déjeuner (1 h)**
@@ -43,25 +44,41 @@ Programme de reference ; les sequences optionnelles peuvent etre adaptees.
 | 16:00–16:30 | 30 min | 8 · Questions et approfondissement | Échanges · **optionnel** |
 
 Les liens en gras donnent acces aux dossiers des sessions avec demonstration
-ou pratique. Les autres sequences restent uniquement dans ce programme.
+ou pratique sur le serveur fil rouge. La session 3 est independante de ce depot ;
+son contenu est gere separement. Les autres sequences restent uniquement dans
+ce programme.
 
 ## Organisation du depot
 
-Seules les sessions avec demonstration ou hands-on disposent d'un dossier dans
-[sessions/](sessions/). Leur numerotation reste celle du programme.
+Seules les sessions qui utilisent et font evoluer le serveur fil rouge disposent
+d'un dossier dans [sessions/](sessions/). Leur numerotation reste celle du programme.
 
 | Dossier | Contenu |
 | --- | --- |
 | [01-mcp-fondamentaux](sessions/01-mcp-fondamentaux/README.md) | Deroule, deux demos, mini-hack et configuration d'exemple |
-| [02-architecture](sessions/02-architecture/README.md) | Cadrage de la demo API REST vers MCP ; supports a preparer |
-| [03-securite-gouvernance](sessions/03-securite-gouvernance/README.md) | Cadrage de la demo de lecture d'un jeton ; supports a preparer |
-| [06-hands-on](sessions/06-hands-on/README.md) | Cadrage du hands-on de securisation ; implementation a construire |
+| [02-architecture](sessions/02-architecture/README.md) | Evolution du meme serveur, par exemple avec APIM ; scenario au choix de l'intervenant |
+| [06-hands-on](sessions/06-hands-on/README.md) | Complement pratique des briques non couvertes en session 2 |
 
-## Suite du parcours
+## Fil rouge : un serveur, des briques successives
 
-L'apres-midi reprend le meme cas fictif : authentification, autorisation cote
-serveur, passerelle, droits delegues ou applicatifs, puis supervision. La
-procedure d'hebergement et ces etapes de securisation restent a construire.
+Les participants rappellent les memes outils sur les memes donnees fictives
+pour observer ce que chaque nouvelle brique change.
+
+| Etape | Evolution | Verification |
+| --- | --- | --- |
+| Session 1 | Serveur MCP de demonstration et outils de lecture/ecriture | Decouvrir, appeler, modifier puis relire |
+| Session 2 | Briques au choix de l'intervenant, par exemple une passerelle APIM devant le serveur existant | Rejouer les appels et relever les controles effectivement actifs |
+| Session 6 | Completer ce qui n'a pas ete traite ou termine en session 2 | Rejouer les memes appels autorises et refuses |
+
+Le serveur et le contrat des outils restent le socle commun. L'URL d'acces et
+l'authentification peuvent changer, notamment lors de l'ajout d'APIM : la
+configuration du client est alors mise a jour, pas le cas pratique reconstruit.
+La premiere demo avec Azure MCP Server reste une introduction distincte ;
+le serveur fil rouge est celui d'Inspector et du mini-hack.
+
+Le contenu de la session 6 depend de l'etat reel laisse par la session 2, et non
+d'une limite supposee d'APIM. La procedure d'hebergement et ces evolutions restent
+a construire.
 
 Ne pas deployer un serveur d'ecriture anonyme en production. Une confirmation
 dans le chat n'est pas une regle d'autorisation.

@@ -118,7 +118,16 @@ Ne pas explorer d'autres identifiants.
 Restaurer chaque statut initial et le verifier par lecture. En cas d'erreur,
 la signaler a l'animation ; ne pas masquer l'echec et ne pas multiplier les appels.
 
-## Debrief et lien avec l'apres-midi
+## Debrief et lien avec les sessions suivantes
+
+Conserver ce serveur et le contrat de ses outils pour la
+[session 2](../02-architecture/README.md), qui peut ajouter APIM ou d'autres
+briques selon le scenario retenu. La [session 6](../06-hands-on/README.md)
+reprend cet etat et complete les points non couverts. Les participants rejouent
+les memes lectures et ecritures pour comparer les comportements.
+
+Si l'URL ou l'authentification change, l'animation fournit la nouvelle
+configuration avant de refaire les appels.
 
 - Qui a confirme l'appel ? L'utilisateur dans son client.
 - Qui aurait du decider des equipes accessibles ? Le serveur.
