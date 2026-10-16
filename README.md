@@ -55,9 +55,12 @@ d'un dossier dans [sessions/](sessions/). Leur numerotation reste celle du progr
 
 | Dossier | Contenu |
 | --- | --- |
-| [01-mcp-fondamentaux](sessions/01-mcp-fondamentaux/README.md) | Deroule, deux demos, mini-hack et configuration d'exemple |
+| [01-mcp-fondamentaux](sessions/01-mcp-fondamentaux/README.md) | [Presentation web](sessions/01-mcp-fondamentaux/presentation.html), deux demos, mini-hack et configuration d'exemple |
 | [02-architecture](sessions/02-architecture/README.md) | Evolution du meme serveur, par exemple avec APIM ; scenario au choix de l'intervenant |
 | [06-hands-on](sessions/06-hands-on/README.md) | Complement pratique des briques non couvertes en session 2 |
+
+Le [skill Azure Showcase Web](.github/skills/README.md), installe dans
+`.github/skills/`, permet de generer et d'adapter les presentations web du depot.
 
 ## Fil rouge : un serveur, des briques successives
 

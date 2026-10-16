@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Session 1 : comprendre MCP, observer deux démonstrations et prendre en main un serveur fil rouge.">
+  <title>Serveur MCP : les fondamentaux — Session 1</title>
+  <link rel="stylesheet" href="presentation.css">
+  <script src="presentation.js" defer></script>
+</head>
+<body id="top">
+  <a class="skip" href="#contenu">Aller au contenu</a>
+  <nav class="nav" aria-label="Navigation principale">
+    <div class="container nav-inner">
+      <a class="brand" href="#top"><span class="brand-mark" aria-hidden="true">mcp</span> Le fil rouge <span class="brand-session">/ session 01</span></a>
+      <button class="btn menu" type="button" aria-expanded="false" aria-controls="nav-links" hidden>Menu</button>
+      <div class="nav-links" id="nav-links">
+        <a href="#comprendre">Comprendre</a><a href="#protocole">Observer</a>
+        <a href="#demos">Démos</a><a href="#pratique">Pratiquer</a><a href="#suite">La suite</a>
+      </div>
+    </div>
+  </nav>
+  <main id="contenu">
+    <header class="hero">
+      <div class="container hero-grid">
+        <div>
+          <div class="eyebrow">Workshop MCP · 09:20–10:20 · 60 minutes</div>
+          <h1>Un langage commun.<br>Des outils concrets.<br><span>Un serveur fil rouge.</span></h1>
+          <p class="lead">Serveur MCP : les fondamentaux. Comprendre comment une application d’IA découvre des outils, les appelle et exploite leurs résultats.</p>
+          <div class="actions">
+            <a class="btn btn-primary" href="#comprendre">Entrer dans le sujet <span aria-hidden="true">↗</span></a>
+            <a class="btn" href="#pratique">Voir le cas pratique</a>
+          </div>
+          <div class="hero-meta"><span class="chip">Session 01 / Fondamentaux</span><span>Comprendre → observer → essayer</span></div>
+        </div>
+        <div class="hero-board" aria-label="Le parcours de la journée">
+          <div class="board-label"><span class="dot" aria-hidden="true"></span> Notre parcours, pas trois projets</div>
+          <div class="board-node"><span class="node-number">01</span><div><strong>Découvrir et appeler</strong><span>Deux outils · données fictives</span></div><span class="chip">Maintenant</span></div>
+          <div class="board-connector" aria-hidden="true">↓</div>
+          <div class="board-node"><span class="node-number">02</span><div><strong>Ajouter une brique</strong><span>Par exemple, une passerelle APIM</span></div></div>
+          <div class="board-connector" aria-hidden="true">↓</div>
+          <div class="board-node"><span class="node-number">06</span><div><strong>Compléter et vérifier</strong><span>Rejouer les mêmes appels</span></div></div>
+          <p class="board-caption">Même serveur métier. Mêmes outils.<br>Des contrôles qui évoluent.</p>
+        </div>
+      </div>
+    </header>
+
+    <section id="objectif" aria-labelledby="objectif-title">
+      <div class="container">
+        <div class="section-heading reveal"><div><span class="eyebrow">Notre contrat pour cette heure</span><h2 id="objectif-title">À la fin, vous saurez…</h2></div><span class="section-number" aria-hidden="true">01</span></div>
+        <div class="grid">
+          <article class="card reveal"><span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8m-4-4v4"/></svg></span><h3>Expliquer</h3><p>Distinguer l’application hôte, son client MCP et le serveur qui expose les capacités.</p></article>
+          <article class="card reveal"><span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h16m-4-4 4 4-4 4M20 17H4m4-4-4 4 4 4"/></svg></span><h3>Reconnaître</h3><p>Retrouver une découverte d’outils et un appel dans les messages du protocole.</p></article>
+          <article class="card reveal"><span class="icon icon-green" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></svg></span><h3>Faire</h3><p>Lire, modifier puis relire une donnée fictive, et identifier le contrôle qui manque.</p></article>
+        </div>
+        <div class="agenda-strip" aria-label="Répartition des 60 minutes">
+          <div><strong>20 min</strong><span>Fondamentaux</span></div><div><strong>10 min</strong><span>Deux démos</span></div><div><strong>15 min</strong><span>Cas pratique</span></div><div><strong>15 min</strong><span>Débrief et questions</span></div>
+        </div>
+        <details class="speaker"><summary>Notes d’animation · ouverture</summary><p>Faire lever la main : qui a déjà utilisé un serveur MCP ? Qui en a déjà développé un ? Annoncer que les participants vont utiliser un serveur, pas en coder un en 15 minutes. Ce support accompagne l’animation ; les démos se font dans les vrais clients.</p></details>
+      </div>
+    </section>
+
+    <section id="comprendre" class="surface-section" aria-labelledby="comprendre-title">
+      <div class="container">
+        <div class="section-heading reveal"><div><span class="eyebrow">09:20–09:30 · Pourquoi MCP ?</span><h2 id="comprendre-title">Le modèle ne connaît pas<br>le statut de votre service.</h2><p class="lead">Pour répondre avec une donnée actuelle ou agir sur un système, l’application doit se connecter à une capacité externe.</p></div><span class="section-number" aria-hidden="true">02</span></div>
+        <div class="grid two">
+          <article class="card"><span class="chip chip-amber">Sans accès à une source</span><h3>Une réponse n’est pas une observation.</h3><blockquote>« Le service Catalogue est-il disponible ? »</blockquote><p>Le texte produit par le modèle ne prouve ni l’état du service ni qu’une action a été exécutée.</p></article>
+          <article class="card accent-card"><span class="chip">Avec un outil adapté</span><h3>Lire l’état, puis répondre.</h3><div class="mini-flow"><span>Intention</span><span aria-hidden="true">→</span><code>list_services</code><span aria-hidden="true">→</span><span>Donnée</span></div><p>Le client exécute un appel et fournit le résultat au modèle. La réponse peut alors s’appuyer sur cette observation.</p></article>
+        </div>
+        <div class="statement reveal"><span class="eyebrow">Model Context Protocol</span><p>Un <strong>protocole ouvert</strong> pour connecter des applications d’IA à des outils et à des sources de contexte, via une interface standardisée.</p><span>MCP standardise l’échange. Il ne remplace pas votre API et ne crée pas les droits d’accès.</span></div>
+        <h3 class="subheading">Qui fait quoi ?</h3>
+        <div class="architecture" aria-label="Architecture : hôte avec client MCP, serveur MCP, système métier">
+          <div class="host-box"><span class="eyebrow">Application hôte</span><h3>VS Code + Copilot</h3><p>Conversation, modèle, sélection d’outils et confirmations.</p><div class="client-box"><strong>Client MCP</strong><span>Composant qui porte la connexion au serveur</span></div></div>
+          <span class="flow-arrow" aria-label="Échange MCP">MCP ↔</span>
+          <div class="architecture-box"><span class="eyebrow">Serveur MCP</span><h3>Expose des capacités</h3><p>Décrit les outils, valide les entrées et applique les règles d’accès prévues.</p></div>
+          <span class="flow-arrow" aria-label="Appel métier">API ↔</span>
+          <div class="architecture-box"><span class="eyebrow">Système métier</span><h3>API, données, services</h3><p>La source et la logique restent ici. Le serveur peut aussi porter sa propre logique.</p></div>
+        </div>
+        <p class="caption">Un hôte peut gérer plusieurs clients MCP, chacun associé à un serveur. Le serveur peut être local ou distant.</p>
+        <div class="grid four comparison">
+          <article><h3>API</h3><p>Expose une interface applicative. Un outil MCP peut appeler cette API.</p></article>
+          <article><h3>RAG</h3><p>Recherche du contexte pour enrichir une réponse. Peut être utilisé avec MCP.</p></article>
+          <article><h3>Connecteur</h3><p>Intègre un service selon un produit. Peut s’appuyer sur MCP, ou non.</p></article>
+          <article><h3>MCP</h3><p>Standardise découverte et échanges entre clients et serveurs compatibles.</p></article>
+        </div>
+        <details class="speaker"><summary>Notes d’animation · architecture</summary><p>Demander : « Le serveur MCP est-il le modèle ? » Non. Montrer que le client est un composant de l’hôte, pas nécessairement une application séparée. MCP réduit la diversité des interfaces d’intégration côté client ; chaque serveur doit toujours implémenter sa logique métier et sa sécurité.</p></details>
+      </div>
+    </section>
+
+    <section id="capacites" aria-labelledby="capacites-title">
+      <div class="container">
+        <div class="section-heading reveal"><div><span class="eyebrow">09:30–09:40 · Le vocabulaire utile</span><h2 id="capacites-title">Trois capacités, trois intentions.</h2><p>Un serveur ne doit pas toutes les implémenter. Leur prise en charge dépend aussi du client.</p></div><span class="section-number" aria-hidden="true">03</span></div>
+        <div class="grid">
+          <article class="card reveal"><span class="chip">Agir ou interroger</span><h3>Tools</h3><p>Des fonctions avec un nom, une description et un schéma d’entrée. Le modèle peut proposer un appel ; le client pilote son exécution.</p><code>list_services(team_id)</code><p class="caption">Un outil peut être en lecture seule ou modifier un état.</p></article>
+          <article class="card reveal"><span class="chip">Fournir du contexte</span><h3>Resources</h3><p>Des contenus identifiés par une URI, que l’application peut lire et intégrer au contexte.</p><code>catalog://services/schema</code><p class="caption">Exemple de ressource, pas un endpoint de cet atelier.</p></article>
+          <article class="card reveal"><span class="chip">Guider une interaction</span><h3>Prompts</h3><p>Des modèles d’instructions exposés par le serveur, que l’utilisateur peut sélectionner dans un client compatible.</p><code>analyser_un_incident</code><p class="caption">Un prompt n’accorde aucune permission métier.</p></article>
+        </div>
+        <div class="callout"><strong>Notre fil rouge utilise des tools.</strong> Les resources et prompts ci-dessus sont des exemples explicatifs, pas des capacités déjà implémentées.</div>
+        <h3 class="subheading">Même protocole, deux chemins de transport</h3>
+        <div class="grid two">
+          <article class="card transport"><span class="eyebrow">Processus local</span><h3>stdio</h3><p>Le client communique via l’entrée et la sortie standard du processus serveur.</p><div class="mini-flow"><span>Client</span><span aria-hidden="true">↔</span><span>Processus local</span></div><p class="caption">Local ne veut pas dire sûr : vérifier le code exécuté et ses accès.</p></article>
+          <article class="card transport"><span class="eyebrow">Serveur distant</span><h3>Streamable HTTP</h3><p>Les échanges passent par HTTP ; le serveur peut être utilisé par plusieurs clients.</p><div class="mini-flow"><span>Client</span><span aria-hidden="true">↔</span><span>Endpoint HTTPS</span></div><p class="caption">Le transport du serveur fil rouge ; HTTPS seul ne définit pas les droits.</p></article>
+        </div>
+        <div class="callout"><strong>Le schéma fait partie du contrat.</strong> Une description claire aide à choisir l’outil ; le serveur doit quand même valider les arguments. Ni une description ni une annotation de lecture seule ne remplace une politique d’autorisation.</div>
+      </div>
+    </section>
+
+    <section id="protocole" class="surface-section" aria-labelledby="protocole-title">
+      <div class="container">
+        <div class="section-heading reveal"><div><span class="eyebrow">Ouvrir le capot</span><h2 id="protocole-title">Du besoin au résultat,<br>sans boîte noire.</h2><p>Parcours illustratif. Ces messages ne sont pas envoyés à un serveur : aucune action réelle n’est exécutée sur cette page.</p></div><span class="section-number" aria-hidden="true">04</span></div>
+        <div class="journey" data-journey>
+          <div class="steps" role="group" aria-label="Choisir une étape de l’échange MCP" hidden>
+            <button type="button" class="step" aria-pressed="true" aria-controls="exchange-1">01 <span>Se connecter</span></button>
+            <button type="button" class="step" aria-pressed="false" aria-controls="exchange-2">02 <span>Découvrir les outils</span></button>
+            <button type="button" class="step" aria-pressed="false" aria-controls="exchange-3">03 <span>Appeler un outil</span></button>
+            <button type="button" class="step" aria-pressed="false" aria-controls="exchange-4">04 <span>Observer le résultat</span></button>
+          </div>
+          <div class="panels" aria-live="polite" aria-atomic="true">
+            <article class="panel" id="exchange-1"><span class="chip">Connexion et capacités</span><h3>Le client établit l’échange.</h3><p>Il identifie les capacités et la version compatibles avec le serveur. La séquence exacte dépend de la version du protocole et du client ; laisser le SDK ou Inspector la gérer.</p><div class="wire"><span>Client MCP</span><span aria-hidden="true">↔</span><span>Serveur d’atelier</span></div><p class="caption">Pour la démo, vérifier les versions réellement utilisées plutôt que réciter une capture d’une autre version.</p></article>
+            <article class="panel" id="exchange-2"><span class="chip">tools/list</span><h3>Que sais-tu faire ?</h3><p>Le serveur retourne les noms, descriptions et schémas des outils disponibles pour cette connexion.</p><pre><code>{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "tools/list",
+  "params": {}
+}</code></pre><p class="caption">Le modèle peut utiliser les descriptions pour proposer un outil. La liste visible ne prouve pas à elle seule qu’une autorisation métier est appliquée.</p></article>
+            <article class="panel" id="exchange-3"><span class="chip">tools/call</span><h3>Lis les services de cette équipe.</h3><p>Le client envoie un nom d’outil et des arguments structurés. L’outil n’exécute pas directement la phrase de l’utilisateur.</p><pre><code>{
+  "jsonrpc": "2.0",
+  "id": 2,
+  "method": "tools/call",
+  "params": {
+    "name": "list_services",
+    "arguments": { "team_id": "team-demo" }
+  }
+}</code></pre></article>
+            <article class="panel" id="exchange-4"><span class="chip chip-green">Réponse au même id : 2</span><h3>Un résultat observable, pas une promesse.</h3><p>Exemple de réponse MCP avec un contenu texte contenant une donnée fictive. Le client peut ensuite l’utiliser pour répondre.</p><pre><code>{
+  "jsonrpc": "2.0",
+  "id": 2,
+  "result": {
+    "content": [{
+      "type": "text",
+      "text": "{\"services\":[{\"service_id\":\"svc-catalog\",\"team_id\":\"team-demo\",\"name\":\"Catalogue\",\"status\":\"healthy\"}]}"
+    }]
+  }
+}</code></pre><p class="caption">Un résultat d’outil peut aussi signaler un échec. Le résultat réel doit être contrôlé et les erreurs rendues visibles.</p></article>
+          </div>
+        </div>
+        <p class="caption">Messages JSON-RPC 2.0 illustratifs. Ce ne sont pas des requêtes HTTP complètes : le client gère aussi les règles du transport et du cycle de connexion.</p>
+        <details class="speaker"><summary>Notes d’animation · faire lire un échange</summary><p>Demander au groupe de retrouver le nom de l’outil, ses arguments, puis l’identifiant qui relie requête et réponse. Faire distinguer la donnée retournée de la reformulation du modèle. Ne pas faire passer ce parcours interactif pour une démo live.</p></details>
+      </div>
+    </section>
+
+    <section id="ecosysteme" aria-labelledby="ecosysteme-title">
+      <div class="container">
+        <div class="section-intro reveal"><span class="eyebrow">Situer les briques de la journée</span><h2 id="ecosysteme-title">Un protocole, plusieurs rôles.</h2></div>
+        <div class="grid four">
+          <article class="card"><span class="chip">Hôte et expérience</span><h3>VS Code + Copilot</h3><p>Le chat et l’environnement dans lesquels nous allons utiliser les outils.</p></article>
+          <article class="card"><span class="chip">Serveur de la démo 1</span><h3>Azure MCP Server</h3><p>Accède aux services Azure avec une identité disposant des droits nécessaires.</p></article>
+          <article class="card"><span class="chip">Client de diagnostic</span><h3>MCP Inspector</h3><p>Découvre et appelle les outils directement, sans sélection par un modèle.</p></article>
+          <article class="card"><span class="chip">Brique possible ensuite</span><h3>API Management</h3><p>Peut exposer et gouverner le serveur existant. Son rôle sera montré en session 2.</p></article>
+        </div>
+        <p class="caption">D’autres applications et plateformes, dont Microsoft Foundry et Copilot Studio, peuvent intégrer des serveurs MCP selon leurs capacités et configurations. Notre objectif ici reste le mécanisme, pas un inventaire produit.</p>
+      </div>
+    </section>
+
+    <section id="demos" class="surface-section" aria-labelledby="demos-title">
+      <div class="container">
+        <div class="section-heading reveal"><div><span class="eyebrow">09:40–09:50 · Deux regards complémentaires</span><h2 id="demos-title">D’abord l’usage.<br>Puis le protocole.</h2></div><span class="section-number" aria-hidden="true">05</span></div>
+        <div class="grid two">
+          <article class="card demo-card"><div class="card-top"><span class="chip">Démo 1 · 5 minutes</span><span class="eyebrow">09:40</span></div><h3>Une intention dans Copilot</h3><p>Avec Azure MCP Server, lister les groupes de ressources d’un abonnement de démonstration. Lecture seule.</p><ol><li>Montrer le serveur et les outils disponibles.</li><li>Saisir le prompt et inspecter l’appel proposé.</li><li>Observer les arguments et le résultat réel.</li></ol><div class="prompt" id="azure-prompt">Dans l’abonnement de démonstration indiqué par l’animation, liste les groupes de ressources avec Azure MCP Server. N’effectue aucune création, modification ou suppression. Si le périmètre est ambigu, demande une précision.</div><div class="actions"><button class="btn" type="button" data-copy="azure-prompt" hidden>Copier le prompt</button><a href="demo-1.md">Guide d’animation →</a></div><p class="caption">Ce serveur introduit MCP. Ce n’est pas le serveur fil rouge du mini-hack.</p></article>
+          <article class="card demo-card"><div class="card-top"><span class="chip">Démo 2 · 5 minutes</span><span class="eyebrow">09:45</span></div><h3>Le même mécanisme sans modèle</h3><p>Avec Inspector, se connecter au serveur fil rouge et appeler directement son outil de lecture.</p><ol><li>Se connecter en Streamable HTTP.</li><li>Observer <code>tools/list</code> et le schéma.</li><li>Exécuter <code>list_services</code> avec <code>team-demo</code>.</li><li>Retrouver <code>tools/call</code> et sa réponse.</li></ol><div class="callout"><strong>À observer :</strong> l’appel existe sans modèle. Le modèle propose une utilisation ; MCP porte l’échange.</div><div class="actions"><a class="btn" href="#protocole">Revoir l’échange illustratif</a><a href="demo-2-inspector.md">Guide d’animation →</a></div><p class="caption">Le serveur fil rouge doit être implémenté et testé avant la session. Il n’est pas fourni par cette page.</p></article>
+        </div>
+        <details class="speaker"><summary>Notes d’animation · bascule vers les outils</summary><p>Quitter la page pour les démos dans VS Code puis Inspector. Préparer les connexions et le périmètre avant la session. En cas d’échec, expliquer l’erreur et utiliser une capture anonymisée annoncée comme telle ; ne pas simuler une réussite.</p></details>
+      </div>
+    </section>
+
+    <section id="pratique" aria-labelledby="pratique-title">
+      <div class="container">
+        <div class="section-heading reveal"><div><span class="eyebrow">09:50–10:05 · À vous de jouer</span><h2 id="pratique-title">Qui peut modifier<br>mon service ?</h2><p class="lead">15 minutes en binôme. Vous utilisez un serveur déjà préparé : aucun serveur à coder pendant l’exercice.</p></div><span class="section-number" aria-hidden="true">06</span></div>
+        <div class="callout warning"><strong>État de préparation :</strong> le serveur et son hébergement restent à construire. L’exercice sera réalisable après validation et distribution du point d’accès par l’animation. Aucun endpoint opérationnel n’est intégré à cette présentation.</div>
+        <div class="grid two">
+          <article class="card"><span class="chip">Contrat proposé</span><h3>Un catalogue 100 % fictif.</h3><p>Deux espaces jetables par binôme, par exemple <code>team-07-a</code> et <code>team-07-b</code>, et seulement deux outils :</p><div class="tool-row"><code>list_services</code><span>Lire les services d’un espace</span></div><div class="tool-row"><code>set_service_status</code><span>Modifier le statut d’un service</span></div><p class="caption">Statuts : <code>healthy</code>, <code>degraded</code>, <code>maintenance</code>. Identifiants illustratifs : utilisez ceux distribués à votre binôme.</p></article>
+          <article class="card"><span class="chip chip-green">Preuves attendues</span><h3>Pas juste « c’est fait ».</h3><ul class="check-list"><li>Les deux outils sont visibles dans le client.</li><li>Un appel de lecture fournit l’état initial.</li><li>Une écriture est confirmée, puis vérifiée par relecture.</li><li>Les deux espaces attribués sont testés.</li><li>Les statuts initiaux sont restaurés et relus.</li></ul></article>
+        </div>
+        <div class="practice-timeline">
+          <article><span>00–03 min</span><h3>Connecter</h3><p>Configurer l’URL fournie et découvrir les outils.</p></article>
+          <article><span>03–06 min</span><h3>Lire</h3><p>Noter le service et son statut initial.</p></article>
+          <article><span>06–10 min</span><h3>Modifier</h3><p>Confirmer le passage en maintenance, puis relire.</p></article>
+          <article><span>10–13 min</span><h3>Comparer</h3><p>Refaire l’appel sur le second espace attribué.</p></article>
+          <article><span>13–15 min</span><h3>Restaurer</h3><p>Rétablir chaque statut initial et le vérifier.</p></article>
+        </div>
+        <div class="grid two">
+          <article class="card"><h3>Configuration de départ</h3><p>À placer dans <code>.vscode/mcp.json</code> à la racine du dépôt. Remplacer l’URL fictive par celle de l’animation ; ne pas écraser une configuration existante.</p><pre><code>{
+  "servers": {
+    "workshop": {
+      "type": "http",
+      "url": "https://mcp.example.invalid/mcp"
+    }
+  }
+}</code></pre><a href="examples/mcp.remote.example.json" download>Télécharger l’exemple JSON →</a></article>
+          <article class="card"><h3>Prompt de départ</h3><div class="prompt" id="practice-prompt">Utilise uniquement le serveur MCP d’atelier. Consulte les services de l’espace attribué à mon binôme ; demande-moi son identifiant si nécessaire. Ne modifie rien pour le moment.</div><p>Ensuite, choisissez un service fictif et demandez le passage en maintenance. Examinez les arguments avant de confirmer, puis demandez une nouvelle lecture.</p><div class="actions"><button class="btn" type="button" data-copy="practice-prompt" hidden>Copier le prompt</button><a href="mini-hack.md">Consigne complète →</a></div></article>
+        </div>
+        <div class="callout warning"><strong>Périmètre de l’exercice :</strong> uniquement les deux espaces attribués au binôme, aucune donnée réelle, aucune exploration d’autres équipes. Conserver les confirmations du client et signaler les erreurs à l’animation.</div>
+      </div>
+    </section>
+
+    <section id="debrief" class="surface-section" aria-labelledby="debrief-title">
+      <div class="container">
+        <div class="section-heading reveal"><div><span class="eyebrow">10:05–10:15 · Le vrai apprentissage</span><h2 id="debrief-title">Confirmer un appel<br>n’est pas autoriser un accès.</h2></div><span class="section-number" aria-hidden="true">07</span></div>
+        <div class="grid two">
+          <article class="card"><span class="chip">Côté client</span><h3>« Je confirme cette action. »</h3><p>La confirmation porte sur l’exécution dans ce client. Masquer un outil ne protège pas le serveur contre un autre client.</p></article>
+          <article class="card accent-card"><span class="chip">Côté serveur</span><h3>« Cette identité a-t-elle ce droit ? »</h3><p>Le serveur doit vérifier les accès aux données et les opérations autorisées. Un <code>team_id</code> fourni dans l’appel n’est pas une identité.</p></article>
+        </div>
+        <div class="quiz card">
+          <span class="eyebrow">Question au groupe</span><h3>Je désactive l’outil d’écriture dans mon client.<br>Est-il désormais inaccessible à tous ?</h3>
+          <div class="actions" role="group" aria-label="Répondre à la question" hidden><button type="button" class="btn" data-answer="yes" aria-pressed="false">Oui, l’outil est protégé</button><button type="button" class="btn" data-answer="no" aria-pressed="false">Non, cela ne suffit pas</button></div>
+          <p id="quiz-feedback" role="status" hidden></p>
+          <details><summary>Afficher l’explication</summary><p><strong>Non.</strong> Le masquage ne concerne que ce client. Un autre client pourrait appeler l’outil si le serveur l’accepte. L’autorisation doit être contrôlée côté serveur et le backend ne doit pas permettre de contourner la protection annoncée.</p></details>
+        </div>
+        <p class="caption">L’atelier illustre une absence volontaire de contrôle par équipe dans un bac à sable. Il ne prouve pas que tous les serveurs MCP sont ouverts.</p>
+        <details class="speaker"><summary>Notes d’animation · débrief</summary><p>Faire raconter une preuve par un binôme : état initial, appel, relecture. Demander ce que le serveur sait réellement de l’appelant. Distinguer authentification, autorisation et confirmation. Ne pas anticiper la présentation indépendante de la session 3 ; préparer la transition vers les briques sur notre serveur commun.</p></details>
+      </div>
+    </section>
+
+    <section id="suite" aria-labelledby="suite-title">
+      <div class="container">
+        <div class="section-heading reveal"><div><span class="eyebrow">10:15–10:20 · La journée continue</span><h2 id="suite-title">On garde le serveur.<br>On fait évoluer les règles.</h2><p class="lead">Le même cas, les mêmes outils, des appels rejoués pour observer les changements.</p></div><span class="section-number" aria-hidden="true">08</span></div>
+        <div class="journey" data-journey>
+          <div class="steps" role="group" aria-label="Explorer le fil rouge de la journée" hidden>
+            <button type="button" class="step" aria-pressed="true" aria-controls="day-1">01 <span>Le socle MCP</span></button>
+            <button type="button" class="step" aria-pressed="false" aria-controls="day-2">02 <span>Une brique d’architecture</span></button>
+            <button type="button" class="step" aria-pressed="false" aria-controls="day-6">06 <span>Les compléments pratiques</span></button>
+          </div>
+          <div class="panels" aria-live="polite" aria-atomic="true">
+            <article class="panel" id="day-1"><span class="chip">Notre point de départ</span><h3>Découvrir, lire, écrire, vérifier.</h3><p>Inspector et le mini-hack s’appuient sur le serveur fictif. On comprend les outils et le comportement initial avant d’ajouter les contrôles.</p><div class="wire"><span>Client MCP</span><span aria-hidden="true">→</span><span>Serveur fil rouge</span><span aria-hidden="true">→</span><span>Données fictives</span></div></article>
+            <article class="panel" id="day-2"><span class="chip">Choix de l’intervenant</span><h3>Par exemple, APIM devant le serveur.</h3><p>La session 2 choisit ses briques et son scénario sur le socle commun. Une passerelle peut changer le point d’accès et les contrôles appliqués, sans recréer le cas métier.</p><div class="wire"><span>Client</span><span aria-hidden="true">→</span><span class="wire-highlight">APIM, si retenu</span><span aria-hidden="true">→</span><span>Même serveur MCP</span></div><p class="caption">Option d’architecture, pas une infrastructure déjà déployée. L’URL et l’authentification peuvent changer.</p></article>
+            <article class="panel" id="day-6"><span class="chip">Selon l’état laissé par la session 2</span><h3>Compléter, pas refaire.</h3><p>Identité, droits métier, délégation ou supervision : sélectionner les briques restantes et rejouer les mêmes outils pour vérifier les appels autorisés et refusés.</p><div class="wire"><span>Même serveur</span><span aria-hidden="true">+</span><span class="wire-highlight">Contrôles restants</span><span aria-hidden="true">→</span><span>Preuves avant / après</span></div><p class="caption">Il s’agit de ce qui n’a pas encore été couvert, pas d’une limite présumée d’APIM. La session 3 reste indépendante.</p></article>
+          </div>
+        </div>
+        <div class="closing reveal"><span class="eyebrow">Trois idées à emporter</span><h3>MCP décrit l’échange.<br>L’outil porte une capacité.<br>Le serveur doit faire respecter les droits.</h3><p>Questions avant de passer à l’architecture ?</p><div class="actions"><a class="btn btn-primary" href="#top">Revenir au début</a><button class="btn" type="button" id="print-button" hidden>Imprimer / enregistrer en PDF</button></div></div>
+      </div>
+    </section>
+    <section id="references" class="surface-section" aria-labelledby="references-title">
+      <div class="container"><span class="eyebrow">Pour aller plus loin</span><h2 id="references-title">Les sources et les supports</h2><div class="reference-links"><a href="https://modelcontextprotocol.io/docs/learn/architecture">Architecture MCP</a><a href="https://modelcontextprotocol.io/docs/learn/server-concepts">Tools, resources, prompts</a><a href="https://code.visualstudio.com/docs/copilot/customization/mcp-servers">MCP dans VS Code</a><a href="https://modelcontextprotocol.io/docs/tools/inspector">MCP Inspector</a><a href="https://learn.microsoft.com/azure/developer/azure-mcp-server/get-started">Azure MCP Server</a><a href="https://learn.microsoft.com/azure/api-management/expose-existing-mcp-server">Serveur MCP existant et APIM</a></div><p class="caption">Concepts et exemples à confronter aux versions utilisées pendant l’atelier. Données de démonstration uniquement.</p></div>
+    </section>
+  </main>
+  <footer><div class="container footer-inner"><span>Workshop MCP / Session 01</span><a href="README.md">Support de la session</a><a href="../../README.md">Programme de la journée</a><span>Sans bibliothèque ni ressource distante au chargement.</span></div></footer>
+</body>
+</html>

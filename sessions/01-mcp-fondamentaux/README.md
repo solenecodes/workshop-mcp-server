@@ -38,10 +38,34 @@ Le decoupage ci-dessous est une **proposition d'animation** dans le creneau de
 
 ## Supports
 
+- [Presentation web interactive](presentation.html) : fondamentaux, schemas,
+  echanges illustratifs, transitions vers les demos et consigne du cas pratique.
 - [Guide de la premiere demonstration](demo-1.md)
 - [Guide MCP Inspector](demo-2-inspector.md)
 - [Cas pratique guide (mini-hack) et contrat d'outils propose](mini-hack.md)
 - [Configuration VS Code pour un serveur distant](examples/mcp.remote.example.json)
+
+### Ouvrir la presentation
+
+Ouvrir `presentation.html` dans un navigateur, ou utiliser un serveur statique
+depuis la racine du depot :
+
+```sh
+python3 -m http.server 8000 --bind 127.0.0.1
+```
+
+Puis ouvrir <http://localhost:8000/sessions/01-mcp-fondamentaux/presentation.html>.
+Garder les trois fichiers `presentation.html`, `presentation.css` et
+`presentation.js` ensemble pour une utilisation locale ou hors ligne.
+
+La page ne charge aucune dependance distante. Les parcours sont selectionnables,
+les notes d'animation sont repliables et un bouton permet d'imprimer ou
+d'enregistrer en PDF via le navigateur. Les echanges affiches sont illustratifs :
+la page ne se connecte pas au serveur MCP et ne remplace pas les demonstrations.
+Sans JavaScript, les contenus des parcours restent tous lisibles.
+
+Pour regenerer ou adapter la page avec le meme style, utiliser le
+[skill du projet](../../.github/skills/README.md).
 
 ## Prerequis
 
