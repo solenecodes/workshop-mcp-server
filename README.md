@@ -9,8 +9,8 @@ d'entreprise n'est necessaire pour le mini-hack propose.
 
 ## Etat du depot
 
-Ce depot contient le programme et une proposition de supports pour la premiere
-partie. Il ne contient pas encore de serveur executable ni de deploiement.
+Ce depot contient le programme et une proposition de supports pour la session 1,
+« Serveur MCP : les fondamentaux ». Il ne contient pas encore de serveur executable ni de deploiement.
 Le mini-hack necessite donc la preparation d'un serveur et la communication de
 son URL par l'equipe d'animation. Les noms d'outils presentes sont un contrat
 pedagogique propose, pas des outils deja disponibles.
@@ -22,7 +22,7 @@ Programme de reference ; les sequences optionnelles peuvent etre adaptees.
 | Horaire | Duree | Sequence |
 | --- | --- | --- |
 | 09:00 - 09:20 | 20 min | Accueil, objectifs et tour de table |
-| 09:20 - 10:20 | 60 min | Fondamentaux MCP, deux demonstrations et mini-hack |
+| 09:20 - 10:20 | 60 min | Session 1 - Serveur MCP : les fondamentaux (deux demos et cas pratique) |
 | 10:20 - 10:35 | 15 min | Pause |
 | 10:35 - 11:10 | 35 min | Architecture d'entreprise : API-first, hebergement et passerelle |
 | 11:10 - 11:45 | 35 min | Securite et gouvernance : identites, droits et jetons |
@@ -34,7 +34,11 @@ Programme de reference ; les sequences optionnelles peuvent etre adaptees.
 | 15:30 - 16:00 | 30 min | Application au cas d'usage et prochaines etapes |
 | 16:00 - 16:30 | 30 min | Option : questions et approfondissement |
 
-## Premiere partie : comprendre, observer, essayer
+## Session 1 - Serveur MCP : les fondamentaux
+
+Cette session comprend les explications, les deux demonstrations de l'animation,
+puis le cas pratique guide (mini-hack) realise par les participants. Ce cas
+pratique fait partie de la session 1 ; il est distinct du hands-on de l'apres-midi.
 
 Objectif a 10:20 : savoir expliquer le role d'un serveur MCP, avoir observe un
 echange reel et avoir appele un outil.
@@ -48,27 +52,27 @@ Le decoupage ci-dessous est une **proposition d'animation** dans le creneau de
 | 09:30 - 09:40 | 10 min | Tools, resources, prompts, JSON-RPC et transports |
 | 09:40 - 09:45 | 5 min | Demo 1 : GitHub Copilot et Azure MCP Server |
 | 09:45 - 09:50 | 5 min | Demo 2 : les memes mecanismes dans MCP Inspector |
-| 09:50 - 10:05 | 15 min | Mini-hack : consulter puis modifier un service fictif |
+| 09:50 - 10:05 | 15 min | Cas pratique guide (mini-hack) : consulter puis modifier un service fictif |
 | 10:05 - 10:15 | 10 min | Debrief : permissions du client et autorisation du serveur |
 | 10:15 - 10:20 | 5 min | Questions et transition vers la gouvernance |
 
-## Supports
+### Supports de la session 1
 
 - [Guide de la premiere demonstration](docs/demo-1.md)
 - [Guide MCP Inspector](docs/demo-2-inspector.md)
-- [Mini-hack et contrat d'outils propose](docs/mini-hack.md)
+- [Cas pratique guide (mini-hack) et contrat d'outils propose](docs/mini-hack.md)
 - [Configuration VS Code pour un serveur distant](examples/mcp.remote.example.json)
 
-## Prerequis
+### Prerequis de la session 1
 
-### Participants
+#### Participants
 
 - VS Code a jour et GitHub Copilot utilisable en mode agent.
 - Autorisation d'ajouter un serveur MCP distant et d'activer ses outils.
 - Acces reseau HTTPS a l'endpoint d'atelier.
 - Aucune donnee personnelle, aucun secret et aucune ressource de production.
 
-### Animation
+#### Animation
 
 - Pour la demo 1 uniquement : Azure MCP Server configure et acces en lecture a un
   abonnement de demonstration ne contenant que des ressources fictives.
@@ -77,7 +81,7 @@ Le decoupage ci-dessous est une **proposition d'animation** dans le creneau de
 - Pour le mini-hack : serveur de demonstration isole, donnees synthetiques,
   remise a zero et solution de repli testees.
 
-## Connexion au futur serveur d'atelier
+### Connexion au futur serveur d'atelier
 
 1. Cloner ce depot et l'ouvrir dans VS Code.
 2. Copier [la configuration d'exemple](examples/mcp.remote.example.json) dans

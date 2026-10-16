@@ -1,4 +1,8 @@
-# Mini-hack : qui peut modifier mon service ?
+# Cas pratique guide (mini-hack) : qui peut modifier mon service ?
+
+Exercice participant de la [session 1 - Serveur MCP : les fondamentaux](../README.md#session-1---serveur-mcp--les-fondamentaux),
+a realiser apres les deux demonstrations. Il ne s'agit pas du hands-on de
+securisation de l'apres-midi.
 
 **Duree : 15 minutes.** Proposition a preparer, pas un exercice executable dans
 l'etat actuel du depot.
