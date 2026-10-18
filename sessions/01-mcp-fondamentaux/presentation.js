@@ -1,146 +1,103 @@
-const json = (value) => JSON.stringify(value, null, 2);
-const toolCall = (write = false) => ({
-  jsonrpc: '2.0', id: 3, method: 'tools/call',
-  params: {
-    name: write ? 'set_service_status' : 'list_services',
-    arguments: write
-      ? { team_id: 'team-demo', service_id: 'svc-catalog', status: 'maintenance' }
-      : { team_id: 'team-demo' },
-  },
-});
-const result = (write = false) => ({
-  jsonrpc: '2.0', id: 3,
-  result: { content: [{ type: 'text', text: json(write
-    ? { service_id: 'svc-catalog', team_id: 'team-demo', previous_status: 'healthy', status: 'maintenance' }
-    : { services: [{ service_id: 'svc-catalog', team_id: 'team-demo', name: 'Catalogue', status: 'healthy' }] }) }] },
-});
-const node = (id, badge, name, description, state) => ({ id, badge, name, description, state });
-const client = node('client', 'APP', 'AI app + MCP client', 'The client is a component inside the host application.', 'Ready');
-const server = node('server', 'MCP', 'MCP server', 'Exposes tools and runs the requested operation.', 'Waiting for a request');
-const store = node('store', 'DATA', 'Service store', 'Fictitious Catalogue service · team-demo', 'status: healthy');
-const step = (title, description, from, to, message, category, outcome, extra = {}) => ({
-  title, description, from, to, message: typeof message === 'string' ? message : json(message), category, outcome, ...extra,
-});
+import { defaultEndpoint, labStep, shareUrl, validateEndpoint } from './presentation-lab.mjs';
 
-const demos = {
-  mcp: {
-    label: 'MCP server animation',
-    nodes: [client, server, node('api', 'API', 'Service API', 'Business operations behind the MCP tool.', 'No operation yet'), store],
-    edges: [['client', 'server'], ['server', 'api'], ['api', 'store']],
-    scenarios: [['read', 'Read the service status'], ['write', 'Change the service status']],
-    steps(mode) {
-      const write = mode === 'write';
-      const operation = write ? 'set_service_status' : 'list_services';
-      return [
-        step('Establish the MCP connection.', 'The client starts a connection. This simplified exchange uses protocol version 2025-06-18 over Streamable HTTP.', 'client', 'server', { jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'Workshop client', version: '1.0' } } }, 'Connection', 'No tool has run yet.', { states: { client: 'Connecting', server: 'Negotiating capabilities' } }),
-        step('Agree on the available capabilities.', 'The server responds with its capabilities. The client then sends notifications/initialized before discovering tools.', 'server', 'client', { jsonrpc: '2.0', id: 1, result: { protocolVersion: '2025-06-18', capabilities: { tools: {} }, serverInfo: { name: 'Service demo', version: '1.0' } } }, 'Connection', 'The connection is ready; business data is unchanged.', { states: { client: 'Connected', server: 'Ready' } }),
-        step('Ask which tools are available.', 'The client sends tools/list. No model is needed to perform this protocol operation—Inspector can do it too.', 'client', 'server', { jsonrpc: '2.0', id: 2, method: 'tools/list', params: {} }, 'Discovery', 'Discovery is not tool execution.'),
-        step('Return the tool contract.', 'Names, descriptions and input schemas tell the application how to call the tools. This shows the selected tool; the full catalogue also includes the other operation.', 'server', 'client', { jsonrpc: '2.0', id: 2, result: { tools: [{ name: operation, description: write ? 'Change a fictitious service status.' : 'List fictitious services for a team.', inputSchema: { type: 'object', properties: write ? { team_id: { type: 'string', minLength: 1 }, service_id: { type: 'string', minLength: 1 }, status: { type: 'string', enum: ['healthy', 'degraded', 'maintenance'] } } : { team_id: { type: 'string', minLength: 1 } }, required: write ? ['team_id', 'service_id', 'status'] : ['team_id'] } }] } }, 'Discovery', `The application can now select ${operation}.`),
-        step(write ? 'Request a confirmed status change.' : 'Request the current service status.', write ? 'The user asks for maintenance. After any required client confirmation, the application invokes the tool with structured arguments.' : 'The user asks for the current status. The model proposes a tool; the host delegates the call to its MCP client.', 'client', 'server', toolCall(write), 'Tool call', 'A structured call—not the user’s sentence—crosses the MCP connection.', { states: { server: 'Validating tool arguments' } }),
-        step('Run the business operation.', 'The MCP server validates the tool name and arguments, then calls its service API. This first example deliberately has no per-team authorization; the third animation adds it.', 'server', 'api', `${write ? 'PATCH' : 'GET'} /teams/team-demo/services${write ? '/svc-catalog' : ''}${write ? '\n\n{"status":"maintenance"}' : ''}`, 'Execution', 'MCP can sit on top of an existing API; it does not replace that API.', { states: { server: 'Calling the service API', api: write ? 'Updating svc-catalog' : 'Reading team-demo' } }),
-        step(write ? 'Update the stored status.' : 'Read the stored status.', 'The API accesses the fictitious data store. Moving to a previous step or restarting resets this illustration; no external data is changed.', 'api', 'store', write ? 'UPDATE svc-catalog\nhealthy → maintenance' : 'READ svc-catalog\nstatus = healthy', 'Business data', write ? 'Illustrated service state: maintenance.' : 'Illustrated service state: healthy.', { states: { store: `status: ${write ? 'maintenance' : 'healthy'}` } }),
-        step('Return the stored data.', 'The store returns the observed state to the service API. The response is based on the read or write that just completed.', 'store', 'api', { service_id: 'svc-catalog', status: write ? 'maintenance' : 'healthy' }, 'Business data', 'The service API has the operation result.'),
-        step('Return the business data to the server.', 'The API completes the operation and returns data. The server wraps the outcome in an MCP tool result.', 'api', 'server', write ? { service_id: 'svc-catalog', previous_status: 'healthy', status: 'maintenance' } : { services: [{ service_id: 'svc-catalog', status: 'healthy' }] }, 'Result', 'The tool result is based on the operation, not a model guess.', { states: { api: 'Operation completed', server: 'Preparing tool result' } }),
-        step('Give the result back to the application.', 'The client receives the response with the same request ID. The application can use the observed result to answer. For a real write, call the read tool again to verify the change.', 'server', 'client', result(write), 'Result', write ? 'Completed: Catalogue changed from healthy to maintenance.' : 'Completed: Catalogue is healthy.', { tone: 'success', states: { client: 'Tool result received', server: 'Ready for the next call' } }),
-      ];
-    },
-  },
-  apim: {
-    label: 'API Management gateway animation',
-    nodes: [client, node('gateway', 'APIM', 'API Management', 'Routes MCP traffic and applies configured policies.', 'No request processed'), server, store],
-    edges: [['client', 'gateway'], ['gateway', 'server'], ['server', 'store']],
-    scenarios: [['allowed', 'Within the configured rate limit'], ['limited', 'Rate limit exceeded · HTTP 429']],
-    steps(mode) {
-      const limited = mode === 'limited';
-      const initial = [
-        step('Send the tool call to the gateway.', 'The client uses the APIM endpoint instead of the server’s direct URL. Tool names and arguments do not change. The MCP connection is assumed to be established.', 'client', 'gateway', `POST https://gateway.example.invalid/mcp\n\n${json(toolCall())}`, 'Routing', 'Backend tool executions: 0', { states: { gateway: 'Request received' } }),
-        step('Evaluate a configured rate-limit policy.', 'This example allows 10 requests per minute for the configured caller key. The counter and limit are illustrative; actual policy scope and caller identification must be configured.', null, 'gateway', `Configured policy: 10 requests / minute\nCaller key: workshop-demo\nThis request: ${limited ? '11' : '4'} of 10`, 'Gateway policy', 'Backend tool executions: 0', { states: { gateway: limited ? 'Limit exceeded' : 'Policy passed' } }),
-      ];
-      if (limited) return [...initial,
-        step('Reject before forwarding.', 'APIM returns HTTP 429. The request never reaches the MCP server and no service data is accessed.', 'gateway', 'client', 'HTTP/1.1 429 Too Many Requests\nRetry-After: 30\n\nConfigured rate limit exceeded.', 'Gateway rejection', 'Blocked: 0 backend tool executions. The server is untouched.', { tone: 'blocked', states: { gateway: '429 · not forwarded', client: 'Retry later', server: 'Not called', store: 'status: healthy · untouched' } }),
-      ];
-      return [...initial,
-        step('Forward to the existing MCP server.', 'APIM proxies the MCP request to the configured backend. This illustration focuses on routing and rate limiting, not an authenticated gateway-to-backend design.', 'gateway', 'server', `Backend: https://server.example.invalid/mcp\nMethod: tools/call\nTool: list_services\nArguments: {"team_id":"team-demo"}`, 'Routing', 'The existing server receives the original tool operation.', { states: { gateway: 'Forwarded', server: 'Processing tool call' } }),
-        step('Execute the requested read.', 'The MCP server validates the tool arguments and reads the fictitious service. Gateway policy checks do not replace business authorization inside the service.', 'server', 'store', 'list_services(team_id="team-demo")\n→ Catalogue: healthy', 'Backend execution', 'Backend tool executions: 1', { states: { store: 'status: healthy · read', server: 'Tool completed' } }),
-        step('Send the MCP result through the gateway.', 'The existing server returns its MCP tool result to APIM. APIM does not need to invent or recreate the tool.', 'server', 'gateway', result(), 'Return path', 'Backend tool executions: 1', { states: { gateway: 'Response received' } }),
-        step('Deliver the result to the client.', 'The client receives the tool response through its configured entry point. Configured diagnostics can record duration and outcome without logging secrets.', 'gateway', 'client', 'HTTP/1.1 200 OK\n\nMCP tool result: Catalogue is healthy.\nGateway diagnostic: request completed.', 'Return path', 'Completed: gateway policy applied, 1 backend execution.', { tone: 'success', states: { gateway: '200 · completed', client: 'Tool result received' } }),
-      ];
-    },
-  },
-  auth: {
-    label: 'Authentication and authorization animation',
-    nodes: [client, node('identity', 'ID', 'Authorization server', 'For example, Microsoft Entra ID. Handles sign-in and token issuance.', 'No token issued'), node('server', 'MCP', 'Protected MCP server', 'Validates access tokens and enforces business permissions.', 'Protected resource'), store],
-    edges: [['client', 'identity'], ['client', 'server'], ['server', 'store']],
-    scenarios: [['allowed', 'Valid token · write allowed'], ['audience', 'Wrong token audience · rejected'], ['scope', 'Missing write scope · denied'], ['team', 'No access to the requested team · denied']],
-    steps(mode) {
-      const badAudience = mode === 'audience';
-      const missingScope = mode === 'scope';
-      const wrongTeam = mode === 'team';
-      const base = [
-        step('Call the protected endpoint without a token.', 'The client tries to access the MCP resource. A tool is not allowed to run just because the client knows its name.', 'client', 'server', 'POST /mcp\nAuthorization: [not present]', 'Protected resource', 'Service writes: 0', { states: { server: 'No access token' } }),
-        step('Challenge the client with HTTP 401.', 'The server identifies where the client can find protected-resource metadata. This is an authentication challenge, not a tool result.', 'server', 'client', 'HTTP/1.1 401 Unauthorized\nWWW-Authenticate: Bearer resource_metadata=\n  "https://server.example.invalid/.well-known/oauth-protected-resource"', 'Challenge', 'No token → no tool execution.', { states: { client: 'Authentication required' } }),
-        step('Discover the authorization server.', 'The client reads protected-resource metadata, finds its authorization server, then reads that server’s metadata. These discovery exchanges are grouped here for clarity.', 'client', 'identity', 'Resource metadata → authorization server URL\nAuthorization-server metadata → authorization/token endpoints\nTarget resource: https://server.example.invalid', 'Discovery', 'The token request must target the intended MCP resource.', { states: { client: 'Authorization endpoints discovered', identity: 'Ready for authorization' } }),
-        step('Sign in and authorize the client.', 'The user signs in through the authorization server. Consent is shown if required. For a public client, the authorization-code flow uses PKCE; the app does not collect the user’s password.', 'client', 'identity', 'Authorization request (simplified)\nresponse_type=code\ncode_challenge_method=S256\nscope=services.write\nresource=https://server.example.invalid', 'User authentication', 'Sign-in proves identity; it does not grant every business permission.', { states: { identity: 'User signed in · code issued' } }),
-        step('Exchange the code for an access token.', 'The client submits the authorization code and PKCE verifier. The authorization server issues an access token. Claims shown below are explanatory examples, not a real token.', 'identity', 'client', 'Token exchange (client → authorization server)\ngrant_type=authorization_code\ncode_verifier=[not displayed]\n\nToken response (authorization server → client)\naccess_token=[never displayed]', 'Token issuance', 'The MCP request uses an access token, not an ID token.', { states: { identity: 'Access token issued', client: 'Access token available' } }),
-        step('Retry the tool call with a bearer token.', badAudience ? 'Negative test: replace the correct access token with a token intended for a different API. The resource server must reject it.' : missingScope ? 'Negative test: use a valid token with services.read but no services.write. A signed token alone does not grant write permission.' : wrongTeam ? 'The token is valid and has the write scope, but the authenticated caller belongs to a different team. The server must check team access separately.' : 'The client sends the write request with an access token intended for this resource. Team membership comes from trusted server-side policy, not from the submitted team_id.', 'client', 'server', `Authorization: Bearer [not displayed]\n\nIllustrative token claims:\naud = ${badAudience ? 'https://other-api.example.invalid' : 'https://server.example.invalid'}\nscp = ${missingScope ? 'services.read' : 'services.write'}\n\n${json(toolCall(true))}`, 'Authenticated request', 'Service writes: 0 · token and permission checks still pending.', { states: { server: 'Checking the access token' } }),
-      ];
-      if (badAudience) return [...base,
-        step('Reject a token intended for another resource.', 'The resource server checks issuer, signature, lifetime and audience. This token has the wrong audience, so it is not accepted. A real client would need a token for this resource.', 'server', 'client', 'HTTP/1.1 401 Unauthorized\nWWW-Authenticate: Bearer error="invalid_token"\n\nRejected: token audience does not match this resource.', 'Token validation', 'Rejected: invalid token. Service writes: 0.', { tone: 'blocked', states: { server: 'Invalid token · rejected', client: '401 · obtain appropriate token', store: 'status: healthy · untouched' } }),
-      ];
-      base.push(step('Validate the access token.', 'The resource server checks the trusted issuer, signature, lifetime and intended audience. Local JWT validation normally uses trusted signing keys; the identity provider is not contacted for every tool call.', null, 'server', 'Issuer: trusted\nSignature: valid\nLifetime: valid\nAudience: this MCP resource\n\nToken accepted. Continue to authorization.', 'Token validation', 'Valid token ≠ unrestricted access. Service writes: 0.', { states: { server: 'Token valid · checking permissions' } }));
-      if (missingScope || wrongTeam) return [...base,
-        step(missingScope ? 'Deny the write: required scope is missing.' : 'Deny the write: this team is not allowed.', 'Authentication succeeded, but authorization failed. This example rejects at the application-policy layer with HTTP 403 before executing the tool. Other implementations may surface business denial as an MCP tool error.', 'server', 'client', `HTTP/1.1 403 Forbidden\n\n${missingScope ? 'Required scope: services.write\nGranted scope: services.read' : 'Requested team: team-demo\nCaller team access: another-team'}\nDecision: do not execute set_service_status`, 'Business authorization', 'Denied: authenticated, but not authorized. Service writes: 0.', { tone: 'blocked', states: { server: 'Permission denied', client: '403 · access denied', store: 'status: healthy · untouched' } }),
-      ];
-      return [...base,
-        step('Check scope and team access.', 'The server verifies services.write and checks the authenticated caller’s access to team-demo. These are example application rules that must be implemented explicitly.', null, 'server', 'Required scope: services.write → granted\nRequested team: team-demo → allowed\nTool: set_service_status → permitted', 'Business authorization', 'Permission granted for this operation and this team.', { states: { server: 'Write authorized' } }),
-        step('Execute the authorized change.', 'Only after the token and business checks pass does the server change the fictitious service state.', 'server', 'store', 'set_service_status(\n  team_id="team-demo",\n  service_id="svc-catalog",\n  status="maintenance"\n)', 'Execution', 'Service writes: 1 · Catalogue is now in maintenance.', { states: { store: 'status: maintenance', server: 'Write completed' } }),
-        step('Return the tool result.', 'The client receives the result of the authorized write. A client confirmation and a server permission check solve different problems; both may be needed.', 'server', 'client', result(true), 'Result', 'Completed: valid token, sufficient permission, 1 service write.', { tone: 'success', states: { client: 'Authorized result received' } }),
-      ];
-    },
-  },
-};
-
+const $ = (selector, root = document) => root.querySelector(selector);
+const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
+const format = (value) => typeof value === 'string' ? value : JSON.stringify(value, null, 2);
 const motion = matchMedia('(prefers-reduced-motion: reduce)');
-const controllers = [];
 const svgNS = 'http://www.w3.org/2000/svg';
+$$('svg.icon').forEach((icon) => {
+  icon.setAttribute('aria-hidden', 'true');
+  icon.setAttribute('focusable', 'false');
+});
+const controllers = [];
+const request = (method, params = {}, id = 3) => ({ jsonrpc: '2.0', id, method, params });
+const step = (title, text, from, to, wire, options = {}) => ({ title, text, from, to, wire, ...options });
+const claimsArgs = { claimId: 'CLM-1001' };
+const noteArgs = { ...claimsArgs, note: 'Workshop: evidence requested.' };
 
-function createDemo(mount, config) {
-  const fragment = document.getElementById('demo-template').content.cloneNode(true);
-  mount.append(fragment);
-  const root = mount.querySelector('.demo');
-  root.setAttribute('aria-label', config.label);
-  const diagram = root.querySelector('.diagram');
-  diagram.classList.add(mount.dataset.demo);
-  const nodes = new Map();
-  for (const item of config.nodes) {
-    const element = document.createElement('article');
-    element.className = 'node';
-    element.dataset.node = item.id;
-    for (const [tag, className, text] of [['span', 'node-icon', item.badge], ['h3', '', item.name], ['p', '', item.description], ['span', 'node-state', item.state]]) {
-      const child = document.createElement(tag);
-      child.className = className;
-      child.textContent = text;
-      element.append(child);
-    }
-    root.querySelector('.diagram-nodes').append(element);
-    nodes.set(item.id, element);
-  }
-  const select = root.querySelector('select');
-  select.setAttribute('aria-label', `${config.label}: scenario`);
-  config.scenarios.forEach(([value, label]) => select.add(new Option(label, value)));
-  const paths = root.querySelector('[data-paths]');
-  const activePath = root.querySelector('[data-active-path]');
-  const packet = root.querySelector('[data-packet]');
-  const play = root.querySelector('[data-play]');
-  const next = root.querySelector('[data-next]');
-  const prev = root.querySelector('[data-prev]');
-  const picker = root.querySelector('.step-picker');
-  const outcome = root.querySelector('.outcome');
-  let steps = config.steps(select.value);
+function callSteps(mode) {
+  const write = mode === 'write';
+  return [
+    step('Connect the client.', 'The host creates an MCP client. It initializes the connection and negotiates the supported capabilities.', 'app', 'server',
+      request('initialize', { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'Workshop client', version: '1.0' } }, 1)),
+    step('Discover the tool contracts.', 'tools/list returns names, descriptions and input schemas. No claim has been read or changed.', 'server', 'app',
+      { request: request('tools/list', {}, 2), responseExcerpt: { tools: [
+        { name: write ? 'create_claim_note' : 'check_missing_documents', inputSchema: {
+          type: 'object', properties: { claimId: { type: 'string' }, ...(write ? { note: { type: 'string' } } : {}) },
+          required: write ? ['claimId', 'note'] : ['claimId'],
+        } },
+      ] } }),
+    step(write ? 'Ask to add a note.' : 'Ask about the missing documents.', 'The AI app interprets the request and selects a published tool. The model does not directly modify the database.', 'user', 'app',
+      write ? 'Add "Workshop: evidence requested." to CLM-1001.' : 'What is missing from claim CLM-1001?'),
+    step('Send structured arguments.', 'After any required client confirmation, the MCP client sends tools/call. The sentence becomes a typed request.', 'app', 'server',
+      request('tools/call', { name: write ? 'create_claim_note' : 'check_missing_documents', arguments: write ? noteArgs : claimsArgs })),
+    step(write ? 'Check access. Prepare a proposal.' : 'Check access. Read the data.', write
+      ? 'The protected server checks the adjuster’s rights and queues an approval proposal. It does not append the note to the claim.'
+      : 'The server checks the caller and claim assignment, then runs its business code against the synthetic dataset.', 'server', 'data',
+      write ? { claimId: 'CLM-1001', claimMutation: false, pendingAction: 'create_claim_note' }
+        : { claimId: 'CLM-1001', missingDocuments: ['proof_of_payment', 'incident_report'] }),
+    step('Return an observed result.', write
+      ? 'The result says requiresApproval. A human with a different supervisor/admin identity must review and confirm the exact proposal.'
+      : 'The server returns the documents it actually found. The MCP client gives this result back to the host.', 'server', 'app',
+      { jsonrpc: '2.0', id: 3, result: { content: [{ type: 'text', text: JSON.stringify(write
+        ? { requiresApproval: true, proposedAction: { actionId: '<generated UUID>', toolName: 'create_claim_note', claimId: 'CLM-1001', payload: noteArgs.note } }
+        : { claimId: 'CLM-1001', missingDocuments: ['proof_of_payment', 'incident_report'], redactedFields: [] }) }] } }),
+    step(write ? '“The note is awaiting review.”' : '“Proof of payment and incident report are missing.”', write
+      ? 'A proposal is not a completed write. Stop here; do not let the initiating agent approve its own request.'
+      : 'The AI app answers using the tool result. Inspector can make the same protocol calls without any model.', 'app', 'user',
+      write ? 'Claim unchanged. A separate, human-controlled approval is still required.' : 'Answer grounded in the tool result, not model memory.'),
+  ];
+}
+
+function authSteps(mode) {
+  const anonymous = mode === 'anonymous';
+  const denied = mode === 'denied';
+  const write = mode === 'write';
+  const base = [
+    step('Identify the caller.', anonymous ? 'No token was supplied. The protected endpoint must stop before running business logic.'
+      : 'A credential maps to a server-trusted identity. The local demo uses a fixed token table, not Entra.', 'user', 'app',
+    anonymous ? 'No Authorization header.' : { credential: '[not displayed]', userId: write ? 'adjuster-1' : 'reader-1' }),
+  ];
+  if (anonymous) return [...base,
+    step('401. Nothing executes.', 'The client needs an appropriate credential. A successful network connection is not authentication.', 'app', 'user',
+      { httpStatus: 401, error: 'UNAUTHENTICATED', claimWrites: 0 }, { blocked: true }),
+  ];
+  base.push(step('Check the tool allowlist.', 'Roles come from the server’s identity record, never from arguments such as role: admin.', 'app', 'server',
+    { role: write ? 'claims_adjuster' : 'claims_reader', tool: write ? 'create_claim_note' : 'get_claim_summary', toolAllowed: true }));
+  base.push(step('Check this specific claim.', denied ? 'The reader is assigned CLM-1001, not CLM-1002. Changing the ID does not change the caller’s rights.'
+    : 'The caller is assigned CLM-1001. Tool permission alone is not enough; record access must also pass.', null, 'server',
+    { assignedClaims: ['CLM-1001'], requestedClaim: denied ? 'CLM-1002' : 'CLM-1001', allowed: !denied }));
+  if (denied) return [...base,
+    step('Deny without reading the other record.', 'The server returns an MCP tool error. This application denial is not a claim that every MCP server returns HTTP 403.', 'server', 'user',
+      { isError: true, error: 'CLAIM_ACCESS_DENIED', claimWrites: 0 }, { blocked: true }),
+  ];
+  return [...base,
+    step(write ? 'Propose, do not execute.' : 'Minimize the returned data.', write
+      ? 'The stored proposal expires in five minutes. Its payload cannot be replaced during confirmation.'
+      : 'Mask personal and medical fields. Withhold arbitrary free text and report redactedFields.', 'server', 'data',
+      write ? { requiresApproval: true, claimWrites: 0, expiresInMinutes: 5 }
+        : { customerName: '[REDACTED]', dateOfBirth: '[REDACTED]', redactedFields: ['customerName', 'dateOfBirth', 'address', 'description', 'internalNotes', 'documents'] }),
+    step(write ? 'A separate human reviews the action.' : 'Return only what this caller needs.', write
+      ? 'Only a different supervisor/admin identity can call confirm_action. The initiating agent must not hold those credentials.'
+      : 'Authentication, tool RBAC, claim assignment and redaction are distinct checks. Secure tool calls are also audited.', 'data', 'user',
+      write ? 'Human reviews exact payload → confirm_action(actionId) → re-read → single-use action consumed.'
+        : 'Reader gets an allowed, redacted result. No unrestricted PII access.'),
+  ];
+}
+
+function createFlow(root) {
+  const diagram = $('.flow-diagram', root);
+  const nodes = new Map($$('[data-node]', root).map((element) => [element.dataset.node, element]));
+  const pathGroup = $('[data-paths]', root);
+  const activePath = $('[data-active-path]', root);
+  const packet = $('[data-packet]', root);
+  const play = $('[data-play]', root);
+  const select = $('[data-scenario]', root);
+  let steps = [];
   let index = 0;
   let playing = false;
-  let timer = null;
-  let frame = null;
+  let timer;
+  let frame;
   let picks = [];
 
   function route(from, to) {
@@ -149,144 +106,120 @@ function createDemo(mount, config) {
     const a = nodes.get(from).getBoundingClientRect();
     const b = nodes.get(to).getBoundingClientRect();
     const x1 = a.left + a.width / 2 - box.left;
-    const y1 = a.top + a.height / 2 - box.top;
     const x2 = b.left + b.width / 2 - box.left;
+    const y1 = a.top + a.height / 2 - box.top;
     const y2 = b.top + b.height / 2 - box.top;
-    if (Math.abs(y1 - y2) < 20) {
+    if (Math.abs(y1 - y2) < 16) {
       const direction = x2 > x1 ? 1 : -1;
-      const start = x1 + direction * a.width / 2;
-      const end = x2 - direction * b.width / 2;
-      return `M ${start} ${y1} L ${end} ${y2}`;
+      return `M ${x1 + direction * a.width / 2} ${y1} L ${x2 - direction * b.width / 2} ${y2}`;
     }
-    if (Math.abs(x1 - x2) < 20 && Math.abs(y2 - y1) < a.height + b.height) {
+    if (Math.abs(x1 - x2) < 16) {
       const direction = y2 > y1 ? 1 : -1;
       return `M ${x1} ${y1 + direction * a.height / 2} L ${x2} ${y2 - direction * b.height / 2}`;
     }
-    if (Math.abs(x1 - x2) < 20) return `M ${a.left - box.left} ${y1} L 12 ${y1} L 12 ${y2} L ${b.left - box.left} ${y2}`;
-    const start = (y2 < y1 ? a.top : a.bottom) - box.top;
-    const end = (y2 < y1 ? b.bottom : b.top) - box.top;
+    const start = (y2 > y1 ? a.bottom : a.top) - box.top;
+    const end = (y2 > y1 ? b.top : b.bottom) - box.top;
     const middle = (start + end) / 2;
     return `M ${x1} ${start} L ${x1} ${middle} L ${x2} ${middle} L ${x2} ${end}`;
   }
 
   function stopPacket() {
     cancelAnimationFrame(frame);
-    frame = null;
+    frame = undefined;
     packet.setAttribute('visibility', 'hidden');
   }
 
   function draw(animate = false) {
     stopPacket();
-    paths.replaceChildren();
-    for (const [from, to] of config.edges) {
+    if (!diagram.getBoundingClientRect().width) return;
+    pathGroup.replaceChildren();
+    for (const [from, to] of [['user', 'app'], ['app', 'server'], ['server', 'data']]) {
       const path = document.createElementNS(svgNS, 'path');
       path.setAttribute('d', route(from, to));
-      path.setAttribute('class', 'connection');
-      paths.append(path);
+      pathGroup.append(path);
     }
     const current = steps[index];
-    const pathData = route(current.from, current.to);
-    activePath.setAttribute('d', pathData);
-    activePath.classList.toggle('blocked', current.tone === 'blocked');
-    packet.classList.toggle('blocked', current.tone === 'blocked');
-    if (!pathData || motion.matches || !animate) return;
+    const path = route(current.from, current.to);
+    activePath.setAttribute('d', path);
+    activePath.classList.toggle('blocked', Boolean(current.blocked));
+    if (!animate || motion.matches || !path) return;
     const length = activePath.getTotalLength();
-    let started = null;
-    const origin = activePath.getPointAtLength(0);
-    packet.setAttribute('cx', origin.x);
-    packet.setAttribute('cy', origin.y);
-    packet.setAttribute('visibility', 'visible');
+    let started;
     function tick(time) {
-      if (started === null) started = time;
+      started ??= time;
       const progress = Math.min((time - started) / 1100, 1);
-      const point = activePath.getPointAtLength(length * progress);
+      const point = activePath.getPointAtLength(progress * length);
       packet.setAttribute('cx', point.x);
       packet.setAttribute('cy', point.y);
+      packet.setAttribute('visibility', 'visible');
       if (progress < 1) frame = requestAnimationFrame(tick);
-      else { frame = null; packet.setAttribute('visibility', 'hidden'); }
+      else stopPacket();
     }
     frame = requestAnimationFrame(tick);
   }
 
   function updatePlay() {
-    play.textContent = playing ? 'Pause' : index === steps.length - 1 ? 'Play again' : 'Play animation';
+    $('span', play).textContent = playing ? 'Pause' : index === steps.length - 1 ? 'Replay' : 'Play';
+    $('use', play).setAttribute('href', playing ? '#i-pause' : '#i-play');
     play.setAttribute('aria-pressed', String(playing));
-    root.dataset.playing = String(playing);
   }
-
   function pause() {
-    playing = false;
     clearTimeout(timer);
-    timer = null;
+    playing = false;
     stopPacket();
     updatePlay();
   }
-
   function render(animate = false) {
     const current = steps[index];
     root.dataset.step = String(index + 1);
-    root.querySelector('.step-title').textContent = current.title;
-    root.querySelector('.step-description').textContent = current.description;
-    root.querySelector('.step-category').textContent = current.category;
-    root.querySelector('.message-code').textContent = current.message;
-    root.querySelector('.message-direction').textContent = current.from
-      ? `${current.from.toUpperCase()} → ${current.to.toUpperCase()}`
-      : `CHECK AT ${current.to.toUpperCase()}`;
-    outcome.textContent = current.outcome;
-    outcome.className = `outcome ${current.tone || ''}`;
-    root.querySelector('.step-count').textContent = `Step ${index + 1} / ${steps.length}`;
-    root.querySelector('.progress-track > span').style.width = `${(index + 1) / steps.length * 100}%`;
-    prev.disabled = index === 0;
-    next.disabled = index === steps.length - 1;
-    config.nodes.forEach((item) => {
-      const element = nodes.get(item.id);
-      let state = item.state;
-      for (let position = 0; position <= index; position++) state = steps[position].states?.[item.id] ?? state;
-      element.querySelector('.node-state').textContent = state;
-      element.classList.toggle('is-active', current.from === item.id || current.to === item.id);
-      element.classList.toggle('is-blocked', current.tone === 'blocked' && (current.from === item.id || current.to === item.id));
+    $('[data-step-title]', root).textContent = `${index + 1}. ${current.title}`;
+    $('[data-step-text]', root).textContent = current.text;
+    $('[data-wire]', root).textContent = format(current.wire);
+    $('.flow-count', root).textContent = `${index + 1} / ${steps.length}`;
+    $('[data-prev]', root).disabled = index === 0;
+    $('[data-next]', root).disabled = index === steps.length - 1;
+    nodes.forEach((element, id) => {
+      const active = id === current.from || id === current.to;
+      element.classList.toggle('active', active);
+      element.classList.toggle('blocked', active && Boolean(current.blocked));
     });
-    picks.forEach((button, position) => {
-      button.setAttribute('aria-pressed', String(position === index));
-      button.classList.toggle('is-complete', position < index);
-    });
+    picks.forEach((button, position) => button.setAttribute('aria-pressed', String(position === index)));
     updatePlay();
     draw(animate);
   }
-
   function schedule() {
     timer = setTimeout(() => {
       if (!playing) return;
-      if (index === steps.length - 1) { pause(); return; }
       index++;
       render(true);
-      if (index === steps.length - 1) {
-        playing = false;
-        timer = null;
-        updatePlay();
-      } else schedule();
-    }, 3400);
+      if (index === steps.length - 1) { playing = false; updatePlay(); }
+      else schedule();
+    }, 3200);
   }
-
   function rebuild() {
     pause();
-    steps = config.steps(select.value);
+    steps = root.dataset.flow === 'call' ? callSteps(select.value) : authSteps(select.value);
     index = 0;
-    picker.replaceChildren();
+    const dots = $('.flow-dots', root);
+    dots.replaceChildren();
     picks = steps.map((item, position) => {
       const button = document.createElement('button');
       button.type = 'button';
-      button.className = 'step-pick';
-      button.textContent = String(position + 1).padStart(2, '0');
+      button.textContent = String(position + 1);
       button.setAttribute('aria-label', `Step ${position + 1}: ${item.title}`);
-      button.title = item.title;
       button.addEventListener('click', () => { pause(); index = position; render(true); });
-      picker.append(button);
+      dots.append(button);
       return button;
     });
+    if (root.dataset.flow === 'call') {
+      const heading = $('#mcp-title');
+      const accent = document.createElement('span');
+      const write = select.value === 'write';
+      accent.textContent = write ? 'to claim CLM-1001.”' : 'from claim CLM-1001?”';
+      heading.replaceChildren(document.createTextNode(write ? '“Add a note' : '“What is missing'), document.createElement('br'), accent);
+    }
     render();
   }
-
   play.addEventListener('click', () => {
     if (playing) { pause(); return; }
     controllers.forEach((controller) => controller.pause());
@@ -295,89 +228,205 @@ function createDemo(mount, config) {
     render(true);
     schedule();
   });
-  next.addEventListener('click', () => { pause(); index = Math.min(index + 1, steps.length - 1); render(true); });
-  prev.addEventListener('click', () => { pause(); index = Math.max(index - 1, 0); render(true); });
-  root.querySelector('[data-reset]').addEventListener('click', () => { pause(); index = 0; render(); });
+  $('[data-next]', root).addEventListener('click', () => { pause(); index = Math.min(index + 1, steps.length - 1); render(true); });
+  $('[data-prev]', root).addEventListener('click', () => { pause(); index = Math.max(0, index - 1); render(true); });
+  $('[data-reset]', root).addEventListener('click', () => { pause(); index = 0; render(); });
   select.addEventListener('change', rebuild);
   function updateMotion() {
     pause();
     play.disabled = motion.matches;
-    root.querySelector('.motion-note').hidden = !motion.matches;
-    draw();
+    $('.motion-note', root).hidden = !motion.matches;
   }
   motion.addEventListener('change', updateMotion);
-  if ('ResizeObserver' in window) new ResizeObserver(() => draw(frame !== null)).observe(diagram);
-  else window.addEventListener('resize', () => draw(frame !== null));
-  if ('IntersectionObserver' in window) {
-    new IntersectionObserver((entries) => {
-      if (!entries[0].isIntersecting) pause();
-    }).observe(root);
-  }
-  controllers.push({ pause });
   rebuild();
   updateMotion();
-  mount.nextElementSibling.open = false;
+  if ('ResizeObserver' in window) new ResizeObserver(() => draw(frame !== undefined)).observe(diagram);
+  else window.addEventListener('resize', () => draw(frame !== undefined));
+  if ('IntersectionObserver' in window) new IntersectionObserver((entries) => {
+    if (!entries[0].isIntersecting) pause();
+  }).observe(root);
+  return { pause, redraw: () => draw() };
 }
 
-document.querySelectorAll('[data-demo]').forEach((mount) => createDemo(mount, demos[mount.dataset.demo]));
+$$('[data-flow]').forEach((root) => controllers.push(createFlow(root)));
+$$('.flow-fallback,.lab-fallback').forEach((element) => { element.open = false; });
+
+const chapters = $$('.chapter');
+const navigation = $$('.chapters a');
+let chapterIndex = 0;
+function showChapter(focus = false) {
+  const target = chapters.findIndex((chapter) => `#${chapter.id}` === location.hash);
+  chapterIndex = target === -1 ? 0 : target;
+  controllers.forEach((controller) => controller.pause());
+  chapters.forEach((chapter, index) => { chapter.hidden = index !== chapterIndex; });
+  navigation.forEach((link, index) => {
+    if (index === chapterIndex) link.setAttribute('aria-current', 'step');
+    else link.removeAttribute('aria-current');
+  });
+  $('#chapter-prev').disabled = chapterIndex === 0;
+  $('#chapter-next').disabled = chapterIndex === chapters.length - 1;
+  $('#chapter-count').textContent = `${chapterIndex + 1} / ${chapters.length}`;
+  requestAnimationFrame(() => controllers.forEach((controller) => controller.redraw()));
+  if (focus) {
+    $('h1,h2', chapters[chapterIndex]).focus({ preventScroll: true });
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }
+}
+function changeChapter(direction) {
+  const next = chapters[chapterIndex + direction];
+  if (next) location.hash = next.id;
+}
+$('#chapter-prev').addEventListener('click', () => changeChapter(-1));
+$('#chapter-next').addEventListener('click', () => changeChapter(1));
+window.addEventListener('hashchange', () => showChapter(true));
+document.addEventListener('keydown', (event) => {
+  if (event.altKey || event.ctrlKey || event.metaKey || !(event.target instanceof Element)) return;
+  if (event.target.closest('input,select,textarea,button,[contenteditable="true"],summary')) return;
+  if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') {
+    event.preventDefault();
+    changeChapter(event.key === 'ArrowRight' ? 1 : -1);
+  }
+});
+
+$$('[data-integration-mode]').forEach((button) => button.addEventListener('click', () => {
+  $('.integration-board').dataset.integration = button.dataset.integrationMode;
+  $$('[data-integration-mode]').forEach((item) => item.setAttribute('aria-pressed', String(item === button)));
+  $('#integration-caption').textContent = button.dataset.integrationMode === 'mcp'
+    ? 'Same connections. One shared protocol: reusable clients, a server per system.'
+    : 'Each app-to-system pair needs its own integration code.';
+}));
+
+let settings;
+let labIndex = 0;
+const endpointInput = $('#endpoint');
+const accessInput = $('#access');
+const codeTargets = ['lab-code', 'terminal-code', 'inspector-code'];
+function renderLab() {
+  if (!settings) return;
+  const current = labStep(labIndex, settings);
+  $('#lab-step-title').textContent = current.title;
+  $('#lab-instruction').textContent = current.instruction;
+  $('#copy-label').textContent = current.label;
+  $('#lab-code').textContent = current.code;
+  $('#terminal-code').textContent = current.terminalCode;
+  $('#inspector-code').textContent = current.inspectorCode;
+  $('#lab-expected').textContent = current.expected;
+  $('#lab-progress').textContent = `Step ${labIndex + 1} / 6`;
+  $$('[data-lab-step]').forEach((button, index) => button.setAttribute('aria-pressed', String(index === labIndex)));
+  $('#lab-prev').disabled = labIndex === 0;
+  $('#lab-next').disabled = labIndex === 5;
+  $('#lab-completion').textContent = labIndex === 5 ? 'Compare the actual result with your pair.' : 'Advance after checking your client’s result.';
+}
+function applyEndpoint() {
+  try {
+    settings = validateEndpoint(endpointInput.value.trim(), accessInput.value);
+    endpointInput.value = settings.endpoint;
+    $('#endpoint-error').hidden = true;
+    $('#endpoint-status').textContent = settings.local
+      ? 'Local endpoint: each participant must run their own server. Availability is not checked by this page.'
+      : 'HTTPS endpoint configured. Credentials are shared separately; availability and hosting controls must be verified by the facilitator.';
+    $$('[data-copy],#share').forEach((button) => { button.disabled = false; });
+    renderLab();
+    return true;
+  } catch (error) {
+    settings = undefined;
+    codeTargets.forEach((id) => { document.getElementById(id).textContent = 'Apply a valid endpoint to generate this command.'; });
+    $('#participant-link')?.remove();
+    $('#endpoint-error').textContent = error.message;
+    $('#endpoint-error').hidden = false;
+    $('#endpoint-status').textContent = 'Endpoint not applied. Fix the URL or access mode before copying commands.';
+    $$('[data-copy],#share').forEach((button) => { button.disabled = true; });
+    return false;
+  }
+}
+function markEndpointDirty() {
+  settings = undefined;
+  codeTargets.forEach((id) => { document.getElementById(id).textContent = 'Apply the endpoint changes to regenerate this command.'; });
+  $('#participant-link')?.remove();
+  $('#endpoint-status').textContent = 'Changes not applied. Select “Use endpoint” to regenerate all commands.';
+  $$('[data-copy],#share').forEach((button) => { button.disabled = true; });
+}
+$('#endpoint-form').addEventListener('submit', (event) => { event.preventDefault(); applyEndpoint(); });
+endpointInput.addEventListener('input', markEndpointDirty);
+accessInput.addEventListener('change', markEndpointDirty);
+$$('[data-lab-step]').forEach((button) => button.addEventListener('click', () => {
+  labIndex = Number(button.dataset.labStep);
+  renderLab();
+}));
+$('#lab-prev').addEventListener('click', () => { labIndex = Math.max(0, labIndex - 1); renderLab(); });
+$('#lab-next').addEventListener('click', () => { labIndex = Math.min(5, labIndex + 1); renderLab(); });
+
+const params = new URLSearchParams(location.search);
+endpointInput.value = params.get('endpoint') ?? defaultEndpoint;
+const access = params.get('access') ?? 'bearer';
+if (['bearer', 'oauth', 'open'].includes(access)) accessInput.value = access;
+else {
+  const invalid = document.createElement('option');
+  invalid.value = access;
+  invalid.textContent = 'Unsupported access mode';
+  accessInput.append(invalid);
+  accessInput.value = access;
+}
+applyEndpoint();
+
+let toastTimer;
+function notify(message) {
+  clearTimeout(toastTimer);
+  $('#copy-status').textContent = message;
+  toastTimer = setTimeout(() => { $('#copy-status').textContent = ''; }, 6000);
+}
+async function copy(text, message = 'Copied. Paste into your MCP client.') {
+  try {
+    await navigator.clipboard.writeText(text);
+    notify(message);
+  } catch {
+    notify('Clipboard unavailable. Select the visible code and copy it manually.');
+  }
+}
+$$('[data-copy]').forEach((button) => button.addEventListener('click', () => {
+  if (!settings || !codeTargets.includes(button.dataset.copy)) return;
+  void copy(document.getElementById(button.dataset.copy).textContent);
+}));
+$('#share').addEventListener('click', () => {
+  if (!settings) return;
+  const url = shareUrl(location.href, settings);
+  // The link is visible too, so clipboard failure never strands the presenter.
+  let link = $('#participant-link');
+  if (!link) {
+    link = document.createElement('a');
+    link.id = 'participant-link';
+    link.className = 'participant-link';
+    $('#endpoint-form').after(link);
+  }
+  link.href = url;
+  link.textContent = url;
+  const localPage = ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname) || location.protocol === 'file:';
+  void copy(url, localPage
+    ? 'Copied a local preview link. Publish this page before sharing outside your machine.'
+    : settings.local ? 'Copied. This endpoint points to each participant’s own machine, not yours.' : 'Participant link copied. No credentials are included.');
+});
+
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) controllers.forEach((controller) => controller.pause());
 });
 window.addEventListener('pagehide', () => controllers.forEach((controller) => controller.pause()));
-
-const menu = document.querySelector('.menu');
-const navigation = document.querySelector('.nav-links');
-const mobile = matchMedia('(max-width: 760px)');
-function closeMenu(focus = false) {
-  navigation.classList.remove('is-open');
-  menu.setAttribute('aria-expanded', 'false');
-  if (focus) menu.focus();
-}
-menu.addEventListener('click', () => {
-  menu.setAttribute('aria-expanded', String(navigation.classList.toggle('is-open')));
-});
-navigation.addEventListener('click', (event) => {
-  if (!(event.target instanceof Element)) return;
-  const link = event.target.closest('a');
-  if (!link) return;
-  closeMenu();
-  if (mobile.matches) {
-    const target = document.querySelector(link.hash);
-    target.setAttribute('tabindex', '-1');
-    target.focus({ preventScroll: true });
-  }
-});
-document.addEventListener('keydown', (event) => {
-  if (event.key === 'Escape' && navigation.classList.contains('is-open')) closeMenu(true);
-});
-mobile.addEventListener('change', () => {
-  const hiddenFocus = mobile.matches ? navigation.contains(document.activeElement) : document.activeElement === menu;
-  closeMenu();
-  if (hiddenFocus) (mobile.matches ? menu : navigation.querySelector('a')).focus();
-});
-menu.hidden = false;
-const print = document.getElementById('print');
-let printState = null;
+let printState;
 function preparePrint() {
   controllers.forEach((controller) => controller.pause());
   if (printState) return;
-  printState = [...document.querySelectorAll('.fallback')].map((element) => ({ element, open: element.open }));
+  printState = $$('details').map((element) => ({ element, open: element.open }));
   printState.forEach(({ element }) => { element.open = true; });
 }
 function finishPrint() {
   if (!printState) return;
   printState.forEach(({ element, open }) => { element.open = open; });
-  printState = null;
+  printState = undefined;
 }
 window.addEventListener('beforeprint', preparePrint);
 window.addEventListener('afterprint', finishPrint);
-matchMedia('print').addEventListener('change', (event) => {
-  if (event.matches) preparePrint();
-  else finishPrint();
-});
-print.addEventListener('click', () => {
-  preparePrint();
-  window.print();
-});
-print.hidden = false;
+matchMedia('print').addEventListener('change', (event) => event.matches ? preparePrint() : finishPrint());
+$('#print').addEventListener('click', () => { preparePrint(); window.print(); });
+$('#print').hidden = false;
+$('.chapter-pagination').hidden = false;
 document.documentElement.classList.add('enhanced');
+showChapter();

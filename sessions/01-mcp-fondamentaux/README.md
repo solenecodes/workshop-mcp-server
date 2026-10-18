@@ -1,117 +1,65 @@
-# Session 1 - Serveur MCP : les fondamentaux
+# Session 1 - MCP fundamentals
 
-[Retour au programme](../../README.md)
+[Workshop and runnable server](../../README.md)
 
-**Horaire : 09:20 - 10:20 (60 minutes).**
+**09:20–10:20 · 60 minutes**, including two demos followed by **15 minutes of
+participant practice**. Use the same Insurance Claims server in both demos.
 
-Cette session comprend les explications, les deux demonstrations de l'animation,
-puis le cas pratique guide (mini-hack) realise par les participants. Ce cas
-pratique fait partie de la session 1 ; il est distinct du hands-on de l'apres-midi.
+| Time | Duration | Activity |
+| --- | ---: | --- |
+| 09:20–09:30 | 10 min | Host, client, server; MCP vs API, RAG and connectors |
+| 09:30–09:40 | 10 min | Tools/resources/prompts, JSON-RPC 2.0, stdio vs remote Streamable HTTP |
+| 09:40–09:45 | 5 min | [Demo 1: useful claim read/write from an AI client](demo-1.md) |
+| 09:45–09:50 | 5 min | [Demo 2: inspect the same protocol directly](demo-2-inspector.md) |
+| 09:50–10:05 | 15 min | [Practice: discover, read, write, verify](mini-hack.md) |
+| 10:05–10:15 | 10 min | Debrief: client confirmation is not backend authorization |
+| 10:15–10:20 | 5 min | Questions and transition |
 
-Objectif a 10:20 : savoir expliquer le role d'un serveur MCP, avoir observe un
-echange reel et avoir appele un outil.
+The **host** is the AI application (for example VS Code). Its **MCP client**
+discovers capabilities and invokes the **MCP server**. The server operates on
+synthetic records. The model is not the server and does not perform the database
+write itself. Inspector can make the same calls without any model.
 
-## Serveur fil rouge
+**Tools** query or change state; **resources** supply URI-addressable context;
+**prompts** supply reusable interaction templates. This claims implementation
+has tools only. JSON-RPC is the message format; Streamable HTTP is the transport
+used here. Local stdio is another transport, not another business capability.
 
-Le serveur utilise dans Inspector et le mini-hack sert aussi de base aux
-[sessions 2](../02-architecture/README.md) et [6](../06-hands-on/README.md).
-On conserve les outils et les donnees fictives ; les sessions suivantes ajoutent
-leurs briques autour de ce socle, sans demander de reconstruire le cas pratique.
+MCP exposes typed operations to AI clients; it does not replace an existing
+API, retrieval/RAG pipeline, business authorization, or an integration connector.
+The same principles apply across Copilot, Foundry and other compatible hosts;
+client support and authentication requirements must be checked separately.
 
-La demo 1 avec Azure MCP Server est une introduction distincte. Elle n'est pas
-le serveur pedagogique a faire evoluer.
+## Prepare
 
-## Deroule
+- Each pair runs both editions locally using the [root instructions](../../README.md#run-locally).
+- Node 20+, VS Code with MCP/agent support, or Inspector as a direct-call fallback.
+- Use synthetic data only; keep client confirmations enabled.
+- Select only the insecure endpoint during the first exercise.
+- Each process has its own data; restart it to reset.
 
-Le decoupage ci-dessous est une **proposition d'animation** dans le creneau de
-60 minutes.
+The [example MCP configuration](examples/mcp.remote.example.json) now targets
+the working loopback endpoints, not a hypothetical cloud URL. Despite the
+historical filename, it uses HTTP on the participant's own machine.
 
-| Horaire | Duree | Activite |
-| --- | --- | --- |
-| 09:20 - 09:30 | 10 min | Pourquoi MCP ? Host, client, serveur et comparaison avec API/RAG |
-| 09:30 - 09:40 | 10 min | Tools, resources, prompts, JSON-RPC et transports |
-| 09:40 - 09:45 | 5 min | Demo 1 : GitHub Copilot et Azure MCP Server |
-| 09:45 - 09:50 | 5 min | Demo 2 : les memes mecanismes dans MCP Inspector |
-| 09:50 - 10:05 | 15 min | Cas pratique guide (mini-hack) : consulter puis modifier un service fictif |
-| 10:05 - 10:15 | 10 min | Debrief : permissions du client et autorisation du serveur |
-| 10:15 - 10:20 | 5 min | Questions et transition vers la gouvernance |
+The [visual presentation](presentation.html) now follows the claims example:
+why MCP exists, host/client/server, animated tool calls, API comparison, a
+six-step participant lab and a security walkthrough. Navigate one chapter at
+a time, or print all chapters. Animations have manual steps and reduced-motion
+support; protocol details stay collapsed until needed.
 
-## Supports
+The [public version](https://solenecodes.github.io/workshop-mcp-server/) can be
+shared with participants. In **Your turn**, configure a prepared protected HTTPS
+endpoint and copy the participant link. It contains the endpoint and access mode
+only, never credentials. The page generates commands; calls run in the
+participant's client, not in the browser.
 
-- [MCP in action — presentation en anglais](presentation.html) : trois animations
-  pas a pas sur un appel MCP, une passerelle APIM et l'authentification.
-- [Guide de la premiere demonstration](demo-1.md)
-- [Guide MCP Inspector](demo-2-inspector.md)
-- [Cas pratique guide (mini-hack) et contrat d'outils propose](mini-hack.md)
-- [Configuration VS Code pour un serveur distant](examples/mcp.remote.example.json)
+Default lab instructions use the protected reader/adjuster workflow. For the
+morning insecure comparison, explicitly choose the local `3101` endpoint and
+**No auth · local sandbox only**. Never expose that edition publicly.
 
-### Ouvrir la presentation
+The [project style skill](../../.github/skills/README.md) remains available.
 
-Ouvrir `presentation.html` dans un navigateur, ou utiliser un serveur statique
-depuis la racine du depot :
-
-```sh
-python3 -m http.server 8000 --bind 127.0.0.1
-```
-
-Puis ouvrir <http://localhost:8000/sessions/01-mcp-fondamentaux/presentation.html>.
-Garder les trois fichiers `presentation.html`, `presentation.css` et
-`presentation.js` ensemble pour une utilisation locale ou hors ligne.
-
-La page en anglais ne charge aucune dependance distante. Chaque animation dispose
-de commandes lecture/pause, precedent/suivant, redemarrage et selection d'etape.
-Des messages se deplacent entre les composants et les decisions sont expliquees.
-
-- MCP : decouverte des outils, lecture ou modification d'un service fictif.
-- APIM : requete transmise ou bloquee par une limite configuree (HTTP 429).
-- Authentification : obtention d'un jeton, validation, puis controle des droits ;
-  scenarios de succes, mauvaise audience, scope manquant et equipe non autorisee.
-
-La lecture ne demarre pas automatiquement. Le mode mouvement reduit desactive
-la lecture animee et conserve le pas-a-pas. Sans JavaScript, les trois sequences
-restent lisibles dans les sections explicatives. Un bouton permet d'imprimer ou
-d'enregistrer ces sequences en PDF.
-
-Les echanges sont des illustrations locales : aucun serveur MCP, APIM ou
-fournisseur d'identite n'est contacte. Le diagramme ne remplace pas les demos
-reelles. Les controles APIM et les regles d'autorisation presentes sont des
-exemples a implementer, pas des fonctionnalites deja deployees.
-
-Pour regenerer ou adapter la page avec le meme style, utiliser le
-[skill du projet](../../.github/skills/README.md).
-
-## Prerequis
-
-### Participants
-
-- VS Code a jour et GitHub Copilot utilisable en mode agent.
-- Autorisation d'ajouter un serveur MCP distant et d'activer ses outils.
-- Acces reseau HTTPS a l'endpoint d'atelier.
-- Aucune donnee personnelle, aucun secret et aucune ressource de production.
-
-### Animation
-
-- Pour la demo 1 uniquement : Azure MCP Server configure et acces en lecture a un
-  abonnement de demonstration ne contenant que des ressources fictives.
-- Pour la demo 2 : MCP Inspector et une version de Node.js compatible avec la
-  [version d'Inspector retenue](https://modelcontextprotocol.io/docs/tools/inspector).
-- Pour le mini-hack : serveur de demonstration isole, donnees synthetiques,
-  remise a zero et solution de repli testees.
-
-## Connexion au futur serveur d'atelier
-
-Le serveur reste a implementer et a deployer ; l'exercice n'est pas encore
-executable dans l'etat actuel du depot.
-
-1. Cloner ce depot et ouvrir sa racine dans VS Code.
-2. Copier [la configuration d'exemple](examples/mcp.remote.example.json) dans
-   `.vscode/mcp.json` a la racine du depot, sans ecraser une configuration existante.
-3. Remplacer `https://mcp.example.invalid/mcp` par l'URL fournie par l'animation.
-   L'URL d'exemple est volontairement non fonctionnelle.
-4. Demarrer le serveur depuis la configuration MCP de VS Code et examiner la
-   demande de confiance.
-5. Dans le chat en mode agent, ouvrir la selection des outils et activer
-   uniquement les outils necessaires a l'exercice.
-
-Le dossier `.vscode/` est ignore par Git : la configuration locale et les
-eventuels parametres propres a une session ne sont pas publies.
+Continue with [session 3 security](../03-security/README.md) using the same
+business tools and fixture. [Session 2](../02-architecture/README.md) is reserved
+for the colleague's material.

@@ -3,95 +3,210 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Three animated demonstrations: how an MCP tool call works, how APIM routes it, and how authentication and authorization protect it.">
-  <title>MCP in action — Tools, gateways and authentication</title>
+  <meta name="description" content="Understand MCP visually, follow a real tool call, and connect your client to a guided insurance claims lab.">
+  <meta name="color-scheme" content="light">
+  <title>MCP, from idea to first call</title>
+  <link rel="icon" href="data:,">
   <link rel="stylesheet" href="presentation.css">
-  <script src="presentation.js" defer></script>
+  <script type="module" src="presentation.js"></script>
 </head>
-<body id="top">
-  <a class="skip" href="#main">Skip to content</a>
-  <nav class="nav" aria-label="Main navigation">
-    <div class="container nav-inner">
-      <a class="brand" href="#top"><span class="brand-mark" aria-hidden="true">mcp</span> MCP in action</a>
-      <button class="button menu" type="button" aria-expanded="false" aria-controls="navigation" hidden>Menu</button>
-      <div class="nav-links" id="navigation"><a href="#mcp">01 · MCP server</a><a href="#apim">02 · API gateway</a><a href="#auth">03 · Authentication</a></div>
-    </div>
-  </nav>
-  <main id="main">
-    <header class="hero">
-      <div class="container">
-        <span class="eyebrow">Session 01 / MCP fundamentals</span>
-        <h1>What actually happens<br>when an AI app <span>calls a tool?</span></h1>
-        <p class="lead">Follow the messages. Watch a server execute a request. Add an API gateway. Then see why a token is not the same as permission.</p>
-        <div class="hero-actions"><a class="button primary" href="#mcp">Explore the first animation <span aria-hidden="true">↓</span></a><span class="quiet">Three walkthroughs. One concrete example.</span></div>
-        <div class="example-strip"><span class="chip">Our example</span><span><strong>Catalogue service</strong> · Read its status, or change it to <code>maintenance</code>.</span></div>
-      </div>
-    </header>
+<body>
+  <svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <symbol id="i-plug" viewBox="0 0 24 24"><path d="M9 3v5m6-5v5M6 8h12v3a6 6 0 0 1-6 6v4m-6-13v0"/></symbol>
+    <symbol id="i-app" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 21h8m-4-3v3M3 8h18m-12 4-2 2 2 2m6-4 2 2-2 2"/></symbol>
+    <symbol id="i-server" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="7" rx="2"/><rect x="4" y="14" width="16" height="7" rx="2"/><path d="M8 6.5h.01M8 17.5h.01M12 6.5h5m-5 11h5M12 10v4"/></symbol>
+    <symbol id="i-database" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 4 16 4 16 0V5M4 12c0 4 16 4 16 0"/></symbol>
+    <symbol id="i-tool" viewBox="0 0 24 24"><path d="M14 5a5 5 0 0 0-6 6l-5 5a2.8 2.8 0 0 0 4 4l5-5a5 5 0 0 0 6-6l-3 3-3-3 3-3Z"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9l-6-6Zm0 0v6h6M8 13h8m-8 4h6"/></symbol>
+    <symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 11a8 8 0 0 1-8 8H7l-4 3V7a4 4 0 0 1 4-4h6a8 8 0 0 1 8 8ZM7 8h9M7 12h6"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="7" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="m12 2 9 4v6c0 5-9 10-9 10S3 17 3 12V6l9-4Zm-4 10 3 3 5-6"/></symbol>
+    <symbol id="i-key" viewBox="0 0 24 24"><circle cx="8" cy="8" r="5"/><path d="m12 12 9 9m-5-5 3-3m-6 0 3-3"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><ellipse cx="12" cy="12" rx="4" ry="10"/><path d="M2 12h20"/></symbol>
+    <symbol id="i-code" viewBox="0 0 24 24"><path d="m8 6-6 6 6 6m8-12 6 6-6 6m-3-15-2 18"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="m8 4 12 8-12 8V4Z"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><path d="M8 4v16M16 4v16"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="13" height="13" rx="2"/><path d="M16 8V3H3v13h5"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M3 12h18m-7-7 7 7-7 7"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m4 12 5 5L20 6"/></symbol>
+    <symbol id="i-network" viewBox="0 0 24 24"><rect x="8" y="2" width="8" height="6" rx="1"/><path d="M12 8v5M4 17v-4h16v4"/><rect x="1" y="17" width="6" height="5" rx="1"/><rect x="17" y="17" width="6" height="5" rx="1"/></symbol>
+  </svg>
 
-    <div class="container disclosure"><span class="simulation-dot" aria-hidden="true"></span><p><strong>Interactive illustrations, not live infrastructure.</strong> The animations run locally. No MCP server, Azure service or identity provider is contacted. All data, messages and policy decisions are examples.</p></div>
+  <a class="skip" href="#main">Skip to lesson</a>
+  <header class="topbar">
+    <a class="brand" href="#why"><svg class="icon"><use href="#i-plug"/></svg><span>MCP <span class="muted">/ in practice</span></span></a>
+    <div class="top-actions"><a href="#lab" class="button small">Open the lab <svg class="icon"><use href="#i-arrow"/></svg></a><button id="print" class="text-button" hidden>Print</button></div>
+  </header>
 
-    <section id="mcp" aria-labelledby="mcp-title">
-      <div class="container">
-        <div class="section-heading"><span class="section-number">01</span><div><span class="eyebrow">Understand the protocol</span><h2 id="mcp-title">A request becomes a tool call.</h2><p>The AI application decides which tool to use. Its MCP client handles the protocol. The server validates the request and runs the operation.</p></div></div>
-        <div class="demo-mount" data-demo="mcp"></div>
-        <details class="fallback" open><summary>Read the sequence without animation</summary><ol><li>The client initializes its connection with the MCP server and negotiates capabilities.</li><li>The client sends <code>tools/list</code>. The server returns tool names, descriptions and input schemas.</li><li>The application selects <code>list_services</code> or <code>set_service_status</code> for the user's request.</li><li>The client sends a structured <code>tools/call</code> request.</li><li>The server validates the arguments, then reads or updates the fictitious service store.</li><li>The server sends the tool result back. The application uses that result to answer the user.</li></ol></details>
-        <div class="takeaways"><article><h3>The client carries the protocol.</h3><p>It is a component of the host application, not the model itself. An app can connect to multiple MCP servers.</p></article><article><h3>The server does the work.</h3><p>Tools have typed inputs. The server can call an API, query data or run its own business logic.</p></article><article><h3>A tool can change state.</h3><p>Select the update scenario above. A confirmation in the app is not a server-side access rule.</p></article></div>
-        <div class="concept-bar"><div><strong>Tools</strong><span>Functions to query or act</span></div><div><strong>Resources</strong><span>Read-only context identified by URI</span></div><div><strong>Prompts</strong><span>Reusable interaction templates</span></div></div>
-        <p class="caption">This example uses tools over Streamable HTTP. MCP also supports local stdio servers. Resources and prompts are different capabilities; a server does not have to expose all three. MCP complements existing APIs and retrieval systems rather than replacing them.</p>
-      </div>
-    </section>
+  <div class="lesson-layout">
+    <nav class="chapters" aria-label="Lesson chapters">
+      <a href="#why"><span class="chapter-icon"><svg class="icon"><use href="#i-plug"/></svg></span><span><small>01</small> Why MCP?</span></a>
+      <a href="#anatomy"><span class="chapter-icon"><svg class="icon"><use href="#i-server"/></svg></span><span><small>02</small> What is a server?</span></a>
+      <a href="#mcp"><span class="chapter-icon"><svg class="icon"><use href="#i-play"/></svg></span><span><small>03</small> Follow a call</span></a>
+      <a href="#api"><span class="chapter-icon"><svg class="icon"><use href="#i-code"/></svg></span><span><small>04</small> MCP vs API</span></a>
+      <a href="#lab"><span class="chapter-icon"><svg class="icon"><use href="#i-tool"/></svg></span><span><small>05</small> Your turn</span></a>
+      <a href="#auth"><span class="chapter-icon"><svg class="icon"><use href="#i-shield"/></svg></span><span><small>06</small> Add controls</span></a>
+    </nav>
 
-    <section id="apim" class="alternate" aria-labelledby="apim-title">
-      <div class="container">
-        <div class="section-heading"><span class="section-number">02</span><div><span class="eyebrow">Put a gateway in the request path</span><h2 id="apim-title">Same server. A controlled entry point.</h2><p>Azure API Management can proxy an existing MCP server. This animation shows a configured rate-limit policy accepting a request—or stopping it before the server is called.</p></div></div>
-        <div class="demo-mount" data-demo="apim"></div>
-        <details class="fallback" open><summary>Read the sequence without animation</summary><ol><li>The client sends its MCP request to the APIM endpoint instead of the backend endpoint.</li><li>APIM runs the policies configured for that endpoint.</li><li>If the configured rate limit is exceeded, APIM returns HTTP 429. The backend is not called.</li><li>Otherwise, APIM forwards the MCP request to the existing server.</li><li>The server processes the tool and returns its result through APIM to the client.</li><li>Configured diagnostics record the gateway outcome without recording secrets.</li></ol></details>
-        <div class="takeaways"><article><h3>A gateway is not a new tool.</h3><p>The existing tool name and arguments stay the same. The client endpoint changes.</p></article><article><h3>Policies must be configured.</h3><p>Rate limits, token validation and diagnostics are not implied just by putting APIM in front.</p></article><article><h3>Protect the backend too.</h3><p>Restrict direct backend access or enforce equivalent controls there, so callers cannot bypass the gateway.</p></article></div>
-        <p class="caption">The 10-requests-per-minute limit is an illustrative policy, not an APIM default. The gateway must support the selected MCP version and transport. This is an introduction to the architecture demo, not a deployed APIM configuration.</p>
-      </div>
-    </section>
+    <main id="main">
+      <section id="why" class="chapter" aria-labelledby="why-title">
+        <p class="eyebrow">01 / The problem</p>
+        <h1 id="why-title" tabindex="-1">Your AI can talk.<br><span>How does it do things?</span></h1>
+        <p class="intro">MCP gives AI applications a common way to discover and use external tools and context.</p>
+        <div class="integration-board" data-integration="custom">
+          <div class="segmented" role="group" aria-label="Compare integration approaches">
+            <button data-integration-mode="custom" aria-pressed="true">Custom integrations</button>
+            <button data-integration-mode="mcp" aria-pressed="false">With MCP</button>
+          </div>
+          <div class="integration-map">
+            <div class="integration-side">
+              <div><svg class="icon"><use href="#i-app"/></svg><strong>VS Code</strong></div>
+              <div><svg class="icon"><use href="#i-chat"/></svg><strong>AI assistant</strong></div>
+              <div><svg class="icon"><use href="#i-app"/></svg><strong>Agent app</strong></div>
+            </div>
+            <svg class="integration-lines" viewBox="0 0 300 240" preserveAspectRatio="none" aria-hidden="true">
+              <path d="M0 40 300 40M0 40 300 120M0 40 300 200M0 120 300 40M0 120 300 120M0 120 300 200M0 200 300 40M0 200 300 120M0 200 300 200"/>
+            </svg>
+            <div class="integration-side systems">
+              <div><svg class="icon"><use href="#i-file"/></svg><strong>Claims</strong><small class="mcp-label">MCP server</small></div>
+              <div><svg class="icon"><use href="#i-code"/></svg><strong>Code</strong><small class="mcp-label">MCP server</small></div>
+              <div><svg class="icon"><use href="#i-database"/></svg><strong>Data</strong><small class="mcp-label">MCP server</small></div>
+            </div>
+          </div>
+          <p class="diagram-caption" id="integration-caption">Each app-to-system pair needs its own integration code.</p>
+        </div>
+        <div class="origin"><span class="date-pill">2024</span><p>Anthropic open-sources MCP: a specification + SDKs, not a new model.<br><span class="muted">One shared protocol instead of a different integration contract for every app.</span></p></div>
+        <details><summary>The idea in 30 seconds</summary><p>An assistant cannot infer your live business data or safely invent API calls. A developer exposes explicit capabilities through a server. A compatible host discovers those capabilities and decides when to use them. MCP standardizes that exchange; each backend still needs an implementation and its own security.</p><p>The lines are connections, not a central MCP service. Hosts implement an MCP client; each system exposes its own server.</p><p><a href="https://www.anthropic.com/news/model-context-protocol">Original announcement</a></p></details>
+      </section>
 
-    <section id="auth" aria-labelledby="auth-title">
-      <div class="container">
-        <div class="section-heading"><span class="section-number">03</span><div><span class="eyebrow">Identify the caller, then check access</span><h2 id="auth-title">Who are you?<br><span class="secondary-heading">And may you change this service?</span></h2><p>A protected MCP endpoint needs an appropriate access token. The server must also check scopes and team access before running the tool.</p></div></div>
-        <div class="demo-mount" data-demo="auth"></div>
-        <details class="fallback" open><summary>Read the sequence without animation</summary><ol><li>The client calls the protected MCP endpoint without a token and receives HTTP 401 with a resource-metadata challenge.</li><li>The client discovers protected-resource metadata and authorization-server metadata.</li><li>The user signs in at the authorization server and consents as required. A public client uses an authorization-code flow with PKCE.</li><li>The client exchanges the code with its verifier for an access token intended for this MCP resource.</li><li>The client retries the MCP request with that access token.</li><li>The resource server validates the token, then checks the required scope and the caller's access to the requested team.</li><li>Only an authorized request changes the service. An invalid token is rejected; a valid token with insufficient permissions does not grant access.</li></ol></details>
-        <div class="takeaways"><article><h3>Authentication</h3><p>Establish the caller's identity through the identity provider. The resource server validates the access token.</p></article><article><h3>Authorization</h3><p>Decide whether that caller can perform this operation on this team's service. A <code>team_id</code> supplied in a request is not proof of membership.</p></article><article><h3>Not token forwarding.</h3><p>An access token must be intended for its resource. Calling a downstream API requires an appropriate downstream credential, not blindly forwarding the incoming token.</p></article></div>
-        <p class="caption">OAuth flow simplified for teaching, based on MCP 2025-06-18. Registration, redirects and discovery details depend on the client and identity provider. MCP connection initialization after authorization is omitted from this animation. <code>services.write</code> and team membership are application-specific example policies, not built-in MCP claims. APIM token validation is a separate deployment choice.</p>
-      </div>
-    </section>
+      <section id="anatomy" class="chapter" aria-labelledby="anatomy-title">
+        <p class="eyebrow">02 / Three roles</p>
+        <h2 id="anatomy-title" tabindex="-1">A server is a program.<br><span>Not the AI model.</span></h2>
+        <p class="intro">It exposes capabilities and connects them to real business logic.</p>
+        <div class="anatomy-row">
+          <article class="big-node"><svg class="icon"><use href="#i-app"/></svg><h3>AI application</h3><p>The host: VS Code, for example.</p><div class="nested-client"><svg class="icon"><use href="#i-plug"/></svg> MCP client <small>speaks the protocol</small></div></article>
+          <div class="link-label"><svg class="icon"><use href="#i-arrow"/></svg><span>MCP</span></div>
+          <article class="big-node accent"><svg class="icon"><use href="#i-server"/></svg><h3>MCP server</h3><p>Publishes tool contracts.<br>Runs requested operations.</p><span class="mini-code">get_claim_summary(claimId)</span></article>
+          <div class="link-label"><svg class="icon"><use href="#i-arrow"/></svg><span>your code</span></div>
+          <article class="big-node"><svg class="icon"><use href="#i-database"/></svg><h3>Your systems</h3><p>APIs, databases, files.<br>Here: synthetic claims.</p></article>
+        </div>
+        <div class="primitives">
+          <article><svg class="icon"><use href="#i-tool"/></svg><div><h3>Tools</h3><p>Actions the app can invoke.</p><code>get_claim_summary</code><span class="tag green">Used in this lab</span></div></article>
+          <article><svg class="icon"><use href="#i-file"/></svg><div><h3>Resources</h3><p>Context the client can read.</p><code>claim://CLM-1001</code><span class="tag">Concept only here</span></div></article>
+          <article><svg class="icon"><use href="#i-chat"/></svg><div><h3>Prompts</h3><p>Reusable interaction templates.</p><code>review_claim</code><span class="tag">Concept only here</span></div></article>
+        </div>
+        <div class="transport-strip"><span><svg class="icon"><use href="#i-code"/></svg> Local process <strong>stdio</strong></span><span><svg class="icon"><use href="#i-globe"/></svg> Remote endpoint <strong>Streamable HTTP</strong></span><span>Messages: <strong>JSON-RPC 2.0</strong></span></div>
+      </section>
 
-    <section id="practice" class="alternate" aria-labelledby="practice-title">
-      <div class="container">
-        <div class="section-heading"><span class="section-number">04</span><div><span class="eyebrow">Now use a real client</span><h2 id="practice-title">Read. Change. Read again.</h2><p>During the hands-on exercise, use only the fictitious spaces assigned to your pair. You are using a prepared server, not building one during the exercise.</p></div></div>
-        <div class="practice-grid"><article class="practice-card"><span>01 / Connect</span><h3>Discover the tools.</h3><p>Add the endpoint provided by the facilitator to VS Code. Inspect <code>list_services</code> and <code>set_service_status</code>.</p></article><article class="practice-card"><span>02 / Observe</span><h3>Read the current state.</h3><p>Record the service ID and original status. Do not assume the model's answer proves an operation happened.</p></article><article class="practice-card"><span>03 / Execute</span><h3>Confirm the change.</h3><p>Request <code>maintenance</code>, inspect the arguments and approve the write. Read again to verify it.</p></article><article class="practice-card"><span>04 / Restore</span><h3>Leave the data as it was.</h3><p>Restore the original status and verify it with another read. Discuss where an access check should occur.</p></article></div>
-        <div class="notice"><strong>Workshop preparation:</strong> the real exercise server and endpoint still need to be implemented and tested. These animations work independently and do not imply that the server is already available.</div>
-        <details class="notes"><summary>Facilitator notes: using this page</summary><p>Use animation 1 to explain MCP and pause at the actual tool call. Switch to the live Azure MCP demo and then Inspector when prepared. Animations 2 and 3 introduce the next architectural layers; do not present their policies as already deployed. Keep the practical exercise to 15 minutes and use the detailed guides for setup and fallbacks.</p><p><a href="demo-1.md">Live demo 1 guide</a> · <a href="demo-2-inspector.md">Inspector guide</a> · <a href="mini-hack.md">Hands-on instructions</a></p></details>
-      </div>
-    </section>
-    <section class="sources" aria-labelledby="sources-title"><div class="container"><span class="eyebrow">References</span><h2 id="sources-title">Check the actual protocol and product.</h2><div class="source-links"><a href="https://modelcontextprotocol.io/docs/learn/architecture">MCP architecture</a><a href="https://modelcontextprotocol.io/specification/2025-06-18/basic/authorization">MCP authorization</a><a href="https://learn.microsoft.com/azure/api-management/expose-existing-mcp-server">Proxy an existing MCP server with APIM</a><a href="https://code.visualstudio.com/docs/copilot/customization/mcp-servers">MCP in VS Code</a></div></div></section>
-  </main>
-  <footer><div class="container"><span>MCP in action / Session 01</span><a href="README.md">Session guide</a><a href="../../README.md">Workshop agenda</a><button class="text-button" id="print" type="button" hidden>Print / save as PDF</button></div></footer>
+      <section id="mcp" class="chapter" aria-labelledby="mcp-title">
+        <p class="eyebrow">03 / Watch it happen</p>
+        <h2 id="mcp-title" tabindex="-1">“What is missing<br><span>from claim CLM-1001?”</span></h2>
+        <div class="flow" data-flow="call">
+          <div class="flow-top"><span class="tag">Illustration · no live calls</span><label>Example <select data-scenario><option value="read">Read missing documents</option><option value="write">Propose a claim note</option></select></label></div>
+          <div class="flow-diagram">
+            <svg class="flow-lines" aria-hidden="true"><g data-paths></g><path data-active-path/><circle data-packet r="5" visibility="hidden"/></svg>
+            <article data-node="user"><svg class="icon"><use href="#i-user"/></svg><h3>You</h3><span>Ask a question</span></article>
+            <article data-node="app"><svg class="icon"><use href="#i-app"/></svg><h3>AI app</h3><span>MCP client inside</span></article>
+            <article data-node="server"><svg class="icon"><use href="#i-server"/></svg><h3>MCP server</h3><span>Claims tools</span></article>
+            <article data-node="data"><svg class="icon"><use href="#i-database"/></svg><h3>Claims data</h3><span>Synthetic records</span></article>
+          </div>
+          <div class="flow-controls"><button class="button primary" data-play aria-pressed="false"><svg class="icon"><use href="#i-play"/></svg><span>Play</span></button><button class="button icon-button" data-prev aria-label="Previous animation step">←</button><button class="button icon-button" data-next aria-label="Next animation step">→</button><button class="text-button" data-reset>Restart</button><span class="flow-count"></span></div>
+          <div class="flow-explanation" aria-live="polite"><h3 data-step-title>1. Connect</h3><p data-step-text>The MCP client initializes its connection before calling a tool.</p></div>
+          <div class="flow-dots" role="group" aria-label="Animation steps"></div>
+          <p class="motion-note" hidden>Reduced motion: use the arrows or numbered steps.</p>
+          <details class="wire"><summary>See the actual message shape</summary><pre><code data-wire></code></pre></details>
+        </div>
+        <details class="flow-fallback" open><summary>Read the sequence</summary><ol><li>The client initializes the connection and negotiates capabilities.</li><li>It discovers tools with <code>tools/list</code>.</li><li>The user asks a question; the application selects <code>check_missing_documents</code>.</li><li>The client sends <code>tools/call</code> with <code>{"claimId":"CLM-1001"}</code>.</li><li>The server checks the request and reads its synthetic data.</li><li>The server returns missing documents; the app uses that observed result to answer.</li></ol></details>
+        <p class="one-liner"><svg class="icon"><use href="#i-check"/></svg> Discover ≠ execute. A tool result is evidence; a model's guess is not.</p>
+      </section>
 
-  <template id="demo-template">
-    <div class="demo">
-      <div class="demo-toolbar"><label class="scenario-label">Scenario <select data-scenario></select></label><span class="simulation-label">ILLUSTRATIVE · NO NETWORK CALLS</span></div>
-      <div class="diagram" aria-label="Animated message flow">
-        <svg class="connections" aria-hidden="true"><g data-paths></g><path class="active-connection" data-active-path/><circle class="packet" r="6" data-packet visibility="hidden"/></svg>
-        <div class="diagram-nodes"></div>
-      </div>
-      <div class="playback">
-        <div class="controls"><button class="button primary" type="button" data-play>Play animation</button><button class="button" type="button" data-prev aria-label="Previous step">←</button><button class="button" type="button" data-next>Next step →</button><button class="text-button" type="button" data-reset>Restart</button></div>
-        <span class="step-count"></span>
-      </div>
-      <p class="motion-note" hidden>Reduced motion is enabled. Use Next step or select a step below; automatic playback is disabled.</p>
-      <div class="progress-track" aria-hidden="true"><span></span></div>
-      <div class="demo-content">
-        <div class="step-explanation" aria-live="polite" aria-atomic="true"><span class="step-category"></span><h3 class="step-title"></h3><p class="step-description"></p><div class="outcome" role="status"></div></div>
-        <div class="message-panel"><div class="message-heading"><span>MESSAGE / DECISION</span><span class="message-direction"></span></div><pre><code class="message-code"></code></pre></div>
-      </div>
-      <div class="step-picker" role="group" aria-label="Select an animation step"></div>
-    </div>
-  </template>
+      <section id="api" class="chapter" aria-labelledby="api-title">
+        <p class="eyebrow">04 / Different jobs</p>
+        <h2 id="api-title" tabindex="-1">MCP doesn't replace your API.<br><span>It gives AI apps a common contract.</span></h2>
+        <div class="comparison">
+          <article><div class="card-label"><svg class="icon"><use href="#i-code"/></svg> Business API</div><h3>“Here is an endpoint.”</h3><pre><code>GET /claims/CLM-1001/documents</code></pre><p>Your integration code knows its URL, schema and authentication.</p></article>
+          <article class="accent"><div class="card-label"><svg class="icon"><use href="#i-plug"/></svg> MCP interface</div><h3>“Here is what I can do.”</h3><pre><code>tools/list
+→ check_missing_documents
+  input: { claimId: string }
+
+tools/call
+→ { claimId: "CLM-1001" }</code></pre><p>A compatible client discovers and invokes the published tools.</p></article>
+        </div>
+        <div class="api-path"><span><svg class="icon"><use href="#i-app"/></svg> AI app</span><b>→</b><span><svg class="icon"><use href="#i-server"/></svg> MCP server</span><b>→</b><span><svg class="icon"><use href="#i-code"/></svg> Existing API</span><b>→</b><span><svg class="icon"><use href="#i-database"/></svg> Data</span></div>
+        <p class="caption">Possible architecture. This demo reads in-memory data directly; it has no REST backend.</p>
+        <div class="distinctions"><p><strong>API</strong> Business operations.</p><p><strong>MCP</strong> Standardized discovery + interaction.</p><p><strong>RAG</strong> Retrieval to ground an answer.</p></div>
+        <details><summary>What MCP does not decide</summary><p>It does not train the model, choose your business policy, replace every connector, or make a tool automatically safe. A REST API can also have discovery specifications such as OpenAPI. MCP supplies a runtime interaction protocol that compatible hosts understand; developers still implement the integration and authorization.</p></details>
+      </section>
+
+      <section id="lab" class="chapter" aria-labelledby="lab-title">
+        <p class="eyebrow">05 / Your turn · 15 minutes</p>
+        <h2 id="lab-title" tabindex="-1">Connect. Read. Propose.<br><span>Check what really happened.</span></h2>
+        <div class="endpoint-card">
+          <form id="endpoint-form">
+            <label for="endpoint">Workshop MCP endpoint</label>
+            <div class="endpoint-row"><input id="endpoint" type="url" value="http://127.0.0.1:3102/mcp" required spellcheck="false" aria-describedby="endpoint-status"><button class="button primary" type="submit">Use endpoint</button></div>
+            <div class="endpoint-options"><label>Access <select id="access"><option value="bearer">Bearer token · supplied separately</option><option value="oauth">Sign in through the MCP client</option><option value="open">No auth · local sandbox only</option></select></label><button class="text-button" type="button" id="share"><svg class="icon"><use href="#i-copy"/></svg> Copy participant link</button></div>
+          </form>
+          <p id="endpoint-status" role="status">Default: each participant's own local protected server. No public endpoint is configured.</p>
+          <p id="endpoint-error" class="error" role="alert" hidden></p>
+        </div>
+        <noscript><p class="notice">Enable JavaScript to generate endpoint-specific commands. Use the <a href="https://github.com/solenecodes/workshop-mcp-server#run-locally">repository instructions</a> for local setup.</p></noscript>
+
+        <div class="lab-shell">
+          <div class="lab-steps" role="group" aria-label="Practice steps">
+            <button data-lab-step="0" aria-pressed="true"><span>1</span> Connect</button>
+            <button data-lab-step="1" aria-pressed="false"><span>2</span> Discover</button>
+            <button data-lab-step="2" aria-pressed="false"><span>3</span> Read</button>
+            <button data-lab-step="3" aria-pressed="false"><span>4</span> Write?</button>
+            <button data-lab-step="4" aria-pressed="false"><span>5</span> Verify</button>
+            <button data-lab-step="5" aria-pressed="false"><span>6</span> Test access</button>
+          </div>
+          <div class="lab-content">
+            <div class="lab-heading"><span class="tag" id="lab-progress">Step 1 / 6</span><span class="tag green">Real calls from your client</span></div>
+            <h3 id="lab-step-title">Add the server to your client.</h3>
+            <p id="lab-instruction">Copy the configuration into VS Code's MCP configuration, start the connection and review the trust prompt.</p>
+            <div class="copy-panel"><div><span id="copy-label">VS Code · .vscode/mcp.json</span><button class="text-button" data-copy="lab-code"><svg class="icon"><use href="#i-copy"/></svg> Copy</button></div><pre><code id="lab-code">The generated configuration appears here with JavaScript enabled.</code></pre></div>
+            <div class="expected"><svg class="icon"><use href="#i-check"/></svg><div><strong>What to check</strong><p id="lab-expected">A connected MCP server and its discovered tools. This page does not verify the connection for you.</p></div></div>
+            <details id="terminal-details"><summary>Prefer direct calls? Terminal / Inspector</summary>
+              <p>Terminal: clone the repository, run <code>npm ci</code>, then use the commands below in Bash. The official SDK handles the MCP connection. Inspector: connect with Streamable HTTP, then use the tool name and JSON arguments shown here.</p>
+              <div class="copy-panel"><div><span>Terminal · from the repository root</span><button class="text-button" data-copy="terminal-code">Copy</button></div><pre><code id="terminal-code"></code></pre></div>
+              <div class="copy-panel"><div><span>Inspector · method / arguments</span><button class="text-button" data-copy="inspector-code">Copy</button></div><pre><code id="inspector-code"></code></pre></div>
+            </details>
+            <div class="lab-bottom"><button class="button" id="lab-prev" disabled>← Previous</button><span id="lab-completion" role="status"></span><button class="button primary" id="lab-next">Next step →</button></div>
+          </div>
+        </div>
+        <p class="caption">No MCP requests or credentials pass through this page. Copy commands into your client; compare its actual results with the expected behavior.</p>
+        <details><summary>Local demo tokens &amp; server setup</summary><p>On your own machine: <code>npm ci</code>, then <code>npm run start:secure</code>. Reader: <code>demo-reader-token</code>. Writer: <code>demo-adjuster-token</code>. Supervisor: <code>demo-supervisor-token</code>.</p><p>These are public teaching fixtures, not Internet credentials. For an Internet workshop, use the facilitator's prepared HTTPS endpoint and restricted access supplied outside this page. The current server is loopback-only; cloud hosting is a separate setup.</p><p><a href="https://github.com/solenecodes/workshop-mcp-server#run-locally">Install and run the demo</a> · <a href="https://modelcontextprotocol.io/docs/tools/inspector">Inspector setup</a></p></details>
+        <details class="lab-fallback" open><summary>All six participant steps</summary><ol><li>Connect to the workshop endpoint with the credentials supplied separately.</li><li>Discover tools and inspect their schemas.</li><li>Call <code>get_claim_summary</code> for <code>CLM-1001</code>.</li><li>As an adjuster, propose <code>create_claim_note</code> with <code>{"claimId":"CLM-1001","note":"Workshop: evidence requested."}</code>.</li><li>Read again. A protected write remains pending; a human supervisor reviews a legitimate proposal before calling <code>confirm_action</code>.</li><li>As the reader, request <code>CLM-1002</code> and observe the server's assignment denial.</li></ol></details>
+      </section>
+
+      <section id="auth" class="chapter" aria-labelledby="auth-title">
+        <p class="eyebrow">06 / Session 3 · Whose rights?</p>
+        <h2 id="auth-title" tabindex="-1">Connected doesn't mean<br><span>allowed to do everything.</span></h2>
+        <div class="flow" data-flow="auth">
+          <div class="flow-top"><span class="tag">Illustration · local demo policy</span><label>Request <select data-scenario><option value="allowed">Reader → assigned claim</option><option value="denied">Reader → another claim</option><option value="write">Adjuster → propose a note</option><option value="anonymous">No token → 401</option></select></label></div>
+          <div class="flow-diagram">
+            <svg class="flow-lines" aria-hidden="true"><g data-paths></g><path data-active-path/><circle data-packet r="5" visibility="hidden"/></svg>
+            <article data-node="user"><svg class="icon"><use href="#i-user"/></svg><h3>Caller</h3><span>Trusted identity?</span></article>
+            <article data-node="app"><svg class="icon"><use href="#i-key"/></svg><h3>Authentication</h3><span>Who are you?</span></article>
+            <article data-node="server"><svg class="icon"><use href="#i-shield"/></svg><h3>Authorization</h3><span>This tool + this claim?</span></article>
+            <article data-node="data"><svg class="icon"><use href="#i-file"/></svg><h3>Result</h3><span>Minimal data or denial</span></article>
+          </div>
+          <div class="flow-controls"><button class="button primary" data-play aria-pressed="false"><svg class="icon"><use href="#i-play"/></svg><span>Play</span></button><button class="button icon-button" data-prev aria-label="Previous animation step">←</button><button class="button icon-button" data-next aria-label="Next animation step">→</button><button class="text-button" data-reset>Restart</button><span class="flow-count"></span></div>
+          <div class="flow-explanation" aria-live="polite"><h3 data-step-title>1. Identify the caller</h3><p data-step-text>A protected endpoint requires an appropriate credential before executing a tool.</p></div>
+          <div class="flow-dots" role="group" aria-label="Security animation steps"></div>
+          <p class="motion-note" hidden>Reduced motion: use the arrows or numbered steps.</p>
+          <details class="wire"><summary>See the policy decision</summary><pre><code data-wire></code></pre></details>
+        </div>
+        <details class="flow-fallback" open><summary>Read the control sequence</summary><ol><li>No valid credential: HTTP 401, no business operation.</li><li>A server-trusted identity determines roles and assignments.</li><li>The server checks the tool allowlist and claim assignment.</li><li>Reader results are minimized; a different customer's claim is denied.</li><li>Writes produce an expiring proposal. A different human-controlled supervisor/admin identity must confirm it.</li></ol></details>
+        <div class="distinctions"><p><strong>Authentication</strong> Who is calling?</p><p><strong>Authorization</strong> What may they do?</p><p><strong>Approval</strong> Should this write happen?</p></div>
+        <details><summary>Real Entra vs the local teaching model</summary><p>The local server accepts public demo tokens. It does not perform Entra sign-in, JWT validation, OAuth discovery or OBO. A real protected MCP resource needs issuer, signature, lifetime and audience validation plus the right scopes and business policy. A downstream API needs its own audience token; do not forward the MCP token blindly.</p><p>Delegated/OBO: the downstream call retains user context. Application identity: the service uses its own permissions. Neither is implemented in this local demo.</p></details>
+      </section>
+
+      <div class="chapter-pagination" hidden><button class="button" id="chapter-prev">← Previous</button><span id="chapter-count"></span><button class="button primary" id="chapter-next">Next chapter →</button></div>
+      <footer><span>MCP workshop · Synthetic data only</span><details><summary>Sources &amp; other sessions</summary><p><a href="https://www.anthropic.com/news/model-context-protocol">MCP origin</a> · <a href="https://modelcontextprotocol.io/specification/2025-06-18/architecture">Architecture</a> · <a href="https://code.visualstudio.com/docs/copilot/customization/mcp-servers">VS Code MCP</a> · <a href="https://github.com/solenecodes/workshop-mcp-server">Workshop repository</a></p><p>Session 2 / APIM: reserved for the colleague's material. This page does not prescribe or simulate that presentation.</p></details></footer>
+    </main>
+  </div>
+  <div class="toast" role="status" id="copy-status"></div>
 </body>
 </html>

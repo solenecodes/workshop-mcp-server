@@ -1,0 +1,23 @@
+{
+  "inputs": [
+    {
+      "id": "claimsDemoToken",
+      "type": "promptString",
+      "description": "Public local DEMO token from the README; not a real credential",
+      "password": true
+    }
+  ],
+  "servers": {
+    "claims-insecure": {
+      "type": "http",
+      "url": "http://127.0.0.1:3101/mcp"
+    },
+    "claims-secure": {
+      "type": "http",
+      "url": "http://127.0.0.1:3102/mcp",
+      "headers": {
+        "Authorization": "Bearer ${input:claimsDemoToken}"
+      }
+    }
+  }
+}

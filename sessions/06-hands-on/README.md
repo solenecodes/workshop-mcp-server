@@ -1,49 +1,46 @@
-# Session 6 - Du serveur de demonstration au serveur gouverne
+# Session 6 - Observe prepared enterprise controls
 
-[Retour au programme](../../README.md)
+[Workshop](../../README.md) · **14:00–15:15 · 75 minutes**
 
-**Horaire : 14:00 - 15:15 (75 minutes).**
+Participants reconnect and call the prepared server; they do **not** configure
+Entra, APIM or the security infrastructure during this exercise. The 15-minute
+morning read/write practice is separate and is not counted again here.
 
-## Objectif
+## Target schedule
 
-Reprendre le meme serveur et le cas fictif de la
-[session 1](../01-mcp-fondamentaux/README.md), dans l'etat laisse par la
-[session 2](../02-architecture/README.md), puis completer les briques restantes.
+| Duration | Prepared environment | Participant observations |
+| --- | --- | --- |
+| 20 min | Entra-protected MCP endpoint | 401 without sign-in; authorized vs unauthorized demo accounts; intended audience and scopes |
+| 25 min | Gateway endpoint, prepared by the colleague | Repeat agreed tests against the controls actually configured, including 429 and refusal of direct-backend bypass |
+| 20 min | Delegated/OBO vs application identity | Two users with different rights produce different delegated results; application identity uses its own permissions |
+| 10 min | Logs and registry prepared in advance | Correlate allowed/denied calls with APIM/App Insights events and API Center registration |
 
-## Point de depart
+The gateway's implementation and presentation remain with
+[session 2](../02-architecture/README.md). Coordinate its verified contract
+before publishing participant instructions.
 
-Avant le hands-on, verifier ce qui a effectivement ete mis en place et teste en
-session 2. Si APIM est deja configure, le reutiliser plutot que le reconstruire.
-Si une brique est restee au stade de demonstration ou n'a pas ete terminee, elle
-peut etre reprise ici.
+## Readiness gate — cloud exercise is not implemented yet
 
-Il s'agit de completer le perimetre couvert en session 2, pas d'affirmer qu'APIM
-ne sait pas assurer ces fonctions. Le contenu exact reste a coordonner entre
-les intervenants.
+Prepare and test three separate endpoints **before** the day:
+open sandbox, Entra protected, gateway protected. Do not reconfigure everything
+live. Never expose the intentionally insecure local edition directly to the
+public Internet. A remote open sandbox requires separate network isolation,
+bounded synthetic data and an immediate shutdown plan.
 
-## Briques possibles, selon les points restants
+Also prepare two demo accounts, participant sign-in permissions, outbound
+network access, client reconnection instructions and a tested recording/chat
+fallback. Direct backend access must not bypass claimed gateway controls.
 
-- Authentification avec une identite verifiee.
-- Autorisation metier cote serveur.
-- Integration ou finalisation de la passerelle APIM, si elle reste a faire.
-- Droits delegues/OBO ou identite applicative.
-- Supervision et registre.
+The repository currently supplies only the working **local** claims demo:
+public demo tokens, RBAC, redaction, record assignments, approvals, audit and
+abuse limits. It has no real Entra/OBO flow, gateway, cloud telemetry or registry.
+Those parts must be prepared and verified before this schedule is advertised
+as runnable.
 
-Ces briques sont des options a selectionner selon l'avancement et le temps
-disponible, pas un engagement a toutes les implementer en 75 minutes.
+## Local fallback (not an Entra/APIM demonstration)
 
-## Boucle pratique apres chaque evolution
-
-1. Mettre a jour la connexion du client si l'URL ou l'authentification change.
-2. Retrouver les memes outils et les memes donnees fictives.
-3. Rejouer une lecture puis une ecriture autorisee et verifier le resultat.
-4. Si un controle d'acces a ete ajoute, tester aussi un appel non autorise
-   et verifier son refus explicite.
-5. Verifier qu'un acces direct au backend ne contourne pas les protections
-   revendiquees : restreindre cet acces ou y appliquer les controles necessaires.
-6. Relever le comportement avant/apres et restaurer les donnees de demonstration.
-
-Ce hands-on est distinct du mini-hack de 15 minutes de la session 1.
-La session 3 est independante de ce parcours et n'est pas un prerequis technique.
-
-**Etat : serveur, infrastructure et instructions a construire.**
+Use the [root comparison script](../../README.md#step-by-step-presenter-script):
+unauthenticated vs authenticated requests, two adjuster assignments, redacted
+reader vs analyst data, human-reviewed write proposals, audit and HTTP 429.
+Clearly label role switching as simulated identity selection, **not OBO**.
+Do not relabel local console output as App Insights or local limits as APIM.

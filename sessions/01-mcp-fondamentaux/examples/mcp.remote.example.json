@@ -1,8 +1,15 @@
 {
   "servers": {
-    "workshop": {
+    "claims-insecure": {
       "type": "http",
-      "url": "https://mcp.example.invalid/mcp"
+      "url": "http://127.0.0.1:3101/mcp"
+    },
+    "claims-secure-reader": {
+      "type": "http",
+      "url": "http://127.0.0.1:3102/mcp",
+      "headers": {
+        "Authorization": "Bearer demo-reader-token"
+      }
     }
   }
 }
