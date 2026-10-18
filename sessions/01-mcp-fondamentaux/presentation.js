@@ -12,40 +12,36 @@ $$('svg.icon').forEach((icon) => {
 const controllers = [];
 const request = (method, params = {}, id = 3) => ({ jsonrpc: '2.0', id, method, params });
 const step = (title, text, from, to, wire, options = {}) => ({ title, text, from, to, wire, ...options });
-const claimsArgs = { claimId: 'CLM-1001' };
-const noteArgs = { ...claimsArgs, note: 'Workshop: evidence requested.' };
 
 function callSteps(mode) {
   const write = mode === 'write';
+  const name = write ? 'propose_document_update' : 'search_documents';
+  const args = write ? { path: 'deployment.md', text: 'Draft: add the rollback checklist.' } : { query: 'deployment guide' };
   return [
-    step('Connect the client.', 'The host creates an MCP client. It initializes the connection and negotiates the supported capabilities.', 'app', 'server',
-      request('initialize', { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'Workshop client', version: '1.0' } }, 1)),
-    step('Discover the tool contracts.', 'tools/list returns names, descriptions and input schemas. No claim has been read or changed.', 'server', 'app',
+    step(write ? 'You ask for a change.' : 'You ask a question.', 'The application needs a capability outside the model. Assume you have already connected a trusted document server.', 'user', 'app',
+      write ? 'Propose a rollback checklist for the deployment guide.' : 'Find the deployment guide.'),
+    step('The app discovers what the server can do.', 'The server describes its available tools and the information each needs. Reading a tool description does not run it.', 'server', 'app',
       { request: request('tools/list', {}, 2), responseExcerpt: { tools: [
-        { name: write ? 'create_claim_note' : 'check_missing_documents', inputSchema: {
-          type: 'object', properties: { claimId: { type: 'string' }, ...(write ? { note: { type: 'string' } } : {}) },
-          required: write ? ['claimId', 'note'] : ['claimId'],
+        { name, inputSchema: {
+          type: 'object', properties: write ? { path: { type: 'string' }, text: { type: 'string' } } : { query: { type: 'string' } },
+          required: Object.keys(args),
         } },
       ] } }),
-    step(write ? 'Ask to add a note.' : 'Ask about the missing documents.', 'The AI app interprets the request and selects a published tool. The model does not directly modify the database.', 'user', 'app',
-      write ? 'Add "Workshop: evidence requested." to CLM-1001.' : 'What is missing from claim CLM-1001?'),
-    step('Send structured arguments.', 'After any required client confirmation, the MCP client sends tools/call. The sentence becomes a typed request.', 'app', 'server',
-      request('tools/call', { name: write ? 'create_claim_note' : 'check_missing_documents', arguments: write ? noteArgs : claimsArgs })),
-    step(write ? 'Check access. Prepare a proposal.' : 'Check access. Read the data.', write
-      ? 'The protected server checks the adjuster’s rights and queues an approval proposal. It does not append the note to the claim.'
-      : 'The server checks the caller and claim assignment, then runs its business code against the synthetic dataset.', 'server', 'data',
-      write ? { claimId: 'CLM-1001', claimMutation: false, pendingAction: 'create_claim_note' }
-        : { claimId: 'CLM-1001', missingDocuments: ['proof_of_payment', 'incident_report'] }),
-    step('Return an observed result.', write
-      ? 'The result says requiresApproval. A human with a different supervisor/admin identity must review and confirm the exact proposal.'
-      : 'The server returns the documents it actually found. The MCP client gives this result back to the host.', 'server', 'app',
+    step('The client sends the chosen request.', 'The app selects an appropriate tool and prepares its input. After any required user confirmation, its MCP client sends the request.', 'app', 'server',
+      request('tools/call', { name, arguments: args })),
+    step(write ? 'The server prepares a proposal.' : 'The server searches the documents.', write
+      ? 'In this example, the server checks access and saves a proposal for human review. Requiring review is an application policy, not automatic MCP behavior.'
+      : 'The server checks access and runs its own search code. It can use files, an index or an existing API.', 'server', 'data',
+      write ? { document: 'deployment.md', requiresApproval: true, published: false }
+        : { results: [{ title: 'Deployment guide', path: 'deployment.md' }] }),
+    step('The server returns what happened.', write
+      ? 'The response says the proposal is awaiting review, not that the document was published.'
+      : 'The client receives a matching document. The result comes from the external system, not model memory.', 'server', 'app',
       { jsonrpc: '2.0', id: 3, result: { content: [{ type: 'text', text: JSON.stringify(write
-        ? { requiresApproval: true, proposedAction: { actionId: '<generated UUID>', toolName: 'create_claim_note', claimId: 'CLM-1001', payload: noteArgs.note } }
-        : { claimId: 'CLM-1001', missingDocuments: ['proof_of_payment', 'incident_report'], redactedFields: [] }) }] } }),
-    step(write ? '“The note is awaiting review.”' : '“Proof of payment and incident report are missing.”', write
-      ? 'A proposal is not a completed write. Stop here; do not let the initiating agent approve its own request.'
-      : 'The AI app answers using the tool result. Inspector can make the same protocol calls without any model.', 'app', 'user',
-      write ? 'Claim unchanged. A separate, human-controlled approval is still required.' : 'Answer grounded in the tool result, not model memory.'),
+        ? { requiresApproval: true, document: 'deployment.md', published: false }
+        : { title: 'Deployment guide', path: 'deployment.md' }) }] } }),
+    step(write ? '“Your proposal is ready for review.”' : '“Here is the deployment guide.”', 'The application uses the returned result to answer. The model did not connect to the backend or execute the operation itself.', 'app', 'user',
+      write ? 'The original document is unchanged until an authorized human approves.' : 'Found: deployment.md. Open and review the actual source.'),
   ];
 }
 
@@ -215,8 +211,8 @@ function createFlow(root) {
       const heading = $('#mcp-title');
       const accent = document.createElement('span');
       const write = select.value === 'write';
-      accent.textContent = write ? 'to claim CLM-1001.”' : 'from claim CLM-1001?”';
-      heading.replaceChildren(document.createTextNode(write ? '“Add a note' : '“What is missing'), document.createElement('br'), accent);
+      accent.textContent = write ? 'to the deployment guide.”' : 'deployment guide.”';
+      heading.replaceChildren(document.createTextNode(write ? '“Propose an update' : '“Find the'), document.createElement('br'), accent);
     }
     render();
   }
@@ -290,28 +286,23 @@ document.addEventListener('keydown', (event) => {
 
 function createIntegrationAnimation() {
   const board = $('.integration-board');
-  const paths = $$('.integration-lines path', board);
-  const map = $('.integration-map', board);
-  const svg = $('.integration-lines', board);
-  const packets = $$('.integration-messages>span', board);
-  const apps = $$('.integration-side:not(.systems)>div', board);
-  const systems = $$('.systems>div', board);
+  const panels = $$('.integration-panel', board).map((panel) => ({
+    mcp: panel.dataset.integration === 'mcp',
+    map: $('.integration-map', panel),
+    svg: $('.integration-lines', panel),
+    paths: $$('.integration-lines path', panel),
+    packets: $$('.integration-dots>span', panel),
+  }));
   const play = $('#integration-play');
   const caption = $('#integration-caption');
-  let index = 0;
   let elapsed = 0;
   let previousTime;
   let frame;
   let playing = false;
   let complete = false;
 
-  function phases() {
-    return board.dataset.integration === 'mcp'
-      ? ['tools/list', 'tool schemas', 'tools/call', 'tool result']
-      : ['custom request', 'custom response'];
-  }
   function updatePlay() {
-    $('span', play).textContent = playing ? 'Pause' : complete ? 'Replay' : elapsed > 0 ? 'Resume' : 'Animate';
+    $('span', play).textContent = playing ? 'Pause' : complete ? 'Replay' : elapsed > 0 ? 'Resume' : 'Play';
     $('use', play).setAttribute('href', playing ? '#i-pause' : '#i-play');
     play.setAttribute('aria-pressed', String(playing));
     board.dataset.playing = String(playing);
@@ -323,61 +314,43 @@ function createIntegrationAnimation() {
     updatePlay();
   }
   function clear() {
-    paths.forEach((path) => path.classList.remove('is-active'));
-    [...apps, ...systems].forEach((element) => element.classList.remove('is-active'));
-    packets.forEach((packet) => { packet.hidden = true; });
-  }
-  function idleCaption() {
-    return board.dataset.integration === 'mcp'
-      ? 'Same connections. One shared protocol: reusable clients, a server per system.'
-      : 'Each app-to-system pair needs its own integration code.';
+    panels.forEach(({ packets }) => packets.forEach((packet) => { packet.hidden = true; }));
   }
   function draw() {
-    clear();
     if (complete || motion.matches || !board.getBoundingClientRect().width) return;
-    const messages = phases();
-    const group = Math.floor(index / messages.length);
-    const phase = index % messages.length;
+    const phase = Math.floor(elapsed / 1800);
     const returning = phase % 2 === 1;
-    const customRequests = ['GET /claims', 'repo.list()', 'SELECT rows'];
-    const customResponses = ['claim JSON', 'repo objects', 'SQL rows'];
-    const bounds = map.getBoundingClientRect();
-    const matrix = svg.getScreenCTM();
-    if (!matrix) return;
+    const progress = Math.min((elapsed % 1800) / 1500, 1);
+    const position = returning ? 1 - progress : progress;
     board.dataset.direction = returning ? 'response' : 'request';
-    packets.forEach((packet, source) => {
-      const destination = (source + group) % systems.length;
-      const path = paths[source * systems.length + destination];
-      path.classList.add('is-active');
-      apps[source].classList.add('is-active');
-      systems[destination].classList.add('is-active');
-      const progress = Math.min(Math.max((elapsed - source * 100) / 1050, 0), 1);
-      const point = path.getPointAtLength(path.getTotalLength() * (returning ? 1 - progress : progress));
-      const screenPoint = new DOMPoint(point.x, point.y).matrixTransform(matrix);
-      packet.textContent = board.dataset.integration === 'mcp'
-        ? messages[phase] : (returning ? customResponses : customRequests)[destination];
-      packet.hidden = false;
-      packet.style.transform = `translate(${screenPoint.x - bounds.left}px, ${screenPoint.y - bounds.top}px) translate(-50%, -50%)`;
+    panels.forEach(({ mcp, map, svg, paths, packets }) => {
+      const bounds = map.getBoundingClientRect();
+      const matrix = svg.getScreenCTM();
+      if (!matrix) return;
+      packets.forEach((packet, system) => {
+        // Each side of the server is a separate exchange; do not cross the server card.
+        const upstream = mcp && position < .4;
+        const path = mcp ? paths[upstream ? 0 : system + 1] : paths[system];
+        const fraction = mcp ? upstream ? position / .4 : (position - .4) / .6 : position;
+        const point = path.getPointAtLength(path.getTotalLength() * fraction);
+        const screenPoint = new DOMPoint(point.x, point.y).matrixTransform(matrix);
+        packet.hidden = false;
+        packet.style.transform = `translate(${screenPoint.x - bounds.left}px, ${screenPoint.y - bounds.top}px) translate(-50%, -50%)`;
+      });
     });
-    caption.textContent = board.dataset.integration === 'mcp'
-      ? `${messages[phase]} · same contract for every app · ${group + 1} / 3`
-      : `${returning ? 'Different response formats' : 'Different request contracts'} · ${group + 1} / 3`;
-    board.dataset.exchange = String(index + 1);
+    caption.textContent = returning ? 'Results return to the application.' : 'Requests travel to your systems.';
+    board.dataset.exchange = String(phase + 1);
   }
   function tick(time) {
     if (!playing) return;
     if (previousTime !== undefined) elapsed += time - previousTime;
     previousTime = time;
-    if (elapsed >= 1500) {
-      elapsed = 0;
-      index++;
-      if (index === systems.length * phases().length) {
-        complete = true;
-        pause();
-        clear();
-        caption.textContent = idleCaption();
-        return;
-      }
+    if (elapsed >= 10800) {
+      complete = true;
+      pause();
+      clear();
+      caption.textContent = 'Same systems. A shared interface for AI applications.';
+      return;
     }
     draw();
     frame = requestAnimationFrame(tick);
@@ -385,7 +358,7 @@ function createIntegrationAnimation() {
   function start() {
     if (motion.matches) return;
     controllers.forEach((controller) => controller.pause());
-    if (complete) { index = 0; elapsed = 0; complete = false; }
+    if (complete) { elapsed = 0; complete = false; }
     playing = true;
     updatePlay();
     draw();
@@ -395,30 +368,19 @@ function createIntegrationAnimation() {
     if (playing) pause();
     else start();
   });
-  $$('[data-integration-mode]').forEach((button) => button.addEventListener('click', () => {
-    pause();
-    clear();
-    index = 0;
-    elapsed = 0;
-    complete = false;
-    delete board.dataset.exchange;
-    board.dataset.integration = button.dataset.integrationMode;
-    $$('[data-integration-mode]').forEach((item) => item.setAttribute('aria-pressed', String(item === button)));
-    caption.textContent = idleCaption();
-    updatePlay();
-    start();
-  }));
   function updateMotion() {
     pause();
     if (motion.matches) clear();
     play.disabled = motion.matches;
     play.title = motion.matches ? 'Reduced motion: compare the two static diagrams.' : 'Animate illustrative exchanges; no network calls.';
-    caption.textContent = idleCaption();
+    caption.textContent = 'Same systems. A shared interface for AI applications.';
   }
   motion.addEventListener('change', updateMotion);
-  if ('ResizeObserver' in window) new ResizeObserver(() => {
+  const redraw = () => {
     if (playing || elapsed > 0) draw();
-  }).observe(board);
+  };
+  if ('ResizeObserver' in window) new ResizeObserver(redraw).observe(board);
+  else window.addEventListener('resize', redraw);
   if ('IntersectionObserver' in window) new IntersectionObserver((entries) => {
     if (!entries[0].isIntersecting) pause();
   }).observe(board);

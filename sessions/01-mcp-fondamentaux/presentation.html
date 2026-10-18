@@ -3,12 +3,12 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Understand MCP visually, follow a real tool call, and connect your client to a guided insurance claims lab.">
+  <meta name="description" content="Learn why MCP exists, understand its architecture through animated diagrams, then connect a client in a guided workshop.">
   <meta name="color-scheme" content="light">
   <title>MCP, from idea to first call</title>
   <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="presentation.css?v=message-motion">
-  <script type="module" src="presentation.js?v=message-motion"></script>
+  <link rel="stylesheet" href="presentation.css?v=mcp-course">
+  <script type="module" src="presentation.js?v=mcp-course"></script>
 </head>
 <body>
   <svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -51,38 +51,44 @@
     <main id="main">
       <section id="why" class="chapter" aria-labelledby="why-title">
         <p class="eyebrow">01 / The problem</p>
-        <h1 id="why-title" tabindex="-1">Your AI can talk.<br><span>How does it do things?</span></h1>
-        <p class="intro">MCP gives AI applications a common way to discover and use external tools and context.</p>
-        <div class="integration-board" data-integration="custom">
-          <div class="segmented" role="group" aria-label="Compare integration approaches">
-            <button data-integration-mode="custom" aria-pressed="true">Custom integrations</button>
-            <button data-integration-mode="mcp" aria-pressed="false">With MCP</button>
-          </div>
-          <div class="integration-map">
-            <div class="integration-side">
-              <div><svg class="icon"><use href="#i-app"/></svg><strong>VS Code</strong></div>
-              <div><svg class="icon"><use href="#i-chat"/></svg><strong>AI assistant</strong></div>
-              <div><svg class="icon"><use href="#i-app"/></svg><strong>Agent app</strong></div>
-            </div>
-            <svg class="integration-lines" viewBox="0 0 300 240" preserveAspectRatio="none" aria-hidden="true">
-              <path d="M0 40 300 40"/><path d="M0 40 300 120"/><path d="M0 40 300 200"/>
-              <path d="M0 120 300 40"/><path d="M0 120 300 120"/><path d="M0 120 300 200"/>
-              <path d="M0 200 300 40"/><path d="M0 200 300 120"/><path d="M0 200 300 200"/>
-            </svg>
-            <div class="integration-side systems">
-              <div><svg class="icon"><use href="#i-file"/></svg><strong>Claims</strong><small class="mcp-label">MCP server</small></div>
-              <div><svg class="icon"><use href="#i-code"/></svg><strong>Code</strong><small class="mcp-label">MCP server</small></div>
-              <div><svg class="icon"><use href="#i-database"/></svg><strong>Data</strong><small class="mcp-label">MCP server</small></div>
-            </div>
-            <div class="integration-messages" aria-hidden="true"><span hidden></span><span hidden></span><span hidden></span></div>
-          </div>
+        <h1 id="why-title" tabindex="-1">One assistant.<br><span>Many external systems.</span></h1>
+        <p class="intro">MCP (Model Context Protocol) is an open standard that connects AI applications to tools and data. The model alone cannot access your systems.</p>
+        <div class="integration-board">
           <div class="integration-playback">
-            <button class="button small" id="integration-play" type="button" aria-pressed="false" aria-describedby="integration-caption"><svg class="icon" aria-hidden="true"><use href="#i-play"/></svg><span>Animate</span></button>
-            <p class="diagram-caption" id="integration-caption">Each app-to-system pair needs its own integration code.</p>
+            <button class="button small" id="integration-play" type="button" aria-pressed="false" aria-describedby="integration-caption"><svg class="icon" aria-hidden="true"><use href="#i-play"/></svg><span>Play</span></button>
+            <p class="diagram-caption" id="integration-caption">Same systems. A shared interface for AI applications.</p>
+          </div>
+          <div class="integration-panels">
+            <article class="integration-panel" data-integration="custom">
+              <h2>Before MCP</h2>
+              <p>Custom connectors in the AI app</p>
+              <div class="integration-map">
+                <svg class="integration-lines" viewBox="0 0 300 340" preserveAspectRatio="none" aria-hidden="true"><path d="M150 84 43.5 264"/><path d="M150 84 150 264"/><path d="M150 84 256.5 264"/></svg>
+                <div class="integration-node integration-host" data-integration-node="app"><svg class="icon"><use href="#i-app"/></svg><strong>AI application</strong></div>
+                <div class="integration-node integration-system" data-integration-node="documents"><svg class="icon"><use href="#i-file"/></svg><strong>Documents</strong></div>
+                <div class="integration-node integration-system" data-integration-node="code"><svg class="icon"><use href="#i-code"/></svg><strong>Code</strong></div>
+                <div class="integration-node integration-system" data-integration-node="data"><svg class="icon"><use href="#i-database"/></svg><strong>Data</strong></div>
+                <div class="integration-dots" aria-hidden="true"><span hidden></span><span hidden></span><span hidden></span></div>
+              </div>
+            </article>
+            <article class="integration-panel" data-integration="mcp">
+              <h2>With MCP</h2>
+              <p>A standard interface, reusable by other AI apps</p>
+              <div class="integration-map">
+                <svg class="integration-lines" viewBox="0 0 300 340" preserveAspectRatio="none" aria-hidden="true"><path d="M150 84 150 143"/><path d="M150 217 43.5 264"/><path d="M150 217 150 264"/><path d="M150 217 256.5 264"/></svg>
+                <div class="integration-node integration-host" data-integration-node="app"><svg class="icon"><use href="#i-app"/></svg><strong>AI application</strong><small>MCP client inside</small></div>
+                <div class="integration-node integration-server" data-integration-node="server"><svg class="icon"><use href="#i-server"/></svg><strong>MCP server</strong></div>
+                <div class="integration-node integration-system" data-integration-node="documents"><svg class="icon"><use href="#i-file"/></svg><strong>Documents</strong></div>
+                <div class="integration-node integration-system" data-integration-node="code"><svg class="icon"><use href="#i-code"/></svg><strong>Code</strong></div>
+                <div class="integration-node integration-system" data-integration-node="data"><svg class="icon"><use href="#i-database"/></svg><strong>Data</strong></div>
+                <span class="integration-link-label">MCP</span>
+                <div class="integration-dots" aria-hidden="true"><span hidden></span><span hidden></span><span hidden></span></div>
+              </div>
+            </article>
           </div>
         </div>
-        <div class="origin"><span class="date-pill">2024</span><p>Anthropic open-sources MCP: a specification + SDKs, not a new model.<br><span class="muted">One shared protocol instead of a different integration contract for every app.</span></p></div>
-        <details><summary>The idea in 30 seconds</summary><p>An assistant cannot infer your live business data or safely invent API calls. A developer exposes explicit capabilities through a server. A compatible host discovers those capabilities and decides when to use them. MCP standardizes that exchange; each backend still needs an implementation and its own security.</p><p>The lines are connections, not a central MCP service. Hosts implement an MCP client; each system exposes its own server.</p><p><a href="https://www.anthropic.com/news/model-context-protocol">Original announcement</a></p></details>
+        <div class="origin"><span class="date-pill">2024</span><p>Created at Anthropic and open-sourced in November.<br><span class="muted">The aim: stop rebuilding the AI-side integration for every new application.</span></p></div>
+        <details><summary>What changes — and what does not?</summary><p>The server is code you run, not the model and not a central MCP service. This diagram shows one server wrapping several systems; an application can also connect to several servers. Developers still implement the backend connectors, access checks and business rules.</p><p>MCP means <strong>Model Context Protocol</strong>: an open standard for exchanging context and calling capabilities. It does not give the model automatic access to everything.</p><p><a href="https://www.anthropic.com/news/model-context-protocol">Original announcement</a></p></details>
       </section>
 
       <section id="anatomy" class="chapter" aria-labelledby="anatomy-title">
@@ -92,61 +98,58 @@
         <div class="anatomy-row">
           <article class="big-node"><svg class="icon"><use href="#i-app"/></svg><h3>AI application</h3><p>The host: VS Code, for example.</p><div class="nested-client"><svg class="icon"><use href="#i-plug"/></svg> MCP client <small>speaks the protocol</small></div></article>
           <div class="link-label"><svg class="icon"><use href="#i-arrow"/></svg><span>MCP</span></div>
-          <article class="big-node accent"><svg class="icon"><use href="#i-server"/></svg><h3>MCP server</h3><p>Publishes tool contracts.<br>Runs requested operations.</p><span class="mini-code">get_claim_summary(claimId)</span></article>
+          <article class="big-node accent"><svg class="icon"><use href="#i-server"/></svg><h3>MCP server</h3><p>Describes its capabilities.<br>Checks and executes requests.</p><span class="mini-code">Example: search documents</span></article>
           <div class="link-label"><svg class="icon"><use href="#i-arrow"/></svg><span>your code</span></div>
-          <article class="big-node"><svg class="icon"><use href="#i-database"/></svg><h3>Your systems</h3><p>APIs, databases, files.<br>Here: synthetic claims.</p></article>
+          <article class="big-node"><svg class="icon"><use href="#i-database"/></svg><h3>Your systems</h3><p>APIs, databases, files.<br>The actual source of the result.</p></article>
         </div>
         <div class="primitives">
-          <article><svg class="icon"><use href="#i-tool"/></svg><div><h3>Tools</h3><p>Actions the app can invoke.</p><code>get_claim_summary</code><span class="tag green">Used in this lab</span></div></article>
-          <article><svg class="icon"><use href="#i-file"/></svg><div><h3>Resources</h3><p>Context the client can read.</p><code>claim://CLM-1001</code><span class="tag">Concept only here</span></div></article>
-          <article><svg class="icon"><use href="#i-chat"/></svg><div><h3>Prompts</h3><p>Reusable interaction templates.</p><code>review_claim</code><span class="tag">Concept only here</span></div></article>
+          <article><svg class="icon"><use href="#i-tool"/></svg><div><h3>Tools</h3><p>Do something.</p><span class="capability-example">Search for a document</span></div></article>
+          <article><svg class="icon"><use href="#i-file"/></svg><div><h3>Resources</h3><p>Read context.</p><span class="capability-example">A document's contents</span></div></article>
+          <article><svg class="icon"><use href="#i-chat"/></svg><div><h3>Prompts</h3><p>Start from a template.</p><span class="capability-example">A guided document review</span></div></article>
         </div>
-        <div class="transport-strip"><span><svg class="icon"><use href="#i-code"/></svg> Local process <strong>stdio</strong></span><span><svg class="icon"><use href="#i-globe"/></svg> Remote endpoint <strong>Streamable HTTP</strong></span><span>Messages: <strong>JSON-RPC 2.0</strong></span></div>
+        <div class="transport-strip"><span><svg class="icon"><use href="#i-code"/></svg> Run a server on your machine</span><span><svg class="icon"><use href="#i-globe"/></svg> Connect to a remote server</span></div>
+        <details><summary>How do I connect?</summary><p>Add a trusted server to your application's MCP settings: a command for a local process, or an endpoint URL for a remote server. Review the permissions and credentials, then inspect the capabilities it exposes. We will do this in the lab.</p><p>Technical terms: <strong>stdio</strong> connects local processes; <strong>Streamable HTTP</strong> connects an HTTP endpoint. MCP messages use <strong>JSON-RPC 2.0</strong>. Each server connection has its own MCP client inside the host.</p><p>Servers may expose tools, resources, prompts, or a subset. Client support varies; the workshop backend implements tools.</p></details>
       </section>
 
       <section id="mcp" class="chapter" aria-labelledby="mcp-title">
         <p class="eyebrow">03 / Watch it happen</p>
-        <h2 id="mcp-title" tabindex="-1">“What is missing<br><span>from claim CLM-1001?”</span></h2>
+        <h2 id="mcp-title" tabindex="-1">“Find the<br><span>deployment guide.”</span></h2>
         <div class="flow" data-flow="call">
-          <div class="flow-top"><span class="tag">Illustration · no live calls</span><label>Example <select data-scenario><option value="read">Read missing documents</option><option value="write">Propose a claim note</option></select></label></div>
+          <div class="flow-top"><span class="tag">Illustration · no live calls</span><label>Example <select data-scenario><option value="read">Find a document</option><option value="write">Propose a document update</option></select></label></div>
           <div class="flow-diagram">
             <svg class="flow-lines" aria-hidden="true"><g data-paths></g><path data-active-path/><circle data-packet r="5" visibility="hidden"/></svg>
             <article data-node="user"><svg class="icon"><use href="#i-user"/></svg><h3>You</h3><span>Ask a question</span></article>
             <article data-node="app"><svg class="icon"><use href="#i-app"/></svg><h3>AI app</h3><span>MCP client inside</span></article>
-            <article data-node="server"><svg class="icon"><use href="#i-server"/></svg><h3>MCP server</h3><span>Claims tools</span></article>
-            <article data-node="data"><svg class="icon"><use href="#i-database"/></svg><h3>Claims data</h3><span>Synthetic records</span></article>
+            <article data-node="server"><svg class="icon"><use href="#i-server"/></svg><h3>MCP server</h3><span>Exposes document tools</span></article>
+            <article data-node="data"><svg class="icon"><use href="#i-file"/></svg><h3>Documents</h3><span>Files or an existing API</span></article>
           </div>
           <div class="flow-controls"><button class="button primary" data-play aria-pressed="false"><svg class="icon"><use href="#i-play"/></svg><span>Play</span></button><button class="button icon-button" data-prev aria-label="Previous animation step">←</button><button class="button icon-button" data-next aria-label="Next animation step">→</button><button class="text-button" data-reset>Restart</button><span class="flow-count"></span></div>
-          <div class="flow-explanation" aria-live="polite"><h3 data-step-title>1. Connect</h3><p data-step-text>The MCP client initializes its connection before calling a tool.</p></div>
+          <div class="flow-explanation" aria-live="polite"><h3 data-step-title>1. You ask a question.</h3><p data-step-text>The application needs information from outside the model.</p></div>
           <div class="flow-dots" role="group" aria-label="Animation steps"></div>
           <p class="motion-note" hidden>Reduced motion: use the arrows or numbered steps.</p>
-          <details class="wire"><summary>See the actual message shape</summary><pre><code data-wire></code></pre></details>
+          <details class="wire"><summary>For developers: example message</summary><pre><code data-wire></code></pre></details>
         </div>
-        <details class="flow-fallback" open><summary>Read the sequence</summary><ol><li>The client initializes the connection and negotiates capabilities.</li><li>It discovers tools with <code>tools/list</code>.</li><li>The user asks a question; the application selects <code>check_missing_documents</code>.</li><li>The client sends <code>tools/call</code> with <code>{"claimId":"CLM-1001"}</code>.</li><li>The server checks the request and reads its synthetic data.</li><li>The server returns missing documents; the app uses that observed result to answer.</li></ol></details>
-        <p class="one-liner"><svg class="icon"><use href="#i-check"/></svg> Discover ≠ execute. A tool result is evidence; a model's guess is not.</p>
+        <details class="flow-fallback" open><summary>Read the sequence</summary><ol><li>You ask the application to find the deployment guide.</li><li>The connected client discovers the server's document-search capability.</li><li>The app selects the tool; the client sends the search terms.</li><li>The server checks access and searches the actual documents.</li><li>The server returns the matching document.</li><li>The application answers using the returned result.</li></ol></details>
+        <p class="one-liner"><svg class="icon"><use href="#i-check"/></svg> The app chooses. The server executes. The result comes from your systems.</p>
       </section>
 
       <section id="api" class="chapter" aria-labelledby="api-title">
         <p class="eyebrow">04 / Different jobs</p>
         <h2 id="api-title" tabindex="-1">MCP doesn't replace your API.<br><span>It gives AI apps a common contract.</span></h2>
         <div class="comparison">
-          <article><div class="card-label"><svg class="icon"><use href="#i-code"/></svg> Business API</div><h3>“Here is an endpoint.”</h3><pre><code>GET /claims/CLM-1001/documents</code></pre><p>Your integration code knows its URL, schema and authentication.</p></article>
-          <article class="accent"><div class="card-label"><svg class="icon"><use href="#i-plug"/></svg> MCP interface</div><h3>“Here is what I can do.”</h3><pre><code>tools/list
-→ check_missing_documents
-  input: { claimId: string }
-
-tools/call
-→ { claimId: "CLM-1001" }</code></pre><p>A compatible client discovers and invokes the published tools.</p></article>
+          <article><div class="card-label"><svg class="icon"><use href="#i-code"/></svg> Business API</div><h3>An interface for your software.</h3><p>It already knows how to search documents. Your integration code must know how to call it.</p><span class="tag">Backend-specific contract</span></article>
+          <article class="accent"><div class="card-label"><svg class="icon"><use href="#i-plug"/></svg> MCP server</div><h3>An interface AI apps understand.</h3><p>It advertises “Search documents”, explains the required input and runs the search when requested.</p><span class="tag green">Shared discovery and calling conventions</span></article>
         </div>
         <div class="api-path"><span><svg class="icon"><use href="#i-app"/></svg> AI app</span><b>→</b><span><svg class="icon"><use href="#i-server"/></svg> MCP server</span><b>→</b><span><svg class="icon"><use href="#i-code"/></svg> Existing API</span><b>→</b><span><svg class="icon"><use href="#i-database"/></svg> Data</span></div>
-        <p class="caption">Possible architecture. This demo reads in-memory data directly; it has no REST backend.</p>
+        <p class="caption">One possible architecture. A server can call an API or work with files and data directly.</p>
         <div class="distinctions"><p><strong>API</strong> Business operations.</p><p><strong>MCP</strong> Standardized discovery + interaction.</p><p><strong>RAG</strong> Retrieval to ground an answer.</p></div>
-        <details><summary>What MCP does not decide</summary><p>It does not train the model, choose your business policy, replace every connector, or make a tool automatically safe. A REST API can also have discovery specifications such as OpenAPI. MCP supplies a runtime interaction protocol that compatible hosts understand; developers still implement the integration and authorization.</p></details>
+        <details><summary>Can an API also describe itself?</summary><p>Yes: OpenAPI can describe a REST API. MCP is not the invention of typed APIs. It defines a shared interaction protocol for compatible AI applications, including capability discovery and invocation. Developers still implement connectors and authorization; MCP does not train the model or make every tool safe.</p></details>
       </section>
 
       <section id="lab" class="chapter" aria-labelledby="lab-title">
         <p class="eyebrow">05 / Your turn · 15 minutes</p>
         <h2 id="lab-title" tabindex="-1">Connect. Read. Propose.<br><span>Check what really happened.</span></h2>
+        <p class="intro">Demo starts here: we now use the workshop's synthetic insurance claims server. The document example above was only an illustration.</p>
         <div class="endpoint-card">
           <form id="endpoint-form">
             <label for="endpoint">Workshop MCP endpoint</label>
@@ -210,7 +213,7 @@ tools/call
       </section>
 
       <div class="chapter-pagination" hidden><button class="button" id="chapter-prev">← Previous</button><span id="chapter-count"></span><button class="button primary" id="chapter-next">Next chapter →</button></div>
-      <footer><span>MCP workshop · Synthetic data only</span><details><summary>Sources &amp; other sessions</summary><p><a href="https://www.anthropic.com/news/model-context-protocol">MCP origin</a> · <a href="https://modelcontextprotocol.io/specification/2025-06-18/architecture">Architecture</a> · <a href="https://code.visualstudio.com/docs/copilot/customization/mcp-servers">VS Code MCP</a> · <a href="https://github.com/solenecodes/workshop-mcp-server">Workshop repository</a></p><p>Session 2 / APIM: reserved for the colleague's material. This page does not prescribe or simulate that presentation.</p></details></footer>
+      <footer><span>MCP workshop · Illustrations, then a synthetic-data lab</span><details><summary>Sources &amp; other sessions</summary><p><a href="https://huggingface.co/learn/mcp-course/unit1/introduction">Hugging Face MCP course · foundations</a> · <a href="https://huggingface.co/learn/mcp-course/unit1/architectural-components">Course · host, client, server</a> · <a href="https://www.anthropic.com/news/model-context-protocol">MCP origin</a> · <a href="https://modelcontextprotocol.io/docs/learn/architecture">Official architecture</a> · <a href="https://code.visualstudio.com/docs/copilot/customization/mcp-servers">VS Code MCP</a> · <a href="https://github.com/solenecodes/workshop-mcp-server">Workshop repository</a></p><p>Session 2 / APIM: reserved for the colleague's material. This page does not prescribe or simulate that presentation.</p></details></footer>
     </main>
   </div>
   <div class="toast" role="status" id="copy-status"></div>

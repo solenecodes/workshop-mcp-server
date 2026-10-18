@@ -42,19 +42,34 @@ The [example MCP configuration](examples/mcp.remote.example.json) now targets
 the working loopback endpoints, not a hypothetical cloud URL. Despite the
 historical filename, it uses HTTP on the participant's own machine.
 
-The [visual presentation](presentation.html) now follows the claims example:
-why MCP exists, host/client/server, animated tool calls, API comparison, a
-six-step participant lab and a security walkthrough. Navigate one chapter at
-a time, or print all chapters. Animations have manual steps and reduced-motion
-support; protocol details stay collapsed until needed.
+The [visual presentation](presentation.html) starts with general MCP concepts,
+not the claims domain. Its teaching sequence draws on the
+[Hugging Face MCP course foundations](https://huggingface.co/learn/mcp-course/unit1/introduction),
+the course's [architectural components](https://huggingface.co/learn/mcp-course/unit1/architectural-components)
+and the [official architecture](https://modelcontextprotocol.io/docs/learn/architecture).
+The narration and diagrams are original workshop material:
 
-The opening comparison keeps its two-column layout. Selecting either comparison
-starts three visible message capsules moving between the cards; Animate also
-starts playback. Custom integrations show different illustrative request/response
-formats; MCP shows the same discovery/call messages on all connections. Pause,
-Resume and Replay are available; playback stops when leaving the diagram or
-chapter. Reduced motion keeps both comparisons static. There is no initial
-autoplay. These are illustrations, not live requests.
+1. **Why MCP?** A before/after diagram explains the integration problem and
+   Anthropic's 2024 introduction of the standard.
+2. **Who does what?** The host contains a client; the server exposes capabilities
+   and calls systems. Tools, resources and prompts use everyday document examples.
+3. **Follow one request.** Find a deployment guide, from a question to a returned
+   document. An alternative illustrates a proposed update, not a completed write.
+4. **MCP vs API.** Keep the same document example to distinguish the AI-facing
+   protocol from the backend implementation.
+5. **Demo and practice.** Only here introduce the actual synthetic claims server,
+   with the existing six-step participant lab.
+6. **Security transition.** Separate identity, permissions and human approval.
+
+The opening diagram uses only glowing, unlabelled dots for requests and results.
+The right-hand design illustrates one MCP server wrapping several systems; it is
+not a central MCP service or a claim that every deployment uses one server.
+Backend-specific connectors are still needed. Play, Pause, Resume and Replay
+are available, with no initial autoplay. Playback stops offscreen or on chapter
+changes. Reduced motion and no-JavaScript mode retain the static connections.
+Other animations have manual steps; technical message examples stay collapsed.
+Navigate one chapter at a time, or print all chapters. All animations are
+illustrations, not live requests.
 
 The [public version](https://solenecodes.github.io/workshop-mcp-server/) can be
 shared with participants. In **Your turn**, configure a prepared protected HTTPS
