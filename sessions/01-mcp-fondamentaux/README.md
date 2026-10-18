@@ -38,8 +38,8 @@ Le decoupage ci-dessous est une **proposition d'animation** dans le creneau de
 
 ## Supports
 
-- [Presentation web interactive](presentation.html) : fondamentaux, schemas,
-  echanges illustratifs, transitions vers les demos et consigne du cas pratique.
+- [MCP in action — presentation en anglais](presentation.html) : trois animations
+  pas a pas sur un appel MCP, une passerelle APIM et l'authentification.
 - [Guide de la premiere demonstration](demo-1.md)
 - [Guide MCP Inspector](demo-2-inspector.md)
 - [Cas pratique guide (mini-hack) et contrat d'outils propose](mini-hack.md)
@@ -58,11 +58,24 @@ Puis ouvrir <http://localhost:8000/sessions/01-mcp-fondamentaux/presentation.htm
 Garder les trois fichiers `presentation.html`, `presentation.css` et
 `presentation.js` ensemble pour une utilisation locale ou hors ligne.
 
-La page ne charge aucune dependance distante. Les parcours sont selectionnables,
-les notes d'animation sont repliables et un bouton permet d'imprimer ou
-d'enregistrer en PDF via le navigateur. Les echanges affiches sont illustratifs :
-la page ne se connecte pas au serveur MCP et ne remplace pas les demonstrations.
-Sans JavaScript, les contenus des parcours restent tous lisibles.
+La page en anglais ne charge aucune dependance distante. Chaque animation dispose
+de commandes lecture/pause, precedent/suivant, redemarrage et selection d'etape.
+Des messages se deplacent entre les composants et les decisions sont expliquees.
+
+- MCP : decouverte des outils, lecture ou modification d'un service fictif.
+- APIM : requete transmise ou bloquee par une limite configuree (HTTP 429).
+- Authentification : obtention d'un jeton, validation, puis controle des droits ;
+  scenarios de succes, mauvaise audience, scope manquant et equipe non autorisee.
+
+La lecture ne demarre pas automatiquement. Le mode mouvement reduit desactive
+la lecture animee et conserve le pas-a-pas. Sans JavaScript, les trois sequences
+restent lisibles dans les sections explicatives. Un bouton permet d'imprimer ou
+d'enregistrer ces sequences en PDF.
+
+Les echanges sont des illustrations locales : aucun serveur MCP, APIM ou
+fournisseur d'identite n'est contacte. Le diagramme ne remplace pas les demos
+reelles. Les controles APIM et les regles d'autorisation presentes sont des
+exemples a implementer, pas des fonctionnalites deja deployees.
 
 Pour regenerer ou adapter la page avec le meme style, utiliser le
 [skill du projet](../../.github/skills/README.md).
