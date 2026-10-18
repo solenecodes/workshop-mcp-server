@@ -119,8 +119,16 @@ select,input { max-width:100%; min-width:0; background:white; color:var(--text);
 .flow-diagram article>span { display:block; color:var(--muted); font-size:.69rem; line-height:1.4; }
 .flow-diagram article.active { border-color:var(--blue); background:var(--blue-soft); box-shadow:0 0 0 3px #0078d410; }
 .flow-diagram article.blocked { border-color:var(--red); background:#fff1f0; }
+[data-flow="call"] .flow-diagram { grid-template-areas:". model . ." "user app server data"; align-items:center; gap:32px 40px; }
+[data-flow="call"] [data-node="user"] { grid-area:user; }
+[data-flow="call"] [data-node="app"] { grid-area:app; }
+[data-flow="call"] [data-node="model"] { grid-area:model; border-style:dashed; }
+[data-flow="call"] [data-node="server"] { grid-area:server; }
+[data-flow="call"] [data-node="data"] { grid-area:data; }
+[data-flow="call"] .nested-client { justify-content:center; margin-top:12px; }
 .flow-lines { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; overflow:visible; }
 .flow-lines path { fill:none; stroke:#c5cdd8; stroke-width:1.5; }
+.flow-lines .model-connection { stroke-dasharray:5 4; }
 .flow-lines [data-active-path] { stroke:var(--blue); stroke-width:2.5; }
 .flow-lines [data-active-path].blocked { stroke:var(--red); }
 .flow-lines circle { fill:white; stroke:var(--blue); stroke-width:3; filter:drop-shadow(0 0 5px rgb(0 120 212 / 65%)); }
@@ -242,6 +250,7 @@ footer details { max-width:65%; border:0; padding:0; background:none; margin:0; 
   .flow-top label { width:100%; justify-content:space-between; }
   .flow-top select { max-width:76%; font-size:.74rem; }
   .flow-diagram { grid-template-columns:1fr 1fr; gap:28px; padding:24px; }
+  [data-flow="call"] .flow-diagram { grid-template-areas:". model" "user app" "data server"; gap:28px; }
   .flow-diagram article { padding:18px 8px; }
   .flow-diagram article>.icon { width:30px; height:30px; margin-bottom:12px; }
   .flow-controls { padding:12px 16px; }

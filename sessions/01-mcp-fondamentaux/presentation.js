@@ -27,7 +27,11 @@ function callSteps(mode) {
           required: Object.keys(args),
         } },
       ] } }),
-    step('The client sends the chosen request.', 'The app selects an appropriate tool and prepares its input. After any required user confirmation, its MCP client sends the request.', 'app', 'server',
+    step('The app asks the LLM.', 'The agent sends the question and available tool descriptions to the model. This uses the model API, not an MCP connection.', 'app', 'model',
+      { connection: 'Model API, not MCP', question: write ? 'Propose a rollback checklist.' : 'Find the deployment guide.', availableTools: [name] }),
+    step('The LLM proposes a tool call.', 'The model suggests a tool name and arguments. This is a proposal, not an executed operation; the model does not call the MCP server directly.', 'model', 'app',
+      { toolProposal: { name, arguments: args }, executed: false }),
+    step('The agent checks, then calls.', 'The application validates the proposed call and applies its permissions and any required user confirmation. Its MCP client then sends the request.', 'app', 'server',
       request('tools/call', { name, arguments: args })),
     step(write ? 'The server prepares a proposal.' : 'The server searches the documents.', write
       ? 'In this example, the server checks access and saves a proposal for human review. Requiring review is an application policy, not automatic MCP behavior.'
@@ -40,7 +44,11 @@ function callSteps(mode) {
       { jsonrpc: '2.0', id: 3, result: { content: [{ type: 'text', text: JSON.stringify(write
         ? { requiresApproval: true, document: 'deployment.md', published: false }
         : { title: 'Deployment guide', path: 'deployment.md' }) }] } }),
-    step(write ? '“Your proposal is ready for review.”' : '“Here is the deployment guide.”', 'The application uses the returned result to answer. The model did not connect to the backend or execute the operation itself.', 'app', 'user',
+    step('The agent gives the result to the LLM.', 'The application sends the tool result back through the model API as external evidence, not as new instructions.', 'app', 'model',
+      { connection: 'Model API, not MCP', toolResult: write ? { requiresApproval: true, published: false } : { title: 'Deployment guide', path: 'deployment.md' } }),
+    step('The LLM drafts the answer.', 'The model uses the observed result to prepare a response. It must not invent a successful operation when the result only reports a proposal.', 'model', 'app',
+      write ? 'Your proposal is ready for review. The document has not been published.' : 'Here is the deployment guide: deployment.md.'),
+    step(write ? '“Your proposal is ready for review.”' : '“Here is the deployment guide.”', 'The application displays the answer. The LLM proposed and explained; the agent orchestrated; the MCP server ran the operation.', 'app', 'user',
       write ? 'The original document is unchanged until an authorized human approves.' : 'Found: deployment.md. Open and review the actual source.'),
   ];
 }
@@ -129,15 +137,19 @@ function createFlow(root) {
     stopPacket();
     if (!diagram.getBoundingClientRect().width) return;
     pathGroup.replaceChildren();
-    for (const [from, to] of [['user', 'app'], ['app', 'server'], ['server', 'data']]) {
+    const connections = [['user', 'app'], ['app', 'server'], ['server', 'data']];
+    if (nodes.has('model')) connections.push(['app', 'model']);
+    for (const [from, to] of connections) {
       const path = document.createElementNS(svgNS, 'path');
       path.setAttribute('d', route(from, to));
+      if (from === 'model' || to === 'model') path.classList.add('model-connection');
       pathGroup.append(path);
     }
     const current = steps[index];
     const path = route(current.from, current.to);
     activePath.setAttribute('d', path);
     activePath.classList.toggle('blocked', Boolean(current.blocked));
+    activePath.classList.toggle('model-connection', current.from === 'model' || current.to === 'model');
     if (!animate || motion.matches || !path) return;
     const length = activePath.getTotalLength();
     let started;

@@ -7,8 +7,8 @@
   <meta name="color-scheme" content="light">
   <title>MCP, from idea to first call</title>
   <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="presentation.css?v=mcp-course">
-  <script type="module" src="presentation.js?v=mcp-course"></script>
+  <link rel="stylesheet" href="presentation.css?v=mcp-model">
+  <script type="module" src="presentation.js?v=mcp-model"></script>
 </head>
 <body>
   <svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -30,6 +30,7 @@
     <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M3 12h18m-7-7 7 7-7 7"/></symbol>
     <symbol id="i-check" viewBox="0 0 24 24"><path d="m4 12 5 5L20 6"/></symbol>
     <symbol id="i-network" viewBox="0 0 24 24"><rect x="8" y="2" width="8" height="6" rx="1"/><path d="M12 8v5M4 17v-4h16v4"/><rect x="1" y="17" width="6" height="5" rx="1"/><rect x="17" y="17" width="6" height="5" rx="1"/></symbol>
+    <symbol id="i-model" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="3"/><path d="M9 1v4m6-4v4M9 19v4m6-4v4M1 9h4m-4 6h4m14-6h4m-4 6h4M9 10h6m-6 4h4"/></symbol>
   </svg>
 
   <a class="skip" href="#main">Skip to lesson</a>
@@ -119,7 +120,8 @@
           <div class="flow-diagram">
             <svg class="flow-lines" aria-hidden="true"><g data-paths></g><path data-active-path/><circle data-packet r="5" visibility="hidden"/></svg>
             <article data-node="user"><svg class="icon"><use href="#i-user"/></svg><h3>You</h3><span>Ask a question</span></article>
-            <article data-node="app"><svg class="icon"><use href="#i-app"/></svg><h3>AI app</h3><span>MCP client inside</span></article>
+            <article data-node="app"><svg class="icon"><use href="#i-app"/></svg><h3>Agent / AI app</h3><span>Orchestrates the exchanges</span><div class="nested-client">MCP client</div></article>
+            <article data-node="model"><svg class="icon"><use href="#i-model"/></svg><h3>LLM / Model</h3><span>Suggests tools, drafts answers</span></article>
             <article data-node="server"><svg class="icon"><use href="#i-server"/></svg><h3>MCP server</h3><span>Exposes document tools</span></article>
             <article data-node="data"><svg class="icon"><use href="#i-file"/></svg><h3>Documents</h3><span>Files or an existing API</span></article>
           </div>
@@ -129,8 +131,8 @@
           <p class="motion-note" hidden>Reduced motion: use the arrows or numbered steps.</p>
           <details class="wire"><summary>For developers: example message</summary><pre><code data-wire></code></pre></details>
         </div>
-        <details class="flow-fallback" open><summary>Read the sequence</summary><ol><li>You ask the application to find the deployment guide.</li><li>The connected client discovers the server's document-search capability.</li><li>The app selects the tool; the client sends the search terms.</li><li>The server checks access and searches the actual documents.</li><li>The server returns the matching document.</li><li>The application answers using the returned result.</li></ol></details>
-        <p class="one-liner"><svg class="icon"><use href="#i-check"/></svg> The app chooses. The server executes. The result comes from your systems.</p>
+        <details class="flow-fallback" open><summary>Read the sequence</summary><ol><li>You ask the application to find the deployment guide.</li><li>The connected client discovers the server's document-search capability.</li><li>The app sends the question and tool descriptions to the LLM using its model API, not MCP.</li><li>The LLM proposes a tool and its arguments. Nothing has executed yet.</li><li>The app checks the proposal and any required confirmation; its MCP client calls the server.</li><li>The server checks access and searches the actual documents.</li><li>The server returns the matching document to the app.</li><li>The app sends the tool result back to the LLM.</li><li>The LLM drafts an answer using that result.</li><li>The app displays the answer to you.</li></ol></details>
+        <p class="one-liner"><svg class="icon"><use href="#i-check"/></svg> The LLM proposes. The agent orchestrates. The MCP server executes.</p>
       </section>
 
       <section id="api" class="chapter" aria-labelledby="api-title">

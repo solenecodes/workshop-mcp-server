@@ -54,7 +54,10 @@ The narration and diagrams are original workshop material:
 2. **Who does what?** The host contains a client; the server exposes capabilities
    and calls systems. Tools, resources and prompts use everyday document examples.
 3. **Follow one request.** Find a deployment guide, from a question to a returned
-   document. An alternative illustrates a proposed update, not a completed write.
+   document. A separate LLM node shows the model suggesting a tool, the agent
+   checking and invoking it through its MCP client, then the tool result returning
+   to the model to draft an answer. The model connection uses the model API, not
+   MCP. An alternative illustrates a proposed update, not a completed write.
 4. **MCP vs API.** Keep the same document example to distinguish the AI-facing
    protocol from the backend implementation.
 5. **Demo and practice.** Only here introduce the actual synthetic claims server,
