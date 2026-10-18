@@ -7,8 +7,8 @@
   <meta name="color-scheme" content="light">
   <title>MCP, from idea to first call</title>
   <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="presentation.css?v=fluent-course">
-  <script type="module" src="presentation.js?v=fluent-course"></script>
+  <link rel="stylesheet" href="presentation.css?v=console-sources-2">
+  <script type="module" src="presentation.js?v=console-sources-2"></script>
 </head>
 <body>
   <svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -52,7 +52,7 @@
       </div>
       <div class="chapter-group practice-group">
         <p class="nav-group-label"><svg class="icon"><use href="#i-practice"/></svg>Your turn</p>
-        <a href="#lab"><span class="chapter-icon"><svg class="icon"><use href="#i-practice"/></svg></span><span><small>6 exercises · 15 min</small> Connect and test</span></a>
+        <a href="#lab"><span class="chapter-icon"><svg class="icon"><use href="#i-code"/></svg></span><span><small>3 commands · 15 min</small> Call the server</span></a>
       </div>
       <div class="chapter-group">
         <p class="nav-group-label"><svg class="icon"><use href="#i-shield"/></svg>Next session</p>
@@ -162,46 +162,43 @@
       </section>
 
       <section id="lab" class="chapter" aria-labelledby="lab-title">
-        <p class="eyebrow practice-label"><svg class="icon"><use href="#i-practice"/></svg>Your turn · Hands-on · 15 minutes</p>
-        <h2 id="lab-title" tabindex="-1">Connect to the MCP server</h2>
-        <p class="intro">Run the six exercises below in VS Code or Inspector. This time you will call the workshop's synthetic insurance claims server, not the illustrated document service.</p>
-        <div class="endpoint-card">
+        <p class="eyebrow practice-label"><svg class="icon"><use href="#i-practice"/></svg>Your turn · Terminal · 15 minutes</p>
+        <h2 id="lab-title" tabindex="-1">Three commands. One MCP server.</h2>
+        <p class="intro">Open a Bash terminal. Copy each command below, run it, then check the JSON response. No AI agent, VS Code configuration or model is needed.</p>
+        <div class="source-overview" aria-label="The MCP server connects to three data sources">
+          <div class="source-hub"><svg class="icon"><use href="#i-server"/></svg><strong>MCP server</strong><span>One endpoint</span></div>
+          <div class="source-cards">
+            <article><svg class="icon"><use href="#i-file"/></svg><strong>Private API</strong><span>Fictional customer dossiers</span></article>
+            <article><svg class="icon"><use href="#i-database"/></svg><strong>SQLite database</strong><span>Fictional claims and coverage</span></article>
+            <article><svg class="icon"><use href="#i-globe"/></svg><strong>Internet API</strong><span>Real, dated exchange rates</span></article>
+          </div>
+        </div>
+        <p id="endpoint-status" class="notice" role="status">No public server has been deployed. The default URL is a local sandbox.</p>
+        <p id="endpoint-error" class="error" role="alert" hidden></p>
+        <details class="terminal-setup"><summary>Before your first call: install the terminal client once</summary>
+          <p>Requires Node.js 20+, npm and Git. Use Bash on macOS/Linux, WSL or Git Bash. If the workshop repository is already installed, skip this setup.</p>
+          <div class="copy-panel"><div><span>One-time setup</span><button class="text-button" data-copy="setup-code">Copy</button></div><pre><code id="setup-code">git clone https://github.com/solenecodes/workshop-mcp-server.git
+cd workshop-mcp-server
+npm ci</code></pre></div>
+          <p>Run all three commands from this repository folder. With the default local URL, open a second terminal here and run <code>npm run start:sandbox</code>. With the presenter's public URL, do not start your own server.</p>
+        </details>
+        <div class="terminal-exercises">
+          <article class="terminal-exercise"><h3><span class="exercise-number">1</span><span id="lab-title-0">Discover the tools</span></h3><p id="lab-instruction-0">List what this server can do.</p><div class="copy-panel"><div><span>Bash · repository folder</span><button class="text-button" data-copy="lab-code-0"><svg class="icon"><use href="#i-copy"/></svg>Copy command</button></div><pre><code id="lab-code-0">npm run workshop -- --url 'http://127.0.0.1:3201/mcp' --anonymous tools</code></pre></div><p class="terminal-expected"><strong>Look for:</strong> <span id="lab-expected-0">Four read-only tools with input schemas.</span></p></article>
+          <article class="terminal-exercise"><h3><span class="exercise-number">2</span><span id="lab-title-1">Read a customer dossier</span></h3><p id="lab-instruction-1">This tool reads a fictional customer through the private API.</p><div class="copy-panel"><div><span>Bash · repository folder</span><button class="text-button" data-copy="lab-code-1"><svg class="icon"><use href="#i-copy"/></svg>Copy command</button></div><pre><code id="lab-code-1">npm run workshop -- --url 'http://127.0.0.1:3201/mcp' --anonymous get_customer_file '{"customerId":"DEMO-PERSON-1"}'</code></pre></div><p class="terminal-expected"><strong>Look for:</strong> <span id="lab-expected-1">Alex Example, syntheticCustomerData: true, source: internal-api.</span></p></article>
+          <article class="terminal-exercise"><h3><span class="exercise-number">3</span><span id="lab-title-2">Combine the three sources</span></h3><p id="lab-instruction-2">One tool combines the private API, SQL data and an Internet exchange rate.</p><div class="copy-panel"><div><span>Bash · repository folder</span><button class="text-button" data-copy="lab-code-2"><svg class="icon"><use href="#i-copy"/></svg>Copy command</button></div><pre><code id="lab-code-2">npm run workshop -- --url 'http://127.0.0.1:3201/mcp' --anonymous get_customer_overview '{"customerId":"DEMO-PERSON-1","targetCurrency":"USD"}'</code></pre></div><p class="terminal-expected"><strong>Look for:</strong> <span id="lab-expected-2">A dossier, claim CLM-1001, coverage, a dated EUR/USD rate and three sources. A failed source returns an explicit error, not invented data.</span></p></article>
+        </div>
+        <p class="caption">Calls run in your terminal, not in this page. All customer data is fictional. Only currency codes are sent to the Internet API. The sandbox cannot write or approve anything.</p>
+        <details class="endpoint-card"><summary>Presenter: choose endpoints and share the exercise</summary>
           <form id="endpoint-form">
-            <label for="endpoint">Server URL for the exercises</label>
-            <div class="endpoint-row"><input id="endpoint" type="url" value="http://127.0.0.1:3102/mcp" required spellcheck="false" aria-describedby="endpoint-status"><button class="button primary" type="submit">Use this server</button></div>
-            <div class="endpoint-options"><label>Access <select id="access"><option value="bearer">Bearer token · supplied separately</option><option value="oauth">Sign in through the MCP client</option><option value="open">No auth · local sandbox only</option></select></label><button class="text-button" type="button" id="share"><svg class="icon"><use href="#i-copy"/></svg> Copy participant link</button></div>
+            <label for="endpoint">Public read-only sandbox URL</label>
+            <div class="endpoint-row"><input id="endpoint" type="url" value="http://127.0.0.1:3201/mcp" required spellcheck="false" aria-describedby="endpoint-status"><button class="button primary" type="submit">Apply endpoints</button></div>
+            <label for="protected-endpoint">Protected endpoint for session 3 (optional)</label>
+            <div class="endpoint-row"><input id="protected-endpoint" type="url" placeholder="https://your-protected-server/mcp" spellcheck="false"></div>
+            <button class="text-button" type="button" id="share"><svg class="icon"><use href="#i-copy"/></svg> Copy participant link</button>
           </form>
-          <p id="endpoint-status" role="status">Default: each participant's own local protected server. No public endpoint is configured.</p>
-          <p id="endpoint-error" class="error" role="alert" hidden></p>
-        </div>
-        <noscript><p class="notice">Enable JavaScript to generate endpoint-specific commands. Use the <a href="https://github.com/solenecodes/workshop-mcp-server#run-locally">repository instructions</a> for local setup.</p></noscript>
-
-        <div class="lab-shell">
-          <div class="lab-steps" role="group" aria-label="Practice steps">
-            <button data-lab-step="0" aria-pressed="true"><span>1</span> Connect</button>
-            <button data-lab-step="1" aria-pressed="false"><span>2</span> List tools</button>
-            <button data-lab-step="2" aria-pressed="false"><span>3</span> Read data</button>
-            <button data-lab-step="3" aria-pressed="false"><span>4</span> Request a change</button>
-            <button data-lab-step="4" aria-pressed="false"><span>5</span> Check the result</button>
-            <button data-lab-step="5" aria-pressed="false"><span>6</span> Test permissions</button>
-          </div>
-          <div class="lab-content">
-            <div class="lab-heading"><span class="tag" id="lab-progress">Exercise 1 of 6</span><span class="tag">Run in your MCP client</span></div>
-            <h3 id="lab-step-title">Add the server to your client.</h3>
-            <p id="lab-instruction">Copy the configuration into VS Code's MCP configuration, start the connection and review the trust prompt.</p>
-            <div class="copy-panel"><div><span id="copy-label">VS Code · .vscode/mcp.json</span><button class="text-button" data-copy="lab-code"><svg class="icon"><use href="#i-copy"/></svg> Copy</button></div><pre><code id="lab-code">The generated configuration appears here with JavaScript enabled.</code></pre></div>
-            <div class="expected"><svg class="icon"><use href="#i-check"/></svg><div><strong>Expected result in your client</strong><p id="lab-expected">A connected MCP server and its discovered tools. This page does not verify the connection for you.</p></div></div>
-            <details id="terminal-details"><summary>Prefer direct calls? Terminal / Inspector</summary>
-              <p>Terminal: clone the repository, run <code>npm ci</code>, then use the commands below in Bash. The official SDK handles the MCP connection. Inspector: connect with Streamable HTTP, then use the tool name and JSON arguments shown here.</p>
-              <div class="copy-panel"><div><span>Terminal · from the repository root</span><button class="text-button" data-copy="terminal-code">Copy</button></div><pre><code id="terminal-code"></code></pre></div>
-              <div class="copy-panel"><div><span>Inspector · method / arguments</span><button class="text-button" data-copy="inspector-code">Copy</button></div><pre><code id="inspector-code"></code></pre></div>
-            </details>
-            <div class="lab-bottom"><button class="button" id="lab-prev" disabled>← Previous exercise</button><span id="lab-completion" role="status"></span><button class="button primary" id="lab-next">Next exercise →</button></div>
-          </div>
-        </div>
-        <p class="caption">No MCP requests or credentials pass through this page. Copy commands into your client; compare its actual results with the expected behavior.</p>
-        <details><summary>Local demo tokens &amp; server setup</summary><p>On your own machine: <code>npm ci</code>, then <code>npm run start:secure</code>. Reader: <code>demo-reader-token</code>. Writer: <code>demo-adjuster-token</code>. Supervisor: <code>demo-supervisor-token</code>.</p><p>These are public teaching fixtures, not Internet credentials. For an Internet workshop, use the facilitator's prepared HTTPS endpoint and restricted access supplied outside this page. The current server is loopback-only; cloud hosting is a separate setup.</p><p><a href="https://github.com/solenecodes/workshop-mcp-server#run-locally">Install and run the demo</a> · <a href="https://modelcontextprotocol.io/docs/tools/inspector">Inspector setup</a></p></details>
-        <details class="lab-fallback" open><summary>All six participant steps</summary><ol><li>Connect to the workshop endpoint with the credentials supplied separately.</li><li>Discover tools and inspect their schemas.</li><li>Call <code>get_claim_summary</code> for <code>CLM-1001</code>.</li><li>As an adjuster, propose <code>create_claim_note</code> with <code>{"claimId":"CLM-1001","note":"Workshop: evidence requested."}</code>.</li><li>Read again. A protected write remains pending; a human supervisor reviews a legitimate proposal before calling <code>confirm_action</code>.</li><li>As the reader, request <code>CLM-1002</code> and observe the server's assignment denial.</li></ol></details>
+          <p>Use only the dedicated read-only sandbox here, never the intentionally insecure write-capable server. Remote endpoints require HTTPS. This page does not verify server availability. Shared links contain endpoint URLs only, never tokens.</p>
+        </details>
+        <noscript><p class="notice">The commands above use the local sandbox. JavaScript is needed to generate commands for a presenter's remote endpoint. See the <a href="https://github.com/solenecodes/workshop-mcp-server#multi-source-terminal-lab">terminal instructions</a>.</p></noscript>
       </section>
 
       <section id="auth" class="chapter" aria-labelledby="auth-title">
@@ -225,7 +222,17 @@
         </div>
         <details class="flow-fallback" open><summary>Read the control sequence</summary><ol><li>No valid credential: HTTP 401, no business operation.</li><li>A server-trusted identity determines roles and assignments.</li><li>The server checks the tool allowlist and claim assignment.</li><li>Reader results are minimized; a different customer's claim is denied.</li><li>Writes produce an expiring proposal. A different human-controlled supervisor/admin identity must confirm it.</li></ol></details>
         <div class="distinctions"><p><strong>Authentication</strong> Who is calling?</p><p><strong>Authorization</strong> What may they do?</p><p><strong>Approval</strong> Should this write happen?</p></div>
-        <details><summary>Real Entra vs the local teaching model</summary><p>The local server accepts public demo tokens. It does not perform Entra sign-in, JWT validation, OAuth discovery or OBO. A real protected MCP resource needs issuer, signature, lifetime and audience validation plus the right scopes and business policy. A downstream API needs its own audience token; do not forward the MCP token blindly.</p><p>Delegated/OBO: the downstream call retains user context. Application identity: the service uses its own permissions. Neither is implemented in this local demo.</p></details>
+        <div class="protected-lab">
+          <h3>Try the same call on the protected endpoint</h3>
+          <p id="protected-status" class="notice">No protected endpoint configured. The presenter must configure Entra ID and supply this endpoint before session 3.</p>
+          <div id="protected-commands" hidden>
+            <p><strong>Without a token:</strong> the server returns HTTP 401 before any source is queried.</p>
+            <div class="copy-panel"><div><span>Bash · no identity</span><button class="text-button" data-copy="anonymous-code">Copy</button></div><pre><code id="anonymous-code"></code></pre></div>
+            <p><strong>With your Entra access token:</strong> paste it only into your terminal. A reader receives masked customer fields; an invalid token returns 401 and missing <code>Mcp.Read</code> permission returns 403.</p>
+            <div class="copy-panel"><div><span>Bash · authenticated</span><button class="text-button" data-copy="authenticated-code">Copy</button></div><pre><code id="authenticated-code"></code></pre></div>
+          </div>
+        </div>
+        <details><summary>What is implemented, and what must be configured?</summary><p>The multi-source sandbox has a separate protected mode that validates Entra v2 JWT signatures, issuer, audience, expiry and <code>Mcp.Read</code> scope or application role. It masks customer details unless the signed identity has the <code>Mcp.Pii.Read</code> application role. It accepts no public demo tokens. Hosting, an Entra application registration and participant access must be configured before using it.</p><p>The animation above instead illustrates the existing local Claims demo: public teaching tokens, claim-level authorization and human approval. Those write controls are not tools of the read-only sandbox. Neither server implements interactive OAuth discovery or downstream OBO; the private synthetic API uses loopback, not a forwarded user token.</p></details>
       </section>
 
       <div class="chapter-pagination" hidden><button class="button" id="chapter-prev">← Previous</button><span id="chapter-count"></span><button class="button primary" id="chapter-next">Next chapter →</button></div>

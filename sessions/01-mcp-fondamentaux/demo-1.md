@@ -1,24 +1,17 @@
-# Demo 1 - Read and update a fictitious claim
+# Demo 1 - Discover and read
 
 [Session 1](README.md) · **5 minutes**
 
-Start `npm run start:insecure` from the repository root and connect VS Code to
-`http://127.0.0.1:3101/mcp` using the [configuration](../../examples/mcp.local.json).
-Disable the secure server in the tool picker for this demonstration.
+Start `npm run start:sandbox` locally, or use the prepared public read-only
+sandbox URL. Use the participant page to generate endpoint-specific commands.
 
-1. Discover the seven tools and inspect `get_claim_summary`'s input schema.
-2. Ask: "Use only claims-insecure. Read CLM-1001 without changing anything."
-3. Inspect the actual tool arguments and result. Point out the invented PII,
-   missing documents, and untrusted text. Never follow instructions in it.
-4. Ask: "Add the note 'Workshop evidence requested' to CLM-1001.
-   Show me the tool arguments and wait for my confirmation."
-5. Confirm in the client, then call `get_claim_summary` again to prove the note
-   was stored. A chat sentence saying "done" is not proof.
+1. Run `tools` through the [terminal client](../../README.md#multi-source-terminal-lab).
+2. Show four tools with typed inputs; discovery has not queried any customer.
+3. Call `get_customer_file` with `{"customerId":"DEMO-PERSON-1"}`.
+4. Read `structuredContent`: Alex Example, synthetic-data marker, source
+   `internal-api`. Explain that a real private HTTP API supplied this fixture.
+5. Show that no write tool exists in this sandbox.
 
-Talk track: the host selects a tool, its client sends a structured call, and the
-server changes state. No LLM runs inside this server. Client confirmation does
-not grant or enforce record-level access.
-
-If the model declines or does not call the tool, use the exact tool in Inspector.
-Do not switch off client safety. Restart the insecure process after the demo
-to restore its synthetic records.
+Talk track: a terminal is an MCP client too. An agent can use the same
+discovered tools, but a model is not required for these protocol calls.
+The server is an adapter, not a model or a database.

@@ -1,16 +1,146 @@
-# Insurance Claims MCP Workshop
-
-Two implementations of the same synthetic insurance tools: one intentionally
-insecure, one with explicit application controls. Compare **observed tool
-results**, not an AI model's promises.
+# MCP Workshop: three sources, one endpoint
 
 **Start with the [visual presentation & participant lab](https://solenecodes.github.io/workshop-mcp-server/).**
 Six short chapters: why MCP exists, its architecture, an animated call, MCP vs
-API, guided live-client exercises, and access controls.
+API, three terminal calls, and access controls.
 
-**Local teaching demo, not production software.** All customers, addresses,
-diagnoses, providers and insurance records are invented. No real systems,
-models, cloud services or external APIs are contacted by these servers.
+**All customer and insurance data is invented.** The new read-only sandbox
+actually calls a public exchange-rate API. Only currency codes leave the
+server; customer IDs, names and dossiers are never sent to that API.
+
+## Multi-source terminal lab
+
+Requires Node.js 20+, npm and Git. Use Bash on macOS/Linux, WSL or Git Bash.
+Install once:
+
+```sh
+git clone https://github.com/solenecodes/workshop-mcp-server.git
+cd workshop-mcp-server
+npm ci
+```
+
+For a local workshop, start the server in a second terminal:
+
+```sh
+npm run start:sandbox
+```
+
+Then run these **three commands**, from the repository folder:
+
+```sh
+npm run workshop -- --url 'http://127.0.0.1:3201/mcp' --anonymous tools
+npm run workshop -- --url 'http://127.0.0.1:3201/mcp' --anonymous get_customer_file '{"customerId":"DEMO-PERSON-1"}'
+npm run workshop -- --url 'http://127.0.0.1:3201/mcp' --anonymous get_customer_overview '{"customerId":"DEMO-PERSON-1","targetCurrency":"USD"}'
+```
+
+For a hosted workshop, participants use the presenter's HTTPS URL instead of
+loopback and do **not** start their own server. No hosted endpoint is bundled
+or claimed to be live. The presentation's collapsed presenter panel generates
+the three commands and a shareable link from the actual URLs, never credentials.
+No MCP call or token passes through the presentation.
+
+| Call | What to observe |
+| --- | --- |
+| `tools` | Four read-only tools, their descriptions and input schemas |
+| `get_customer_file` | Alex Example, `syntheticCustomerData: true`, source `internal-api` |
+| `get_customer_overview` | CLM-1001, its coverage, a dated exchange rate, converted amount and three `sources` |
+
+```text
+Terminal / MCP SDK -> MCP server -> private synthetic dossier HTTP API
+                                -> SQLite claims + policies
+                                -> Frankfurter Internet exchange-rate API
+```
+
+The fourth tool, `list_customer_claims(customerId)`, isolates the SQL query.
+`get_exchange_rate(baseCurrency, targetCurrency)` isolates the Internet call.
+Supported currencies: EUR, USD, GBP and CHF; choose different currencies.
+The overview converts the EUR fixture into USD (default), GBP or CHF.
+
+This is a real SQLite database using `sql.js`, seeded in memory and set to
+query-only. The dossier API really runs as a separate HTTP listener on an
+ephemeral **127.0.0.1** port in the same process. It is not an enterprise API
+and is not exposed by the public ingress. Restarting resets the SQL fixture.
+Frankfurter's [documented v2 API](https://frankfurter.dev/) supplies a dated
+reference rate, not a live trading price. Rates are cached for 60 seconds and
+concurrent requests for one pair share the same fetch. Network calls time out
+after five seconds. A failed or malformed source returns `isError: true`;
+there is no made-up rate or success-shaped partial overview.
+
+### Separate protected endpoint for session 3
+
+The **same sandbox code and four tools** have an Entra-protected mode:
+
+```sh
+export SANDBOX_MODE=protected
+export ENTRA_TENANT_ID='<your-tenant-id>'
+export ENTRA_CLIENT_ID='<your-api-application-client-id>'
+npm run start:sandbox
+```
+
+Default protected URL: `http://127.0.0.1:3202/mcp`.
+This mode will **not start** without valid tenant/client UUIDs and accepts
+**no hardcoded demo tokens**.
+
+The presenter must register an Entra API with v2 access tokens
+(`api.requestedAccessTokenVersion: 2`), expose delegated scope `Mcp.Read`,
+and grant participant/client access. Application callers instead need the
+`Mcp.Read` application role. Optional application role `Mcp.Pii.Read` permits
+full synthetic dossier fields; ordinary readers receive masked name, DOB and
+address plus `redactedFields`. This sandbox permits all five **synthetic**
+customers to an authorized reader; it is not the claim-assignment/approval
+demo described below. Cross-tenant attendees need an explicit guest/tenant
+access plan, not a shared privileged account.
+
+JWT verification enforces RS256 signature via tenant JWKS, exact tenant,
+issuer and API audience, expiry, identity and read permission. A token without
+`Mcp.Read` returns 403; a missing/invalid token returns 401 **before source
+access**. This is resource-server validation, not an interactive MCP OAuth
+discovery/sign-in implementation. There is no OBO or token forwarding.
+
+Acquire a token in an authorized client outside the page. For Azure CLI,
+the API registration must authorize the Azure CLI client, with the necessary
+user/admin consent; then an attendee in the correct tenant can use:
+
+```sh
+az login --tenant '<your-tenant-id>' --allow-no-subscriptions
+export MCP_TOKEN="$(az account get-access-token --scope 'api://<your-api-application-client-id>/Mcp.Read' --query accessToken -o tsv)"
+npm run workshop -- --url 'http://127.0.0.1:3202/mcp' get_customer_overview '{"customerId":"DEMO-PERSON-1","targetCurrency":"USD"}'
+unset MCP_TOKEN
+```
+
+Do not paste access tokens into this repository, a shared URL or the page.
+The protected chapter can instead prompt silently for an already acquired
+token. `--anonymous` always suppresses `MCP_TOKEN`, including on public calls.
+
+### Hosting boundaries
+
+Only `start:sandbox` is designed as the Internet-facing read-only candidate;
+never expose `start:insecure` or the public-token `start:secure` edition.
+Two separately configured instances provide public and protected endpoints.
+The default remains loopback. A non-loopback bind requires `HOST` and an
+explicit `PUBLIC_MCP_URL=https://<actual-host>/mcp` for Host validation.
+`PORT` is configurable. Build with `npm run build`; the compiled entry is
+`node dist/src/sandbox/start.js`.
+
+Both sandbox modes reject browser Origins and unexpected inputs, expose no
+writes or arbitrary URL/SQL access, and log decisions without tokens or dossier
+contents. A fixed global limit of 600 POSTs/minute and 32 concurrent requests
+bounds per-instance load; 429 includes `Retry-After`. These in-memory counters
+are **not** distributed abuse protection: use one replica for this workshop,
+add gateway limits as needed, and stop/delete resources afterwards. The
+public version intentionally reveals full **fictional** dossiers so session
+3 can contrast redaction. No real customer system belongs here.
+
+Cloud resources, application registration, participant consent and hosting
+cost require separate approval/configuration. They have not been provisioned
+by these application changes.
+
+## Advanced local Claims security demo
+
+Two existing implementations demonstrate intentionally insecure writes versus
+RBAC, claim assignments, approval, audit and redaction. These editions use only
+in-process fixtures, not the three sandbox sources. Compare observed results,
+not an AI model's promises. They remain local-only and unchanged.
 
 ## Run locally
 
@@ -301,22 +431,24 @@ to demonstrate a backend weakness or does not invoke the expected tool.
 | 16:00–16:30 | 30 min | Questions and deep dive (optional) |
 
 Only sessions with demos/practice have folders. The
-[web presentation](sessions/01-mcp-fondamentaux/presentation.html) uses the claims
-scenario and provides endpoint-specific, copyable participant instructions.
+[web presentation](sessions/01-mcp-fondamentaux/presentation.html) teaches general
+MCP concepts, then provides three calls to the multi-source synthetic sandbox.
 
 ### Share the presentation with participants
 
 Open the [published presentation](https://solenecodes.github.io/workshop-mcp-server/),
-choose **Your turn**, enter your prepared protected HTTPS MCP endpoint and its
-access mode, then select **Copy participant link**. The link opens directly in
-the lab and restores the endpoint; it never includes a token. Share credentials
-separately. An endpoint containing credentials, query parameters or a fragment
-is rejected. The unauthenticated demo can only be configured for loopback.
+choose **Your turn**, expand **Presenter: choose endpoints and share the
+exercise**, enter the public read-only sandbox HTTPS URL and optionally its
+separate protected URL, apply, then select **Copy participant link**. The link
+opens directly in the lab and restores both URLs; it never includes a token.
+An endpoint containing credentials, query parameters or a fragment is rejected.
+Only the dedicated read-only sandbox is eligible for unauthenticated HTTPS;
+the old intentionally insecure write-capable edition remains loopback-only.
 
-The page generates VS Code configuration, chat prompts, exact Inspector tool
-arguments and terminal commands. It does not send MCP requests or verify the
-server's availability. Participants execute real calls in their own clients.
-Use **Use endpoint** after editing settings to regenerate all commands.
+The page generates only three participant terminal commands, with source icons
+and expected JSON fields. It does not send MCP requests or verify availability.
+Participants execute real calls in their terminals. Use **Apply endpoints**
+after editing settings to regenerate commands; editing disables stale copies.
 
 Terminal commands use the official SDK through the repository helper:
 

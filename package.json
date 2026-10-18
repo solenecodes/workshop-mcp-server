@@ -8,17 +8,22 @@
     "build": "tsc",
     "test": "tsx --test tests/*.test.ts tests/*.test.mjs",
     "workshop": "tsx src/workshop-client.ts",
+    "start": "node dist/src/sandbox/start.js",
+    "start:sandbox": "tsx src/sandbox/start.ts",
     "start:insecure": "tsx src/insecure/server.ts",
     "start:secure": "tsx src/secure/server.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.32.1",
     "express": "5.3.0",
+    "jose": "^6.1.0",
+    "sql.js": "^1.13.0",
     "zod": "4.6.7"
   },
   "devDependencies": {
     "@types/express": "^5.0.0",
     "@types/node": "^22.0.0",
+    "@types/sql.js": "^1.4.9",
     "tsx": "^4.20.0",
     "typescript": "^5.9.0"
   }

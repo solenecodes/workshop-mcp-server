@@ -5,6 +5,7 @@ node_modules/
 local.settings.json
 .azurite/
 .azure/
+.copilot-azure/
 dist/
 *.tsbuildinfo
 .env

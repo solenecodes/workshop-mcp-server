@@ -1,4 +1,4 @@
-import { defaultEndpoint, labStep, shareUrl, validateEndpoint } from './presentation-lab.mjs?v=fluent-course';
+import { defaultEndpoint, labStep, securityCode, setupCode, shareUrl, validateEndpoint } from './presentation-lab.mjs?v=console-sources-2';
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -281,7 +281,7 @@ function showChapter(focus = false) {
   $('#chapter-prev').textContent = chapterIndex === 4 ? '← Back to course' : chapterIndex === 5 ? '← Back to exercises' : '← Previous lesson';
   $('#chapter-next').textContent = chapterIndex < 3 ? 'Next lesson →' : chapterIndex === 3 ? 'Start hands-on →' : chapterIndex === 4 ? 'Next: security →' : 'End of workshop';
   $('#chapter-count').textContent = chapterIndex < 4 ? `Course · Lesson ${chapterIndex + 1} of 4`
-    : chapterIndex === 4 ? 'Your turn · 6 exercises' : 'Next session · Security';
+    : chapterIndex === 4 ? 'Your turn · 3 commands' : 'Next session · Security';
   requestAnimationFrame(() => controllers.forEach((controller) => controller.redraw()));
   if (focus) {
     $('h1,h2', chapters[chapterIndex]).focus({ preventScroll: true });
@@ -410,34 +410,45 @@ function createIntegrationAnimation() {
 controllers.push(createIntegrationAnimation());
 
 let settings;
-let labIndex = 0;
 const endpointInput = $('#endpoint');
-const accessInput = $('#access');
-const codeTargets = ['lab-code', 'terminal-code', 'inspector-code'];
+const protectedInput = $('#protected-endpoint');
+const codeTargets = ['lab-code-0', 'lab-code-1', 'lab-code-2', 'anonymous-code', 'authenticated-code'];
+$('#setup-code').textContent = setupCode;
 function renderLab() {
   if (!settings) return;
-  const current = labStep(labIndex, settings);
-  $('#lab-step-title').textContent = current.title;
-  $('#lab-instruction').textContent = current.instruction;
-  $('#copy-label').textContent = current.label;
-  $('#lab-code').textContent = current.code;
-  $('#terminal-code').textContent = current.terminalCode;
-  $('#inspector-code').textContent = current.inspectorCode;
-  $('#lab-expected').textContent = current.expected;
-  $('#lab-progress').textContent = `Exercise ${labIndex + 1} of 6`;
-  $$('[data-lab-step]').forEach((button, index) => button.setAttribute('aria-pressed', String(index === labIndex)));
-  $('#lab-prev').disabled = labIndex === 0;
-  $('#lab-next').disabled = labIndex === 5;
-  $('#lab-completion').textContent = labIndex === 5 ? 'Compare the access result with your partner.' : 'Run this exercise in your client, then continue.';
+  for (let index = 0; index < 3; index++) {
+    const current = labStep(index, settings);
+    $(`#lab-title-${index}`).textContent = current.title;
+    $(`#lab-instruction-${index}`).textContent = current.instruction;
+    $(`#lab-code-${index}`).textContent = current.code;
+    $(`#lab-expected-${index}`).textContent = current.expected;
+  }
+  $('#protected-commands').hidden = !settings.protectedEndpoint;
+  $('#protected-status').textContent = settings.protectedEndpoint
+    ? `Configured protected endpoint: ${settings.protectedEndpoint}. Availability and Entra setup are not verified by this page.`
+    : 'No protected endpoint configured. The presenter must configure Entra ID and supply this endpoint before session 3.';
+  if (settings.protectedEndpoint) {
+    const commands = securityCode(settings.protectedEndpoint);
+    $('#anonymous-code').textContent = commands.anonymous;
+    $('#authenticated-code').textContent = commands.authenticated;
+  } else {
+    $('#anonymous-code').textContent = '';
+    $('#authenticated-code').textContent = '';
+  }
 }
 function applyEndpoint() {
   try {
-    settings = validateEndpoint(endpointInput.value.trim(), accessInput.value);
+    const validated = validateEndpoint(endpointInput.value.trim());
+    const protectedEndpoint = protectedInput.value.trim()
+      ? validateEndpoint(protectedInput.value.trim()).endpoint : undefined;
+    if (protectedEndpoint === validated.endpoint) throw new Error('Use separate public and protected endpoints.');
+    settings = { ...validated, protectedEndpoint };
     endpointInput.value = settings.endpoint;
+    protectedInput.value = protectedEndpoint ?? '';
     $('#endpoint-error').hidden = true;
     $('#endpoint-status').textContent = settings.local
-      ? 'Local server: start it on your machine before connecting. This page generates commands; it does not test the connection.'
-      : 'Remote server selected. Use the facilitator’s credentials in your client. This page does not test the connection.';
+      ? `Local sandbox: ${settings.endpoint}. Start npm run start:sandbox in a second terminal. This is not a public workshop endpoint.`
+      : `Workshop sandbox: ${settings.endpoint}. Run the three commands below. This page does not test availability.`;
     $$('[data-copy],#share').forEach((button) => { button.disabled = false; });
     renderLab();
     return true;
@@ -447,8 +458,9 @@ function applyEndpoint() {
     $('#participant-link')?.remove();
     $('#endpoint-error').textContent = error.message;
     $('#endpoint-error').hidden = false;
-    $('#endpoint-status').textContent = 'Commands not updated. Correct the URL or access mode, then choose Use this server.';
-    $$('[data-copy],#share').forEach((button) => { button.disabled = true; });
+    $('#endpoint-status').textContent = 'Commands disabled. Correct the URLs, then apply endpoints.';
+    $('#protected-commands').hidden = true;
+    $$('[data-copy]:not([data-copy="setup-code"]),#share').forEach((button) => { button.disabled = true; });
     return false;
   }
 }
@@ -456,30 +468,17 @@ function markEndpointDirty() {
   settings = undefined;
   codeTargets.forEach((id) => { document.getElementById(id).textContent = 'Apply the endpoint changes to regenerate this command.'; });
   $('#participant-link')?.remove();
-  $('#endpoint-status').textContent = 'Changes not applied. Select “Use endpoint” to regenerate all commands.';
-  $$('[data-copy],#share').forEach((button) => { button.disabled = true; });
+  $('#endpoint-status').textContent = 'Changes not applied. Select “Apply endpoints” to regenerate all commands.';
+  $('#protected-commands').hidden = true;
+  $$('[data-copy]:not([data-copy="setup-code"]),#share').forEach((button) => { button.disabled = true; });
 }
 $('#endpoint-form').addEventListener('submit', (event) => { event.preventDefault(); applyEndpoint(); });
 endpointInput.addEventListener('input', markEndpointDirty);
-accessInput.addEventListener('change', markEndpointDirty);
-$$('[data-lab-step]').forEach((button) => button.addEventListener('click', () => {
-  labIndex = Number(button.dataset.labStep);
-  renderLab();
-}));
-$('#lab-prev').addEventListener('click', () => { labIndex = Math.max(0, labIndex - 1); renderLab(); });
-$('#lab-next').addEventListener('click', () => { labIndex = Math.min(5, labIndex + 1); renderLab(); });
+protectedInput.addEventListener('input', markEndpointDirty);
 
 const params = new URLSearchParams(location.search);
 endpointInput.value = params.get('endpoint') ?? defaultEndpoint;
-const access = params.get('access') ?? 'bearer';
-if (['bearer', 'oauth', 'open'].includes(access)) accessInput.value = access;
-else {
-  const invalid = document.createElement('option');
-  invalid.value = access;
-  invalid.textContent = 'Unsupported access mode';
-  accessInput.append(invalid);
-  accessInput.value = access;
-}
+protectedInput.value = params.get('protectedEndpoint') ?? '';
 applyEndpoint();
 
 let toastTimer;
@@ -488,7 +487,7 @@ function notify(message) {
   $('#copy-status').textContent = message;
   toastTimer = setTimeout(() => { $('#copy-status').textContent = ''; }, 6000);
 }
-async function copy(text, message = 'Copied. Paste into your MCP client.') {
+async function copy(text, message = 'Copied. Paste into your Bash terminal in the workshop folder.') {
   try {
     await navigator.clipboard.writeText(text);
     notify(message);
@@ -497,7 +496,7 @@ async function copy(text, message = 'Copied. Paste into your MCP client.') {
   }
 }
 $$('[data-copy]').forEach((button) => button.addEventListener('click', () => {
-  if (!settings || !codeTargets.includes(button.dataset.copy)) return;
+  if (button.dataset.copy !== 'setup-code' && (!settings || !codeTargets.includes(button.dataset.copy))) return;
   void copy(document.getElementById(button.dataset.copy).textContent);
 }));
 $('#share').addEventListener('click', () => {

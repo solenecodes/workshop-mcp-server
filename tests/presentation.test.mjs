@@ -1,64 +1,64 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { clientConfig, labStep, shareUrl, validateEndpoint } from '../sessions/01-mcp-fondamentaux/presentation-lab.mjs';
+import { readFileSync } from 'node:fs';
+import { defaultEndpoint, labStep, securityCode, setupCode, shareUrl, validateEndpoint } from '../sessions/01-mcp-fondamentaux/presentation-lab.mjs';
 
-test('participant URLs accept HTTPS or loopback but reject embedded secrets and public open mode', () => {
-  assert.equal(validateEndpoint('https://claims.example.org/mcp', 'bearer').local, false);
-  for (const endpoint of ['http://127.0.0.1:3102/mcp', 'http://localhost:3102/mcp', 'http://[::1]:3102/mcp']) {
-    assert.equal(validateEndpoint(endpoint, 'open').local, true);
+test('public sandbox URLs allow HTTPS and loopback HTTP, but never credentials or remote HTTP', () => {
+  assert.equal(validateEndpoint('https://sandbox.example.org/mcp').local, false);
+  assert.equal(defaultEndpoint, 'http://127.0.0.1:3201/mcp');
+  for (const endpoint of ['http://127.0.0.1:3201/mcp', 'http://localhost:3201/mcp', 'http://[::1]:3201/mcp']) {
+    assert.equal(validateEndpoint(endpoint).local, true);
   }
   for (const endpoint of [
-    'javascript:alert(1)', 'http://claims.example.org/mcp', 'not a URL',
-    'https://user:secret@claims.example.org/mcp', 'https://claims.example.org/mcp?token=secret',
-    'https://claims.example.org/mcp#secret', 'file:///etc/passwd',
-  ]) assert.throws(() => validateEndpoint(endpoint, 'bearer'));
-  assert.throws(() => validateEndpoint('https://claims.example.org/mcp', 'open'));
-  assert.throws(() => validateEndpoint('https://claims.example.org/mcp', 'unknown'));
+    'javascript:alert(1)', 'http://sandbox.example.org/mcp', 'not a URL',
+    'https://user:secret@sandbox.example.org/mcp', 'https://sandbox.example.org/mcp?token=secret',
+    'https://sandbox.example.org/mcp#secret', 'file:///etc/passwd',
+  ]) assert.throws(() => validateEndpoint(endpoint));
 });
 
-test('VS Code config prompts for bearer tokens and does not claim a demo OAuth flow', () => {
-  const bearer = clientConfig({ endpoint: 'https://claims.example.org/mcp', access: 'bearer' });
-  assert.equal(bearer.servers['claims-workshop'].headers.Authorization, 'Bearer ${input:claimsWorkshopToken}');
-  assert.equal(bearer.inputs[0].password, true);
-  for (const access of ['oauth', 'open']) {
-    const config = clientConfig({ endpoint: 'http://localhost:3102/mcp', access });
-    assert.equal(config.inputs, undefined);
-    assert.equal(config.servers['claims-workshop'].headers, undefined);
-  }
-});
-
-test('shared links contain endpoint/access only and land directly in the practice chapter', () => {
+test('shared links preserve both endpoints but never page parameters or credentials', () => {
   const url = new URL(shareUrl('https://pages.example.org/lesson.html?token=must-not-propagate#why', {
-    endpoint: 'https://claims.example.org/mcp', access: 'bearer',
+    endpoint: 'https://sandbox.example.org/mcp', protectedEndpoint: 'https://protected.example.org/mcp',
   }));
-  assert.deepEqual([...url.searchParams.keys()], ['endpoint', 'access']);
+  assert.deepEqual([...url.searchParams.keys()], ['endpoint', 'protectedEndpoint']);
   assert.equal(url.hash, '#lab');
-  assert.equal(url.searchParams.get('endpoint'), 'https://claims.example.org/mcp');
+  assert.equal(url.searchParams.get('endpoint'), 'https://sandbox.example.org/mcp');
+  assert.equal(url.searchParams.get('protectedEndpoint'), 'https://protected.example.org/mcp');
   assert.doesNotMatch(url.href, /must-not-propagate/);
+  assert.throws(() => shareUrl(url.href, { endpoint: defaultEndpoint, protectedEndpoint: 'https://protected.example.org/?token=secret' }));
 });
 
-test('all six practice steps produce endpoint-specific commands and correct secure/open expectations', () => {
-  for (const access of ['bearer', 'open', 'oauth']) {
-    const settings = { endpoint: 'http://127.0.0.1:3102/mcp', access };
-    for (let i = 0; i < 6; i++) {
-      const step = labStep(i, settings);
-      assert.ok(step.code && step.expected && step.inspectorCode && step.terminalCode);
-      if (access === 'bearer') {
-        assert.match(step.terminalCode, /export MCP_URL='http:\/\/127.0.0.1:3102\/mcp'/);
-        assert.match(step.terminalCode, /read -r -s/);
-        assert.doesNotMatch(step.terminalCode, /demo-admin-token|demo-supervisor-token/);
-      }
-      if (access === 'oauth') assert.match(step.terminalCode, /Use VS Code or Inspector/);
-    }
-    const write = labStep(3, settings);
-    assert.equal(write.tool, 'create_claim_note');
-    assert.equal(write.args.claimId, 'CLM-1001');
-    assert.match(write.expected, access === 'open' ? /immediately stored/ : /NOT been stored/);
+test('exactly three terminal exercises discover, read and aggregate; public calls never send a token', () => {
+  const settings = { endpoint: 'https://sandbox.example.org/mcp' };
+  const commands = Array.from({ length: 3 }, (_, index) => labStep(index, settings));
+  assert.match(commands[0].code, /--anonymous tools$/);
+  assert.match(commands[1].code, /--anonymous get_customer_file/);
+  assert.match(commands[2].code, /--anonymous get_customer_overview/);
+  assert.match(commands[2].expected, /three sources/);
+  for (const step of commands) {
+    assert.ok(step.title && step.instruction && step.expected);
+    assert.match(step.code, /--url 'https:\/\/sandbox.example.org\/mcp'/);
+    assert.doesNotMatch(step.code, /MCP_TOKEN|demo-.*-token|Copilot|Inspector/);
   }
-  assert.throws(() => labStep(8, { endpoint: 'http://127.0.0.1/mcp', access: 'open' }));
+  for (const index of [-1, 3, 8]) assert.throws(() => labStep(index, settings));
+  assert.match(setupCode, /npm ci/);
 });
 
-test('shell-quoted endpoints cannot become command substitution', () => {
-  const step = labStep(1, { endpoint: "https://claims.example.org/a'b", access: 'bearer' });
-  assert.match(step.terminalCode, /a'\\''b/);
+test('protected commands contrast no identity and prompted identity without putting tokens in a URL', () => {
+  const commands = securityCode('https://protected.example.org/mcp');
+  assert.match(commands.anonymous, /--anonymous get_customer_overview/);
+  assert.match(commands.authenticated, /read -r -s/);
+  assert.match(commands.authenticated, /unset MCP_TOKEN$/);
+  assert.doesNotMatch(commands.authenticated, /--anonymous|demo-.*-token/);
+  assert.throws(() => securityCode('http://protected.example.org/mcp'));
+});
+
+test('shell-quoted endpoints cannot become shell expansion and static markup contains the three commands', () => {
+  const step = labStep(0, { endpoint: "https://sandbox.example.org/a'b" });
+  assert.match(step.code, /a'\\''b/);
+  const html = readFileSync(new URL('../sessions/01-mcp-fondamentaux/presentation.html', import.meta.url), 'utf8');
+  assert.equal((html.match(/class="terminal-exercise"/g) ?? []).length, 3);
+  assert.equal((html.match(/id="lab-code-[0-2]"/g) ?? []).length, 3);
+  assert.doesNotMatch(html, /data-lab-step|id="lab-prev"|id="access"/);
+  for (const command of ['--anonymous tools', '--anonymous get_customer_file', '--anonymous get_customer_overview']) assert.ok(html.includes(command));
 });

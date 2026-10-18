@@ -3,22 +3,22 @@
 [Workshop and runnable server](../../README.md)
 
 **09:20–10:20 · 60 minutes**, including two demos followed by **15 minutes of
-participant practice**. Use the same Insurance Claims server in both demos.
+participant practice**. Use the same multi-source read-only MCP sandbox throughout.
 
 | Time | Duration | Activity |
 | --- | ---: | --- |
 | 09:20–09:30 | 10 min | Host, client, server; MCP vs API, RAG and connectors |
 | 09:30–09:40 | 10 min | Tools/resources/prompts, JSON-RPC 2.0, stdio vs remote Streamable HTTP |
-| 09:40–09:45 | 5 min | [Demo 1: useful claim read/write from an AI client](demo-1.md) |
-| 09:45–09:50 | 5 min | [Demo 2: inspect the same protocol directly](demo-2-inspector.md) |
-| 09:50–10:05 | 15 min | [Practice: discover, read, write, verify](mini-hack.md) |
-| 10:05–10:15 | 10 min | Debrief: client confirmation is not backend authorization |
+| 09:40–09:45 | 5 min | [Demo 1: discover tools and read a dossier](demo-1.md) |
+| 09:45–09:50 | 5 min | [Demo 2: one call, three sources](demo-2-inspector.md) |
+| 09:50–10:05 | 15 min | [Practice: three terminal commands](mini-hack.md) |
+| 10:05–10:15 | 10 min | Debrief: MCP adapts systems; authentication is a separate control |
 | 10:15–10:20 | 5 min | Questions and transition |
 
 The **host** is the AI application (for example VS Code). Its **MCP client**
 discovers capabilities and invokes the **MCP server**. The server operates on
-synthetic records. The model is not the server and does not perform the database
-write itself. Inspector can make the same calls without any model.
+synthetic records and a public currency API. The model is not the server.
+The terminal client makes the same protocol calls without a model.
 
 **Tools** query or change state; **resources** supply URI-addressable context;
 **prompts** supply reusable interaction templates. This claims implementation
@@ -32,15 +32,23 @@ client support and authentication requirements must be checked separately.
 
 ## Prepare
 
-- Each pair runs both editions locally using the [root instructions](../../README.md#run-locally).
-- Node 20+, VS Code with MCP/agent support, or Inspector as a direct-call fallback.
-- Use synthetic data only; keep client confirmations enabled.
-- Select only the insecure endpoint during the first exercise.
-- Each process has its own data; restart it to reset.
+- Participants install Node 20+, npm, Git and the repository client once.
+- They need Bash on macOS/Linux, WSL or Git Bash, not a configured AI host.
+- Follow the [terminal setup](../../README.md#multi-source-terminal-lab).
+- Locally, start `npm run start:sandbox`; the public-mode default is loopback
+  `http://127.0.0.1:3201/mcp`. This is not reachable from another laptop.
+- With approved hosting, the presenter configures the actual public HTTPS URL
+  in the page and shares the generated link. Participants then run only the client.
+- Never expose the old intentionally insecure write-capable Claims edition.
 
-The [example MCP configuration](examples/mcp.remote.example.json) now targets
-the working loopback endpoints, not a hypothetical cloud URL. Despite the
-historical filename, it uses HTTP on the participant's own machine.
+The sandbox has four tools: `get_customer_file`, `list_customer_claims`,
+`get_exchange_rate`, `get_customer_overview`. The overview combines a real
+loopback HTTP dossier API, a real SQLite query and Frankfurter's public rate API.
+Only currency codes leave for Frankfurter. Customer records are fictional;
+the exchange rate is real and dated. There are no write actions.
+
+The older [MCP configuration](examples/mcp.remote.example.json) targets the
+local advanced Claims security demos, not this terminal exercise.
 
 The [visual presentation](presentation.html) starts with general MCP concepts,
 not the claims domain. Its teaching sequence draws on the
@@ -60,8 +68,8 @@ The narration and diagrams are original workshop material:
    MCP. An alternative illustrates a proposed update, not a completed write.
 4. **MCP vs API.** Keep the same document example to distinguish the AI-facing
    protocol from the backend implementation.
-5. **Demo and practice.** Only here introduce the actual synthetic claims server,
-   with the existing six-step participant lab.
+5. **Demo and practice.** Only here introduce the actual multi-source sandbox:
+   list tools, read a dossier, then combine the three sources.
 6. **Security transition.** Separate identity, permissions and human approval.
 
 The opening diagram uses only glowing, unlabelled dots for requests and results.
@@ -75,9 +83,9 @@ Navigate one chapter at a time, or print all chapters. All animations are
 illustrations, not live requests.
 
 The page separates **Course** (book icon, four lessons) from **Your turn**
-(pointer icon, six hands-on exercises). Both destinations stay available in the
+(pointer icon, three terminal commands). Both destinations stay available in the
 header; security is labelled as the next session. Course animations are not
-connection tests, and exercise results must be checked in the participant's client.
+connection tests, and exercise results must be checked in the participant's terminal.
 
 Visual styling now follows [Fluent 2 typography](https://fluent2.microsoft.design/typography),
 [color](https://fluent2.microsoft.design/color) and
@@ -88,17 +96,20 @@ neutral surfaces, restrained violet accents and compact control corners, not an
 export of the Figma components or a Fluent UI framework dependency.
 
 The [public version](https://solenecodes.github.io/workshop-mcp-server/) can be
-shared with participants. In **Your turn**, configure a prepared protected HTTPS
-endpoint and copy the participant link. It contains the endpoint and access mode
-only, never credentials. The page generates commands; calls run in the
-participant's client, not in the browser.
+shared with participants. In **Your turn**, expand the presenter panel,
+configure the read-only public HTTPS endpoint and optionally a separate
+protected endpoint for session 3. Apply and copy the participant link. It
+contains only endpoint URLs, never tokens. Setup and presenter controls are
+collapsed; the three commands and expected fields stay visible together.
+The commands remain readable without JavaScript, using the local URL.
 
-Default lab instructions use the protected reader/adjuster workflow. For the
-morning insecure comparison, explicitly choose the local `3101` endpoint and
-**No auth · local sandbox only**. Never expose that edition publicly.
+No cloud endpoint or Entra application is provisioned by the page. Until
+hosting is approved and configured, use the local sandbox and its visible warning.
 
 The [project style skill](../../.github/skills/README.md) remains available.
 
 Continue with [session 3 security](../03-security/README.md) using the same
-business tools and fixture. [Session 2](../02-architecture/README.md) is reserved
+read-only sandbox in Entra-protected mode; the existing local Claims demo
+remains available separately for RBAC and human approval.
+[Session 2](../02-architecture/README.md) is reserved
 for the colleague's material.
