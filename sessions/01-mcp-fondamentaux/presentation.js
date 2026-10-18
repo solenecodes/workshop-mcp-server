@@ -1,4 +1,4 @@
-import { defaultEndpoint, labStep, shareUrl, validateEndpoint } from './presentation-lab.mjs';
+import { defaultEndpoint, labStep, shareUrl, validateEndpoint } from './presentation-lab.mjs?v=fluent-course';
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -267,13 +267,21 @@ function showChapter(focus = false) {
   chapterIndex = target === -1 ? 0 : target;
   controllers.forEach((controller) => controller.pause());
   chapters.forEach((chapter, index) => { chapter.hidden = index !== chapterIndex; });
-  navigation.forEach((link, index) => {
-    if (index === chapterIndex) link.setAttribute('aria-current', 'step');
+  navigation.forEach((link) => {
+    if (link.getAttribute('href') === `#${chapters[chapterIndex].id}`) link.setAttribute('aria-current', 'step');
+    else link.removeAttribute('aria-current');
+  });
+  const mode = chapterIndex < 4 ? 'course' : chapterIndex === 4 ? 'practice' : 'security';
+  $$('[data-mode-link]').forEach((link) => {
+    if (link.dataset.modeLink === mode) link.setAttribute('aria-current', 'page');
     else link.removeAttribute('aria-current');
   });
   $('#chapter-prev').disabled = chapterIndex === 0;
   $('#chapter-next').disabled = chapterIndex === chapters.length - 1;
-  $('#chapter-count').textContent = `${chapterIndex + 1} / ${chapters.length}`;
+  $('#chapter-prev').textContent = chapterIndex === 4 ? '← Back to course' : chapterIndex === 5 ? '← Back to exercises' : '← Previous lesson';
+  $('#chapter-next').textContent = chapterIndex < 3 ? 'Next lesson →' : chapterIndex === 3 ? 'Start hands-on →' : chapterIndex === 4 ? 'Next: security →' : 'End of workshop';
+  $('#chapter-count').textContent = chapterIndex < 4 ? `Course · Lesson ${chapterIndex + 1} of 4`
+    : chapterIndex === 4 ? 'Your turn · 6 exercises' : 'Next session · Security';
   requestAnimationFrame(() => controllers.forEach((controller) => controller.redraw()));
   if (focus) {
     $('h1,h2', chapters[chapterIndex]).focus({ preventScroll: true });
@@ -416,11 +424,11 @@ function renderLab() {
   $('#terminal-code').textContent = current.terminalCode;
   $('#inspector-code').textContent = current.inspectorCode;
   $('#lab-expected').textContent = current.expected;
-  $('#lab-progress').textContent = `Step ${labIndex + 1} / 6`;
+  $('#lab-progress').textContent = `Exercise ${labIndex + 1} of 6`;
   $$('[data-lab-step]').forEach((button, index) => button.setAttribute('aria-pressed', String(index === labIndex)));
   $('#lab-prev').disabled = labIndex === 0;
   $('#lab-next').disabled = labIndex === 5;
-  $('#lab-completion').textContent = labIndex === 5 ? 'Compare the actual result with your pair.' : 'Advance after checking your client’s result.';
+  $('#lab-completion').textContent = labIndex === 5 ? 'Compare the access result with your partner.' : 'Run this exercise in your client, then continue.';
 }
 function applyEndpoint() {
   try {
@@ -428,8 +436,8 @@ function applyEndpoint() {
     endpointInput.value = settings.endpoint;
     $('#endpoint-error').hidden = true;
     $('#endpoint-status').textContent = settings.local
-      ? 'Local endpoint: each participant must run their own server. Availability is not checked by this page.'
-      : 'HTTPS endpoint configured. Credentials are shared separately; availability and hosting controls must be verified by the facilitator.';
+      ? 'Local server: start it on your machine before connecting. This page generates commands; it does not test the connection.'
+      : 'Remote server selected. Use the facilitator’s credentials in your client. This page does not test the connection.';
     $$('[data-copy],#share').forEach((button) => { button.disabled = false; });
     renderLab();
     return true;
@@ -439,7 +447,7 @@ function applyEndpoint() {
     $('#participant-link')?.remove();
     $('#endpoint-error').textContent = error.message;
     $('#endpoint-error').hidden = false;
-    $('#endpoint-status').textContent = 'Endpoint not applied. Fix the URL or access mode before copying commands.';
+    $('#endpoint-status').textContent = 'Commands not updated. Correct the URL or access mode, then choose Use this server.';
     $$('[data-copy],#share').forEach((button) => { button.disabled = true; });
     return false;
   }

@@ -7,8 +7,8 @@
   <meta name="color-scheme" content="light">
   <title>MCP, from idea to first call</title>
   <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="presentation.css?v=mcp-model">
-  <script type="module" src="presentation.js?v=mcp-model"></script>
+  <link rel="stylesheet" href="presentation.css?v=fluent-course">
+  <script type="module" src="presentation.js?v=fluent-course"></script>
 </head>
 <body>
   <svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -31,29 +31,40 @@
     <symbol id="i-check" viewBox="0 0 24 24"><path d="m4 12 5 5L20 6"/></symbol>
     <symbol id="i-network" viewBox="0 0 24 24"><rect x="8" y="2" width="8" height="6" rx="1"/><path d="M12 8v5M4 17v-4h16v4"/><rect x="1" y="17" width="6" height="5" rx="1"/><rect x="17" y="17" width="6" height="5" rx="1"/></symbol>
     <symbol id="i-model" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="3"/><path d="M9 1v4m6-4v4M9 19v4m6-4v4M1 9h4m-4 6h4m14-6h4m-4 6h4M9 10h6m-6 4h4"/></symbol>
+    <symbol id="i-course" viewBox="0 0 24 24"><path d="M12 5C9 3 5 3 2 4v15c3-1 7-1 10 1 3-2 7-2 10-1V4c-3-1-7-1-10 1Zm0 0v15M6 8h2m-2 4h2m8-4h2m-2 4h2"/></symbol>
+    <symbol id="i-practice" viewBox="0 0 24 24"><path d="m5 3 14 9-7 2-3 7L5 3Zm8 12 5 6M3 2 2 1m8 0v2M1 8h2"/></symbol>
   </svg>
 
   <a class="skip" href="#main">Skip to lesson</a>
   <header class="topbar">
-    <a class="brand" href="#why"><svg class="icon"><use href="#i-plug"/></svg><span>MCP <span class="muted">/ in practice</span></span></a>
-    <div class="top-actions"><a href="#lab" class="button small">Open the lab <svg class="icon"><use href="#i-arrow"/></svg></a><button id="print" class="text-button" hidden>Print</button></div>
+    <a class="brand" href="#why"><svg class="icon"><use href="#i-plug"/></svg><span>MCP <span class="muted">workshop</span></span></a>
+    <div class="top-actions"><nav class="mode-navigation" aria-label="Course or hands-on"><a href="#why" data-mode-link="course"><svg class="icon"><use href="#i-course"/></svg>Course</a><a href="#lab" data-mode-link="practice"><svg class="icon"><use href="#i-practice"/></svg>Your turn</a></nav><button id="print" class="text-button" hidden>Print</button></div>
   </header>
 
   <div class="lesson-layout">
     <nav class="chapters" aria-label="Lesson chapters">
-      <a href="#why"><span class="chapter-icon"><svg class="icon"><use href="#i-plug"/></svg></span><span><small>01</small> Why MCP?</span></a>
-      <a href="#anatomy"><span class="chapter-icon"><svg class="icon"><use href="#i-server"/></svg></span><span><small>02</small> What is a server?</span></a>
-      <a href="#mcp"><span class="chapter-icon"><svg class="icon"><use href="#i-play"/></svg></span><span><small>03</small> Follow a call</span></a>
-      <a href="#api"><span class="chapter-icon"><svg class="icon"><use href="#i-code"/></svg></span><span><small>04</small> MCP vs API</span></a>
-      <a href="#lab"><span class="chapter-icon"><svg class="icon"><use href="#i-tool"/></svg></span><span><small>05</small> Your turn</span></a>
-      <a href="#auth"><span class="chapter-icon"><svg class="icon"><use href="#i-shield"/></svg></span><span><small>06</small> Add controls</span></a>
+      <div class="chapter-group">
+        <p class="nav-group-label"><svg class="icon"><use href="#i-course"/></svg>Course</p>
+        <a href="#why"><span class="chapter-icon"><svg class="icon"><use href="#i-plug"/></svg></span><span><small>Lesson 1</small> Why use MCP?</span></a>
+        <a href="#anatomy"><span class="chapter-icon"><svg class="icon"><use href="#i-server"/></svg></span><span><small>Lesson 2</small> App, model and server</span></a>
+        <a href="#mcp"><span class="chapter-icon"><svg class="icon"><use href="#i-play"/></svg></span><span><small>Lesson 3</small> Follow a tool call</span></a>
+        <a href="#api"><span class="chapter-icon"><svg class="icon"><use href="#i-code"/></svg></span><span><small>Lesson 4</small> MCP and APIs</span></a>
+      </div>
+      <div class="chapter-group practice-group">
+        <p class="nav-group-label"><svg class="icon"><use href="#i-practice"/></svg>Your turn</p>
+        <a href="#lab"><span class="chapter-icon"><svg class="icon"><use href="#i-practice"/></svg></span><span><small>6 exercises · 15 min</small> Connect and test</span></a>
+      </div>
+      <div class="chapter-group">
+        <p class="nav-group-label"><svg class="icon"><use href="#i-shield"/></svg>Next session</p>
+        <a href="#auth"><span class="chapter-icon"><svg class="icon"><use href="#i-shield"/></svg></span><span><small>Security</small> Protect the tools</span></a>
+      </div>
     </nav>
 
     <main id="main">
       <section id="why" class="chapter" aria-labelledby="why-title">
-        <p class="eyebrow">01 / The problem</p>
-        <h1 id="why-title" tabindex="-1">One assistant.<br><span>Many external systems.</span></h1>
-        <p class="intro">MCP (Model Context Protocol) is an open standard that connects AI applications to tools and data. The model alone cannot access your systems.</p>
+        <p class="eyebrow"><svg class="icon"><use href="#i-course"/></svg>Course · Lesson 1 of 4</p>
+        <h1 id="why-title" tabindex="-1">Why use MCP?</h1>
+        <p class="intro">MCP (Model Context Protocol) gives AI applications a common way to discover tools and access data. Without it, each app needs its own integration with each system.</p>
         <div class="integration-board">
           <div class="integration-playback">
             <button class="button small" id="integration-play" type="button" aria-pressed="false" aria-describedby="integration-caption"><svg class="icon" aria-hidden="true"><use href="#i-play"/></svg><span>Play</span></button>
@@ -93,28 +104,29 @@
       </section>
 
       <section id="anatomy" class="chapter" aria-labelledby="anatomy-title">
-        <p class="eyebrow">02 / Three roles</p>
-        <h2 id="anatomy-title" tabindex="-1">A server is a program.<br><span>Not the AI model.</span></h2>
-        <p class="intro">It exposes capabilities and connects them to real business logic.</p>
+        <p class="eyebrow"><svg class="icon"><use href="#i-course"/></svg>Course · Lesson 2 of 4</p>
+        <h2 id="anatomy-title" tabindex="-1">Which part does what?</h2>
+        <p class="intro">The model suggests a tool. The application calls it through an MCP client. The server checks the request and runs the operation.</p>
         <div class="anatomy-row">
-          <article class="big-node"><svg class="icon"><use href="#i-app"/></svg><h3>AI application</h3><p>The host: VS Code, for example.</p><div class="nested-client"><svg class="icon"><use href="#i-plug"/></svg> MCP client <small>speaks the protocol</small></div></article>
+          <article class="big-node"><svg class="icon"><use href="#i-app"/></svg><h3>AI application</h3><p>The host, such as VS Code. Coordinates the model and tool calls.</p><div class="nested-client"><svg class="icon"><use href="#i-plug"/></svg> MCP client <small>connects to the server</small></div></article>
           <div class="link-label"><svg class="icon"><use href="#i-arrow"/></svg><span>MCP</span></div>
           <article class="big-node accent"><svg class="icon"><use href="#i-server"/></svg><h3>MCP server</h3><p>Describes its capabilities.<br>Checks and executes requests.</p><span class="mini-code">Example: search documents</span></article>
           <div class="link-label"><svg class="icon"><use href="#i-arrow"/></svg><span>your code</span></div>
           <article class="big-node"><svg class="icon"><use href="#i-database"/></svg><h3>Your systems</h3><p>APIs, databases, files.<br>The actual source of the result.</p></article>
         </div>
         <div class="primitives">
-          <article><svg class="icon"><use href="#i-tool"/></svg><div><h3>Tools</h3><p>Do something.</p><span class="capability-example">Search for a document</span></div></article>
-          <article><svg class="icon"><use href="#i-file"/></svg><div><h3>Resources</h3><p>Read context.</p><span class="capability-example">A document's contents</span></div></article>
-          <article><svg class="icon"><use href="#i-chat"/></svg><div><h3>Prompts</h3><p>Start from a template.</p><span class="capability-example">A guided document review</span></div></article>
+          <article><svg class="icon"><use href="#i-tool"/></svg><div><h3>Tools</h3><p>Functions the app can call.</p><span class="capability-example">Search for a document</span></div></article>
+          <article><svg class="icon"><use href="#i-file"/></svg><div><h3>Resources</h3><p>Content the app can read.</p><span class="capability-example">A document's contents</span></div></article>
+          <article><svg class="icon"><use href="#i-chat"/></svg><div><h3>Prompts</h3><p>Templates the user can choose.</p><span class="capability-example">A guided document review</span></div></article>
         </div>
         <div class="transport-strip"><span><svg class="icon"><use href="#i-code"/></svg> Run a server on your machine</span><span><svg class="icon"><use href="#i-globe"/></svg> Connect to a remote server</span></div>
         <details><summary>How do I connect?</summary><p>Add a trusted server to your application's MCP settings: a command for a local process, or an endpoint URL for a remote server. Review the permissions and credentials, then inspect the capabilities it exposes. We will do this in the lab.</p><p>Technical terms: <strong>stdio</strong> connects local processes; <strong>Streamable HTTP</strong> connects an HTTP endpoint. MCP messages use <strong>JSON-RPC 2.0</strong>. Each server connection has its own MCP client inside the host.</p><p>Servers may expose tools, resources, prompts, or a subset. Client support varies; the workshop backend implements tools.</p></details>
       </section>
 
       <section id="mcp" class="chapter" aria-labelledby="mcp-title">
-        <p class="eyebrow">03 / Watch it happen</p>
+        <p class="eyebrow"><svg class="icon"><use href="#i-course"/></svg>Course · Lesson 3 of 4</p>
         <h2 id="mcp-title" tabindex="-1">“Find the<br><span>deployment guide.”</span></h2>
+        <p class="intro">Follow the question, tool call and result. Use Play to watch the sequence, or choose a numbered step.</p>
         <div class="flow" data-flow="call">
           <div class="flow-top"><span class="tag">Illustration · no live calls</span><label>Example <select data-scenario><option value="read">Find a document</option><option value="write">Propose a document update</option></select></label></div>
           <div class="flow-diagram">
@@ -136,11 +148,12 @@
       </section>
 
       <section id="api" class="chapter" aria-labelledby="api-title">
-        <p class="eyebrow">04 / Different jobs</p>
-        <h2 id="api-title" tabindex="-1">MCP doesn't replace your API.<br><span>It gives AI apps a common contract.</span></h2>
+        <p class="eyebrow"><svg class="icon"><use href="#i-course"/></svg>Course · Lesson 4 of 4</p>
+        <h2 id="api-title" tabindex="-1">How is MCP different from an API?</h2>
+        <p class="intro">Your API still does the work. An MCP server makes selected operations discoverable and callable by compatible AI applications.</p>
         <div class="comparison">
-          <article><div class="card-label"><svg class="icon"><use href="#i-code"/></svg> Business API</div><h3>An interface for your software.</h3><p>It already knows how to search documents. Your integration code must know how to call it.</p><span class="tag">Backend-specific contract</span></article>
-          <article class="accent"><div class="card-label"><svg class="icon"><use href="#i-plug"/></svg> MCP server</div><h3>An interface AI apps understand.</h3><p>It advertises “Search documents”, explains the required input and runs the search when requested.</p><span class="tag green">Shared discovery and calling conventions</span></article>
+          <article><div class="card-label"><svg class="icon"><use href="#i-code"/></svg> Business API</div><h3>Exposes a service's operations</h3><p>Your code must know the endpoint, required inputs and authentication. Example: a document-search endpoint.</p><span class="tag">Implemented for this service</span></article>
+          <article class="accent"><div class="card-label"><svg class="icon"><use href="#i-plug"/></svg> MCP server</div><h3>Exposes tools to an AI application</h3><p>The client discovers a “Search documents” tool and its inputs. The server translates the call into the existing search operation.</p><span class="tag">One protocol across compatible clients</span></article>
         </div>
         <div class="api-path"><span><svg class="icon"><use href="#i-app"/></svg> AI app</span><b>→</b><span><svg class="icon"><use href="#i-server"/></svg> MCP server</span><b>→</b><span><svg class="icon"><use href="#i-code"/></svg> Existing API</span><b>→</b><span><svg class="icon"><use href="#i-database"/></svg> Data</span></div>
         <p class="caption">One possible architecture. A server can call an API or work with files and data directly.</p>
@@ -149,13 +162,13 @@
       </section>
 
       <section id="lab" class="chapter" aria-labelledby="lab-title">
-        <p class="eyebrow">05 / Your turn · 15 minutes</p>
-        <h2 id="lab-title" tabindex="-1">Connect. Read. Propose.<br><span>Check what really happened.</span></h2>
-        <p class="intro">Demo starts here: we now use the workshop's synthetic insurance claims server. The document example above was only an illustration.</p>
+        <p class="eyebrow practice-label"><svg class="icon"><use href="#i-practice"/></svg>Your turn · Hands-on · 15 minutes</p>
+        <h2 id="lab-title" tabindex="-1">Connect to the MCP server</h2>
+        <p class="intro">Run the six exercises below in VS Code or Inspector. This time you will call the workshop's synthetic insurance claims server, not the illustrated document service.</p>
         <div class="endpoint-card">
           <form id="endpoint-form">
-            <label for="endpoint">Workshop MCP endpoint</label>
-            <div class="endpoint-row"><input id="endpoint" type="url" value="http://127.0.0.1:3102/mcp" required spellcheck="false" aria-describedby="endpoint-status"><button class="button primary" type="submit">Use endpoint</button></div>
+            <label for="endpoint">Server URL for the exercises</label>
+            <div class="endpoint-row"><input id="endpoint" type="url" value="http://127.0.0.1:3102/mcp" required spellcheck="false" aria-describedby="endpoint-status"><button class="button primary" type="submit">Use this server</button></div>
             <div class="endpoint-options"><label>Access <select id="access"><option value="bearer">Bearer token · supplied separately</option><option value="oauth">Sign in through the MCP client</option><option value="open">No auth · local sandbox only</option></select></label><button class="text-button" type="button" id="share"><svg class="icon"><use href="#i-copy"/></svg> Copy participant link</button></div>
           </form>
           <p id="endpoint-status" role="status">Default: each participant's own local protected server. No public endpoint is configured.</p>
@@ -166,24 +179,24 @@
         <div class="lab-shell">
           <div class="lab-steps" role="group" aria-label="Practice steps">
             <button data-lab-step="0" aria-pressed="true"><span>1</span> Connect</button>
-            <button data-lab-step="1" aria-pressed="false"><span>2</span> Discover</button>
-            <button data-lab-step="2" aria-pressed="false"><span>3</span> Read</button>
-            <button data-lab-step="3" aria-pressed="false"><span>4</span> Write?</button>
-            <button data-lab-step="4" aria-pressed="false"><span>5</span> Verify</button>
-            <button data-lab-step="5" aria-pressed="false"><span>6</span> Test access</button>
+            <button data-lab-step="1" aria-pressed="false"><span>2</span> List tools</button>
+            <button data-lab-step="2" aria-pressed="false"><span>3</span> Read data</button>
+            <button data-lab-step="3" aria-pressed="false"><span>4</span> Request a change</button>
+            <button data-lab-step="4" aria-pressed="false"><span>5</span> Check the result</button>
+            <button data-lab-step="5" aria-pressed="false"><span>6</span> Test permissions</button>
           </div>
           <div class="lab-content">
-            <div class="lab-heading"><span class="tag" id="lab-progress">Step 1 / 6</span><span class="tag green">Real calls from your client</span></div>
+            <div class="lab-heading"><span class="tag" id="lab-progress">Exercise 1 of 6</span><span class="tag">Run in your MCP client</span></div>
             <h3 id="lab-step-title">Add the server to your client.</h3>
             <p id="lab-instruction">Copy the configuration into VS Code's MCP configuration, start the connection and review the trust prompt.</p>
             <div class="copy-panel"><div><span id="copy-label">VS Code · .vscode/mcp.json</span><button class="text-button" data-copy="lab-code"><svg class="icon"><use href="#i-copy"/></svg> Copy</button></div><pre><code id="lab-code">The generated configuration appears here with JavaScript enabled.</code></pre></div>
-            <div class="expected"><svg class="icon"><use href="#i-check"/></svg><div><strong>What to check</strong><p id="lab-expected">A connected MCP server and its discovered tools. This page does not verify the connection for you.</p></div></div>
+            <div class="expected"><svg class="icon"><use href="#i-check"/></svg><div><strong>Expected result in your client</strong><p id="lab-expected">A connected MCP server and its discovered tools. This page does not verify the connection for you.</p></div></div>
             <details id="terminal-details"><summary>Prefer direct calls? Terminal / Inspector</summary>
               <p>Terminal: clone the repository, run <code>npm ci</code>, then use the commands below in Bash. The official SDK handles the MCP connection. Inspector: connect with Streamable HTTP, then use the tool name and JSON arguments shown here.</p>
               <div class="copy-panel"><div><span>Terminal · from the repository root</span><button class="text-button" data-copy="terminal-code">Copy</button></div><pre><code id="terminal-code"></code></pre></div>
               <div class="copy-panel"><div><span>Inspector · method / arguments</span><button class="text-button" data-copy="inspector-code">Copy</button></div><pre><code id="inspector-code"></code></pre></div>
             </details>
-            <div class="lab-bottom"><button class="button" id="lab-prev" disabled>← Previous</button><span id="lab-completion" role="status"></span><button class="button primary" id="lab-next">Next step →</button></div>
+            <div class="lab-bottom"><button class="button" id="lab-prev" disabled>← Previous exercise</button><span id="lab-completion" role="status"></span><button class="button primary" id="lab-next">Next exercise →</button></div>
           </div>
         </div>
         <p class="caption">No MCP requests or credentials pass through this page. Copy commands into your client; compare its actual results with the expected behavior.</p>
@@ -192,8 +205,9 @@
       </section>
 
       <section id="auth" class="chapter" aria-labelledby="auth-title">
-        <p class="eyebrow">06 / Session 3 · Whose rights?</p>
-        <h2 id="auth-title" tabindex="-1">Connected doesn't mean<br><span>allowed to do everything.</span></h2>
+        <p class="eyebrow"><svg class="icon"><use href="#i-shield"/></svg>Next session · Security</p>
+        <h2 id="auth-title" tabindex="-1">Who can call which tools?</h2>
+        <p class="intro">Authentication identifies the caller. Authorization checks what they can access. Human approval adds a separate check before a sensitive change.</p>
         <div class="flow" data-flow="auth">
           <div class="flow-top"><span class="tag">Illustration · local demo policy</span><label>Request <select data-scenario><option value="allowed">Reader → assigned claim</option><option value="denied">Reader → another claim</option><option value="write">Adjuster → propose a note</option><option value="anonymous">No token → 401</option></select></label></div>
           <div class="flow-diagram">

@@ -74,6 +74,19 @@ Other animations have manual steps; technical message examples stay collapsed.
 Navigate one chapter at a time, or print all chapters. All animations are
 illustrations, not live requests.
 
+The page separates **Course** (book icon, four lessons) from **Your turn**
+(pointer icon, six hands-on exercises). Both destinations stay available in the
+header; security is labelled as the next session. Course animations are not
+connection tests, and exercise results must be checked in the participant's client.
+
+Visual styling now follows [Fluent 2 typography](https://fluent2.microsoft.design/typography),
+[color](https://fluent2.microsoft.design/color) and
+[token guidance](https://fluent2.microsoft.design/design-tokens), with the public
+[community Figma file](https://www.figma.com/design/Ch2gvx19jIxueUGkifFyWU/Microsoft-Fluent-2-Web--Community-?node-id=1-840)
+as a visual reference. It uses native HTML/CSS with a Segoe UI/system font stack,
+neutral surfaces, restrained violet accents and compact control corners, not an
+export of the Figma components or a Fluent UI framework dependency.
+
 The [public version](https://solenecodes.github.io/workshop-mcp-server/) can be
 shared with participants. In **Your turn**, configure a prepared protected HTTPS
 endpoint and copy the participant link. It contains the endpoint and access mode
