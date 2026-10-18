@@ -7,8 +7,8 @@
   <meta name="color-scheme" content="light">
   <title>MCP, from idea to first call</title>
   <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="presentation.css">
-  <script type="module" src="presentation.js"></script>
+  <link rel="stylesheet" href="presentation.css?v=message-motion">
+  <script type="module" src="presentation.js?v=message-motion"></script>
 </head>
 <body>
   <svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -68,16 +68,16 @@
               <path d="M0 40 300 40"/><path d="M0 40 300 120"/><path d="M0 40 300 200"/>
               <path d="M0 120 300 40"/><path d="M0 120 300 120"/><path d="M0 120 300 200"/>
               <path d="M0 200 300 40"/><path d="M0 200 300 120"/><path d="M0 200 300 200"/>
-              <circle class="integration-packet" r="5" visibility="hidden"/>
             </svg>
             <div class="integration-side systems">
               <div><svg class="icon"><use href="#i-file"/></svg><strong>Claims</strong><small class="mcp-label">MCP server</small></div>
               <div><svg class="icon"><use href="#i-code"/></svg><strong>Code</strong><small class="mcp-label">MCP server</small></div>
               <div><svg class="icon"><use href="#i-database"/></svg><strong>Data</strong><small class="mcp-label">MCP server</small></div>
             </div>
+            <div class="integration-messages" aria-hidden="true"><span hidden></span><span hidden></span><span hidden></span></div>
           </div>
           <div class="integration-playback">
-            <button class="button small" id="integration-play" type="button" aria-pressed="false" aria-describedby="integration-caption"><svg class="icon" aria-hidden="true"><use href="#i-play"/></svg><span>Play</span></button>
+            <button class="button small" id="integration-play" type="button" aria-pressed="false" aria-describedby="integration-caption"><svg class="icon" aria-hidden="true"><use href="#i-play"/></svg><span>Animate</span></button>
             <p class="diagram-caption" id="integration-caption">Each app-to-system pair needs its own integration code.</p>
           </div>
         </div>

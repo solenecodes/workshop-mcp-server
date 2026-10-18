@@ -291,7 +291,9 @@ document.addEventListener('keydown', (event) => {
 function createIntegrationAnimation() {
   const board = $('.integration-board');
   const paths = $$('.integration-lines path', board);
-  const packet = $('.integration-packet', board);
+  const map = $('.integration-map', board);
+  const svg = $('.integration-lines', board);
+  const packets = $$('.integration-messages>span', board);
   const apps = $$('.integration-side:not(.systems)>div', board);
   const systems = $$('.systems>div', board);
   const play = $('#integration-play');
@@ -309,7 +311,7 @@ function createIntegrationAnimation() {
       : ['custom request', 'custom response'];
   }
   function updatePlay() {
-    $('span', play).textContent = playing ? 'Pause' : complete ? 'Replay' : 'Play';
+    $('span', play).textContent = playing ? 'Pause' : complete ? 'Replay' : elapsed > 0 ? 'Resume' : 'Animate';
     $('use', play).setAttribute('href', playing ? '#i-pause' : '#i-play');
     play.setAttribute('aria-pressed', String(playing));
     board.dataset.playing = String(playing);
@@ -323,7 +325,7 @@ function createIntegrationAnimation() {
   function clear() {
     paths.forEach((path) => path.classList.remove('is-active'));
     [...apps, ...systems].forEach((element) => element.classList.remove('is-active'));
-    packet.setAttribute('visibility', 'hidden');
+    packets.forEach((packet) => { packet.hidden = true; });
   }
   function idleCaption() {
     return board.dataset.integration === 'mcp'
@@ -334,32 +336,42 @@ function createIntegrationAnimation() {
     clear();
     if (complete || motion.matches || !board.getBoundingClientRect().width) return;
     const messages = phases();
-    const pair = Math.floor(index / messages.length);
+    const group = Math.floor(index / messages.length);
     const phase = index % messages.length;
-    const path = paths[pair];
-    const app = apps[Math.floor(pair / systems.length)];
-    const system = systems[pair % systems.length];
     const returning = phase % 2 === 1;
-    path.classList.add('is-active');
-    app.classList.add('is-active');
-    system.classList.add('is-active');
-    const progress = Math.min(elapsed / 900, 1);
-    const point = path.getPointAtLength(path.getTotalLength() * (returning ? 1 - progress : progress));
-    // Compensate for the stretched viewBox so packets stay round at every viewport width.
-    const scale = 300 / $('.integration-lines', board).getBoundingClientRect().width;
-    packet.setAttribute('transform', `translate(${point.x} ${point.y}) scale(${scale} 1)`);
-    packet.setAttribute('visibility', 'visible');
-    caption.textContent = `${$('strong', app).textContent} ${returning ? '←' : '→'} ${$('strong', system).textContent} · ${messages[phase]}`;
+    const customRequests = ['GET /claims', 'repo.list()', 'SELECT rows'];
+    const customResponses = ['claim JSON', 'repo objects', 'SQL rows'];
+    const bounds = map.getBoundingClientRect();
+    const matrix = svg.getScreenCTM();
+    if (!matrix) return;
+    board.dataset.direction = returning ? 'response' : 'request';
+    packets.forEach((packet, source) => {
+      const destination = (source + group) % systems.length;
+      const path = paths[source * systems.length + destination];
+      path.classList.add('is-active');
+      apps[source].classList.add('is-active');
+      systems[destination].classList.add('is-active');
+      const progress = Math.min(Math.max((elapsed - source * 100) / 1050, 0), 1);
+      const point = path.getPointAtLength(path.getTotalLength() * (returning ? 1 - progress : progress));
+      const screenPoint = new DOMPoint(point.x, point.y).matrixTransform(matrix);
+      packet.textContent = board.dataset.integration === 'mcp'
+        ? messages[phase] : (returning ? customResponses : customRequests)[destination];
+      packet.hidden = false;
+      packet.style.transform = `translate(${screenPoint.x - bounds.left}px, ${screenPoint.y - bounds.top}px) translate(-50%, -50%)`;
+    });
+    caption.textContent = board.dataset.integration === 'mcp'
+      ? `${messages[phase]} · same contract for every app · ${group + 1} / 3`
+      : `${returning ? 'Different response formats' : 'Different request contracts'} · ${group + 1} / 3`;
     board.dataset.exchange = String(index + 1);
   }
   function tick(time) {
     if (!playing) return;
     if (previousTime !== undefined) elapsed += time - previousTime;
     previousTime = time;
-    if (elapsed >= 1150) {
+    if (elapsed >= 1500) {
       elapsed = 0;
       index++;
-      if (index === paths.length * phases().length) {
+      if (index === systems.length * phases().length) {
         complete = true;
         pause();
         clear();
@@ -370,14 +382,18 @@ function createIntegrationAnimation() {
     draw();
     frame = requestAnimationFrame(tick);
   }
-  play.addEventListener('click', () => {
-    if (playing) { pause(); return; }
+  function start() {
+    if (motion.matches) return;
     controllers.forEach((controller) => controller.pause());
     if (complete) { index = 0; elapsed = 0; complete = false; }
     playing = true;
     updatePlay();
     draw();
     frame = requestAnimationFrame(tick);
+  }
+  play.addEventListener('click', () => {
+    if (playing) pause();
+    else start();
   });
   $$('[data-integration-mode]').forEach((button) => button.addEventListener('click', () => {
     pause();
@@ -390,6 +406,7 @@ function createIntegrationAnimation() {
     $$('[data-integration-mode]').forEach((item) => item.setAttribute('aria-pressed', String(item === button)));
     caption.textContent = idleCaption();
     updatePlay();
+    start();
   }));
   function updateMotion() {
     pause();

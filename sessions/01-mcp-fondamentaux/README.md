@@ -48,11 +48,13 @@ six-step participant lab and a security walkthrough. Navigate one chapter at
 a time, or print all chapters. Animations have manual steps and reduced-motion
 support; protocol details stay collapsed until needed.
 
-The opening comparison keeps its two-column layout and animates request/response
-packets on demand. Custom integrations use app-specific exchanges; MCP uses the
-same discovery/call messages across connections. Play/Pause and Replay are
-available; playback stops when leaving the diagram or chapter. Reduced motion
-keeps both comparisons static. These are illustrations, not live requests.
+The opening comparison keeps its two-column layout. Selecting either comparison
+starts three visible message capsules moving between the cards; Animate also
+starts playback. Custom integrations show different illustrative request/response
+formats; MCP shows the same discovery/call messages on all connections. Pause,
+Resume and Replay are available; playback stops when leaving the diagram or
+chapter. Reduced motion keeps both comparisons static. There is no initial
+autoplay. These are illustrations, not live requests.
 
 The [public version](https://solenecodes.github.io/workshop-mcp-server/) can be
 shared with participants. In **Your turn**, configure a prepared protected HTTPS
