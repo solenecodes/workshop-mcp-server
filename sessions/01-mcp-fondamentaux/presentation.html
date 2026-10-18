@@ -65,7 +65,10 @@
               <div><svg class="icon"><use href="#i-app"/></svg><strong>Agent app</strong></div>
             </div>
             <svg class="integration-lines" viewBox="0 0 300 240" preserveAspectRatio="none" aria-hidden="true">
-              <path d="M0 40 300 40M0 40 300 120M0 40 300 200M0 120 300 40M0 120 300 120M0 120 300 200M0 200 300 40M0 200 300 120M0 200 300 200"/>
+              <path d="M0 40 300 40"/><path d="M0 40 300 120"/><path d="M0 40 300 200"/>
+              <path d="M0 120 300 40"/><path d="M0 120 300 120"/><path d="M0 120 300 200"/>
+              <path d="M0 200 300 40"/><path d="M0 200 300 120"/><path d="M0 200 300 200"/>
+              <circle class="integration-packet" r="5" visibility="hidden"/>
             </svg>
             <div class="integration-side systems">
               <div><svg class="icon"><use href="#i-file"/></svg><strong>Claims</strong><small class="mcp-label">MCP server</small></div>
@@ -73,7 +76,10 @@
               <div><svg class="icon"><use href="#i-database"/></svg><strong>Data</strong><small class="mcp-label">MCP server</small></div>
             </div>
           </div>
-          <p class="diagram-caption" id="integration-caption">Each app-to-system pair needs its own integration code.</p>
+          <div class="integration-playback">
+            <button class="button small" id="integration-play" type="button" aria-pressed="false" aria-describedby="integration-caption"><svg class="icon" aria-hidden="true"><use href="#i-play"/></svg><span>Play</span></button>
+            <p class="diagram-caption" id="integration-caption">Each app-to-system pair needs its own integration code.</p>
+          </div>
         </div>
         <div class="origin"><span class="date-pill">2024</span><p>Anthropic open-sources MCP: a specification + SDKs, not a new model.<br><span class="muted">One shared protocol instead of a different integration contract for every app.</span></p></div>
         <details><summary>The idea in 30 seconds</summary><p>An assistant cannot infer your live business data or safely invent API calls. A developer exposes explicit capabilities through a server. A compatible host discovers those capabilities and decides when to use them. MCP standardizes that exchange; each backend still needs an implementation and its own security.</p><p>The lines are connections, not a central MCP service. Hosts implement an MCP client; each system exposes its own server.</p><p><a href="https://www.anthropic.com/news/model-context-protocol">Original announcement</a></p></details>

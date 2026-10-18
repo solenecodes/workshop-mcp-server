@@ -288,13 +288,127 @@ document.addEventListener('keydown', (event) => {
   }
 });
 
-$$('[data-integration-mode]').forEach((button) => button.addEventListener('click', () => {
-  $('.integration-board').dataset.integration = button.dataset.integrationMode;
-  $$('[data-integration-mode]').forEach((item) => item.setAttribute('aria-pressed', String(item === button)));
-  $('#integration-caption').textContent = button.dataset.integrationMode === 'mcp'
-    ? 'Same connections. One shared protocol: reusable clients, a server per system.'
-    : 'Each app-to-system pair needs its own integration code.';
-}));
+function createIntegrationAnimation() {
+  const board = $('.integration-board');
+  const paths = $$('.integration-lines path', board);
+  const packet = $('.integration-packet', board);
+  const apps = $$('.integration-side:not(.systems)>div', board);
+  const systems = $$('.systems>div', board);
+  const play = $('#integration-play');
+  const caption = $('#integration-caption');
+  let index = 0;
+  let elapsed = 0;
+  let previousTime;
+  let frame;
+  let playing = false;
+  let complete = false;
+
+  function phases() {
+    return board.dataset.integration === 'mcp'
+      ? ['tools/list', 'tool schemas', 'tools/call', 'tool result']
+      : ['custom request', 'custom response'];
+  }
+  function updatePlay() {
+    $('span', play).textContent = playing ? 'Pause' : complete ? 'Replay' : 'Play';
+    $('use', play).setAttribute('href', playing ? '#i-pause' : '#i-play');
+    play.setAttribute('aria-pressed', String(playing));
+    board.dataset.playing = String(playing);
+  }
+  function pause() {
+    playing = false;
+    cancelAnimationFrame(frame);
+    previousTime = undefined;
+    updatePlay();
+  }
+  function clear() {
+    paths.forEach((path) => path.classList.remove('is-active'));
+    [...apps, ...systems].forEach((element) => element.classList.remove('is-active'));
+    packet.setAttribute('visibility', 'hidden');
+  }
+  function idleCaption() {
+    return board.dataset.integration === 'mcp'
+      ? 'Same connections. One shared protocol: reusable clients, a server per system.'
+      : 'Each app-to-system pair needs its own integration code.';
+  }
+  function draw() {
+    clear();
+    if (complete || motion.matches || !board.getBoundingClientRect().width) return;
+    const messages = phases();
+    const pair = Math.floor(index / messages.length);
+    const phase = index % messages.length;
+    const path = paths[pair];
+    const app = apps[Math.floor(pair / systems.length)];
+    const system = systems[pair % systems.length];
+    const returning = phase % 2 === 1;
+    path.classList.add('is-active');
+    app.classList.add('is-active');
+    system.classList.add('is-active');
+    const progress = Math.min(elapsed / 900, 1);
+    const point = path.getPointAtLength(path.getTotalLength() * (returning ? 1 - progress : progress));
+    // Compensate for the stretched viewBox so packets stay round at every viewport width.
+    const scale = 300 / $('.integration-lines', board).getBoundingClientRect().width;
+    packet.setAttribute('transform', `translate(${point.x} ${point.y}) scale(${scale} 1)`);
+    packet.setAttribute('visibility', 'visible');
+    caption.textContent = `${$('strong', app).textContent} ${returning ? '←' : '→'} ${$('strong', system).textContent} · ${messages[phase]}`;
+    board.dataset.exchange = String(index + 1);
+  }
+  function tick(time) {
+    if (!playing) return;
+    if (previousTime !== undefined) elapsed += time - previousTime;
+    previousTime = time;
+    if (elapsed >= 1150) {
+      elapsed = 0;
+      index++;
+      if (index === paths.length * phases().length) {
+        complete = true;
+        pause();
+        clear();
+        caption.textContent = idleCaption();
+        return;
+      }
+    }
+    draw();
+    frame = requestAnimationFrame(tick);
+  }
+  play.addEventListener('click', () => {
+    if (playing) { pause(); return; }
+    controllers.forEach((controller) => controller.pause());
+    if (complete) { index = 0; elapsed = 0; complete = false; }
+    playing = true;
+    updatePlay();
+    draw();
+    frame = requestAnimationFrame(tick);
+  });
+  $$('[data-integration-mode]').forEach((button) => button.addEventListener('click', () => {
+    pause();
+    clear();
+    index = 0;
+    elapsed = 0;
+    complete = false;
+    delete board.dataset.exchange;
+    board.dataset.integration = button.dataset.integrationMode;
+    $$('[data-integration-mode]').forEach((item) => item.setAttribute('aria-pressed', String(item === button)));
+    caption.textContent = idleCaption();
+    updatePlay();
+  }));
+  function updateMotion() {
+    pause();
+    if (motion.matches) clear();
+    play.disabled = motion.matches;
+    play.title = motion.matches ? 'Reduced motion: compare the two static diagrams.' : 'Animate illustrative exchanges; no network calls.';
+    caption.textContent = idleCaption();
+  }
+  motion.addEventListener('change', updateMotion);
+  if ('ResizeObserver' in window) new ResizeObserver(() => {
+    if (playing || elapsed > 0) draw();
+  }).observe(board);
+  if ('IntersectionObserver' in window) new IntersectionObserver((entries) => {
+    if (!entries[0].isIntersecting) pause();
+  }).observe(board);
+  updateMotion();
+  return { pause, redraw: () => { if (elapsed > 0) draw(); } };
+}
+controllers.push(createIntegrationAnimation());
 
 let settings;
 let labIndex = 0;
