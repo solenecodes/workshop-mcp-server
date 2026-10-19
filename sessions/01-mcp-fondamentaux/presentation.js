@@ -1,5 +1,5 @@
-import { defaultEndpoint, defaultProtectedEndpoint, labCommand, labSteps, securityCode, setupCode, shareUrl, validateEndpoint } from './presentation-lab.mjs?v=guided-lab-1';
-import { callMcp, jsonTokens } from './mcp-console.mjs?v=guided-lab-1';
+import { defaultEndpoint, defaultProtectedEndpoint, labCommand, labSteps, securityCode, setupCode, shareUrl, validateEndpoint } from './presentation-lab.mjs?v=weather-lab-1';
+import { callMcp, jsonTokens } from './mcp-console.mjs?v=weather-lab-1';
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];

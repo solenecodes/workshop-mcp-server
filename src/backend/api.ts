@@ -20,7 +20,8 @@ export function backendOpenApi(domain: Domain, baseUrl: string, authenticated = 
   const properties: Record<Domain, Record<string, unknown>> = {
     customers: { customerId: { type: 'string' }, customerName: { type: 'string' }, dateOfBirth: { type: 'string' }, address: { type: 'string' } },
     policies: { policyId: { type: 'string' }, customerId: { type: 'string' }, coverage: { type: 'string' }, coverageLimit: { type: 'number' } },
-    claims: { claimId: { type: 'string' }, customerId: { type: 'string' }, policyId: { type: 'string' }, amount: { type: 'number' }, currency: { type: 'string', enum: ['EUR'] }, status: { type: 'string', enum: ['open', 'escalated'] } },
+    claims: { claimId: { type: 'string' }, customerId: { type: 'string' }, policyId: { type: 'string' }, amount: { type: 'number' }, currency: { type: 'string', enum: ['EUR'] }, status: { type: 'string', enum: ['open', 'escalated'] },
+      peril: { type: 'string', enum: ['storm', 'flooding'] }, incidentDate: { type: 'string', format: 'date' }, city: { type: 'string' }, latitude: { type: 'number' }, longitude: { type: 'number' } },
   };
   const record = { type: 'object', properties: properties[domain], required: Object.keys(properties[domain]), additionalProperties: false };
   const problem = { description: 'RFC 9457 problem; requestId correlates with server logs.', content: { 'application/problem+json': { schema: { type: 'object' } } } };

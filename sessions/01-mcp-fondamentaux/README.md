@@ -42,11 +42,13 @@ client support and authentication requirements must be checked separately.
 - Never expose the old intentionally insecure write-capable Claims edition.
 
 The sandbox has four tools: `get_customer_file`, `list_customer_claims`,
-`get_exchange_rate`, `get_customer_overview`. The overview combines a real
+`get_incident_weather`, `get_customer_overview`. One story links them: a
+fictional home-insurance claim (storm or flooding, a date and a town) and the
+weather actually observed there that day. The overview combines a real
 Customers REST API, Claims and Policies REST APIs backed by persistent SQLite,
-and Frankfurter's public rate API. The MCP adapter uses HTTP, not direct SQL.
-Only currency codes leave for Frankfurter. Customer records are fictional;
-the exchange rate is real and dated. There are no write actions.
+and the public Open-Meteo weather archive. The MCP adapter uses HTTP, not direct SQL.
+Only a town's coordinates and a date leave for Open-Meteo. Customers and claims
+are fictional; the weather is real and dated. There are no write actions.
 
 The older [MCP configuration](examples/mcp.remote.example.json) targets the
 local advanced Claims security demos, not this terminal exercise.

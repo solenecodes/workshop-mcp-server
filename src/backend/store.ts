@@ -12,10 +12,23 @@ export const customerRecord = z.object({
 export const policyRecord = z.object({
   policyId: z.string(), customerId: z.string(), coverage: z.string(), coverageLimit: z.number(),
 });
+export const perilSchema = z.enum(['storm', 'flooding']);
 export const claimRecord = z.object({
   claimId: z.string(), customerId: z.string(), policyId: z.string(), amount: z.number(),
   currency: z.literal('EUR'), status: z.enum(['open', 'escalated']),
+  peril: perilSchema, incidentDate: z.iso.date(), city: z.string(), latitude: z.number(), longitude: z.number(),
 });
+
+// Fictional home-insurance incidents at real towns on real past dates, so a public
+// weather archive can be compared with the claim. Customer names and amounts stay invented.
+const incidents = {
+  'CLM-1001': { peril: 'storm', incidentDate: '2023-11-02', city: 'Brest', latitude: 48.39, longitude: -4.49 },
+  'CLM-1002': { peril: 'storm', incidentDate: '2024-06-10', city: 'Lyon', latitude: 45.76, longitude: 4.84 },
+  'CLM-1003': { peril: 'flooding', incidentDate: '2023-10-20', city: 'Lille', latitude: 50.63, longitude: 3.06 },
+  'CLM-1004': { peril: 'storm', incidentDate: '2023-11-02', city: 'Nantes', latitude: 47.22, longitude: -1.55 },
+  'CLM-1005': { peril: 'flooding', incidentDate: '2025-02-12', city: 'Strasbourg', latitude: 48.58, longitude: 7.75 },
+} as const;
+const homeCoverage = 'Demo home insurance: storm and flood damage to the insured property; subject to evidence review.';
 
 export async function createBackendStore(databasePath?: string) {
   const SQL = await initSqlJs();
@@ -31,17 +44,20 @@ export async function createBackendStore(databasePath?: string) {
     if (!existing) {
       database.run(`CREATE TABLE customers (customerId TEXT PRIMARY KEY, customerName TEXT NOT NULL, dateOfBirth TEXT NOT NULL, address TEXT NOT NULL);
         CREATE TABLE policies (policyId TEXT PRIMARY KEY, customerId TEXT NOT NULL REFERENCES customers, coverage TEXT NOT NULL, coverageLimit REAL NOT NULL);
-        CREATE TABLE claims (claimId TEXT PRIMARY KEY, customerId TEXT NOT NULL REFERENCES customers, policyId TEXT NOT NULL REFERENCES policies, amount REAL NOT NULL, currency TEXT NOT NULL, status TEXT NOT NULL, documents TEXT NOT NULL);
-        PRAGMA user_version = 1;`);
+        CREATE TABLE claims (claimId TEXT PRIMARY KEY, customerId TEXT NOT NULL REFERENCES customers, policyId TEXT NOT NULL REFERENCES policies, amount REAL NOT NULL, currency TEXT NOT NULL, status TEXT NOT NULL, documents TEXT NOT NULL,
+          peril TEXT NOT NULL, incidentDate TEXT NOT NULL, city TEXT NOT NULL, latitude REAL NOT NULL, longitude REAL NOT NULL);
+        PRAGMA user_version = 2;`);
       const data = createDemoData();
       for (const claim of data.claims.values()) {
         database.run('INSERT INTO customers VALUES (?, ?, ?, ?)', [claim.policyholderId, claim.customerName, claim.dateOfBirth, claim.address]);
       }
       for (const policy of data.policies.values()) {
-        database.run('INSERT INTO policies VALUES (?, ?, ?, ?)', [policy.policyId, policy.policyholderId, policy.coverage, policy.limit]);
+        database.run('INSERT INTO policies VALUES (?, ?, ?, ?)', [policy.policyId, policy.policyholderId, homeCoverage, policy.limit]);
       }
       for (const claim of data.claims.values()) {
-        database.run('INSERT INTO claims VALUES (?, ?, ?, ?, ?, ?, ?)', [claim.claimId, claim.policyholderId, claim.policyId, claim.claimAmount, claim.currency, claim.status, JSON.stringify(claim.documents)]);
+        const incident = incidents[claim.claimId as keyof typeof incidents];
+        database.run('INSERT INTO claims VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [claim.claimId, claim.policyholderId, claim.policyId, claim.claimAmount, claim.currency, claim.status, JSON.stringify(claim.documents),
+          incident.peril, incident.incidentDate, incident.city, incident.latitude, incident.longitude]);
       }
       if (databasePath) {
         const published = new SQL.Database(await persistInitialDatabase(databasePath, database.export()));
@@ -49,7 +65,7 @@ export async function createBackendStore(databasePath?: string) {
         database = published;
       }
     }
-    if (database.exec('PRAGMA user_version')[0]?.values[0]?.[0] !== 1 ||
+    if (database.exec('PRAGMA user_version')[0]?.values[0]?.[0] !== 2 ||
         database.exec('PRAGMA integrity_check')[0]?.values[0]?.[0] !== 'ok') {
       throw new Error('Unsupported or damaged workshop database. No replacement database was created.');
     }

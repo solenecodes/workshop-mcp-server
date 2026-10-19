@@ -33,17 +33,17 @@ This is a real HTTP request to the private **synthetic** dossier API.
 ## 3. Combine
 
 ```sh
-npm run workshop -- --url 'http://127.0.0.1:3201/mcp' --anonymous get_customer_overview '{"customerId":"DEMO-PERSON-1","targetCurrency":"USD"}'
+npm run workshop -- --url 'http://127.0.0.1:3201/mcp' --anonymous get_customer_overview '{"customerId":"DEMO-PERSON-2"}'
 ```
 
-Find the dossier, claim `CLM-1001`, its policy coverage, a dated EUR/USD rate,
-a converted amount and **three source groups**: Customers API, Claims + Policies
-APIs backed by SQLite, and the public exchange-rate API.
-The exchange rate varies by date; do not compare it with a hardcoded number.
+Find the dossier of Robin Sample, claim `CLM-1002` (storm damage in Lyon on
+2024-06-10) and the observed weather that day: calm, so `severeWeatherObserved`
+is `false`. Three source groups answered: Customers API, Claims + Policies APIs
+backed by SQLite, and the public Open-Meteo weather API.
 If the Internet source is unavailable, expect an explicit error, not fake data.
 
 **Debrief:** the MCP endpoint hides several backend interfaces, but the tool's
 implementation still needs each connector. No LLM ran inside the server and
-no write or approval was performed. Only currency codes left for the public API.
+no write or approval was performed. Only a town's coordinates and a date left for the public API.
 In [session 3](../03-security/README.md), call the protected edition of the
 same sandbox to compare 401, valid identity, missing scope and redaction.

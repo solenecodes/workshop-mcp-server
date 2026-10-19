@@ -51,25 +51,25 @@ export const labSteps = [
     notice: 'a different customer, returned by the same tool.',
   },
   {
-    short: 'Claims', title: 'Read the claims of that customer',
-    why: 'A second tool reads a second system: the Claims and Policies APIs, backed by a SQLite database. Amounts are stored in euros.',
+    short: 'Claims', title: 'Read the claim of that customer',
+    why: 'A second tool reads a second system: the Claims and Policies APIs, backed by a SQLite database. Robin reports storm damage to the home, with a date and a town.',
     tool: 'list_customer_claims', args: { customerId: 'DEMO-PERSON-2' },
-    changes: ['list_customer_claims'], focus: ['claimId', 'amount', 'currency', 'status', 'name'],
-    notice: 'the claim, its amount in EUR and its status.',
+    changes: ['list_customer_claims'], focus: ['claimId', 'amount', 'peril', 'incidentDate', 'city', 'name'],
+    notice: 'the claim: storm damage, the date, the town and the amount in EUR.',
   },
   {
-    short: 'Internet', title: 'Ask a public Internet API',
-    why: 'A third source is outside the company: a public exchange-rate API. A partner abroad may need the amount in dollars, which requires a dated rate. Only currency codes leave the server.',
-    tool: 'get_exchange_rate', args: { baseCurrency: 'EUR', targetCurrency: 'USD' },
-    changes: ['get_exchange_rate', '{"baseCurrency":"EUR","targetCurrency":"USD"}'], focus: ['date', 'rate', 'base', 'quote', 'name'],
-    notice: 'the date of the rate, EUR to USD, and the source (Frankfurter).',
+    short: 'Weather', title: 'Check the weather that day',
+    why: 'A third source is outside the company: a public weather archive. The server finds the claim, then asks what the weather was in that town on that day. Only the town’s coordinates and the date leave the server.',
+    tool: 'get_incident_weather', args: { claimId: 'CLM-1002' },
+    changes: ['get_incident_weather', '{"claimId":"CLM-1002"}'], focus: ['city', 'incidentDate', 'maxWindGustKmh', 'precipitationMm', 'test', 'severeWeatherObserved', 'name'],
+    notice: 'the observed wind gusts and rain, and whether severe weather was observed. Here it was a calm day.',
   },
   {
     short: 'Combine', title: 'Combine the three sources in one call',
-    why: 'This is the call an AI assistant would make for the question in the scenario. One tool reads the customer, the claims and the exchange rate, then converts the amount.',
-    tool: 'get_customer_overview', args: { customerId: 'DEMO-PERSON-2', targetCurrency: 'USD' },
-    changes: ['get_customer_overview', '"targetCurrency":"USD"'], focus: ['customerName', 'amount', 'currency', 'rate', 'name'],
-    notice: 'the claim in EUR, the same claim converted to USD, and the three sources used.',
+    why: 'This is the call an AI assistant would make for the question in the scenario. One tool reads the customer, the claim and the weather that day, and returns everything in one answer.',
+    tool: 'get_customer_overview', args: { customerId: 'DEMO-PERSON-2' },
+    changes: ['get_customer_overview', '{"customerId":"DEMO-PERSON-2"}'], focus: ['customerName', 'claimId', 'peril', 'city', 'maxWindGustKmh', 'severeWeatherObserved', 'name'],
+    notice: 'the customer, the claim, the weather that day and the three sources used.',
   },
 ];
 
@@ -90,7 +90,7 @@ export function labCommand(index, settings) {
 
 export function securityCode(endpoint) {
   const url = validateEndpoint(endpoint).endpoint;
-  const command = `npm run workshop -- --url ${quote(url)} get_customer_overview ${quote('{"customerId":"DEMO-PERSON-1","targetCurrency":"USD"}')}`;
+  const command = `npm run workshop -- --url ${quote(url)} get_customer_overview ${quote('{"customerId":"DEMO-PERSON-2"}')}`;
   return {
     anonymous: `${command.replace(' get_customer_overview ', ' --anonymous get_customer_overview ')}`,
     authenticated: 'read -r -s -p "Entra access token: " MCP_TOKEN\nexport MCP_TOKEN\nprintf "\\n"\n' + command + '\nunset MCP_TOKEN',

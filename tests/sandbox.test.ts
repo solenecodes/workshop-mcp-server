@@ -33,7 +33,8 @@ async function fixture(options: Partial<Omit<SandboxOptions, 'sources'>> & { fai
     if (url.hostname === '127.0.0.1') return fetch(input, init);
     internetRequests.push(url);
     if (options.failInternet) return new Response('Unavailable', { status: 503 });
-    return Response.json({ date: '2026-10-16', base: 'EUR', quote: 'USD', rate: 1.1 });
+    const date = url.searchParams.get('start_date');
+    return Response.json({ daily: { time: [date], temperature_2m_max: [12.5], precipitation_sum: [3.2], wind_gusts_10m_max: [95.4] } });
   };
   const sources = await createSources(internal.url, fetcher);
   const logs: Record<string, unknown>[] = [];
@@ -77,7 +78,7 @@ test('public MCP discovers exactly four read-only tools and queries real private
   try {
     const client = await f.client();
     const tools = (await client.listTools()).tools;
-    assert.deepEqual(tools.map((tool) => tool.name).sort(), ['get_customer_file', 'get_customer_overview', 'get_exchange_rate', 'list_customer_claims']);
+    assert.deepEqual(tools.map((tool) => tool.name).sort(), ['get_customer_file', 'get_customer_overview', 'get_incident_weather', 'list_customer_claims']);
     assert.ok(tools.every((tool) => tool.annotations?.readOnlyHint === true && tool.annotations?.destructiveHint === false));
     const dossier = await call(client, 'get_customer_file', { customerId: 'DEMO-PERSON-1' });
     assert.equal(dossier.error, false);
@@ -87,34 +88,41 @@ test('public MCP discovers exactly four read-only tools and queries real private
     assert.match(JSON.stringify(claims.data), /CLM-1001/);
     assert.match(JSON.stringify(claims.data), /POL-1001/);
     assert.match(JSON.stringify(claims.data), /25000/);
+    assert.match(JSON.stringify(claims.data), /"peril":"storm".*"incidentDate":"2023-11-02".*"city":"Brest"/);
+    assert.doesNotMatch(JSON.stringify(claims.data), /latitude|longitude/);
     assert.equal(f.internetRequests.length, 0);
   } finally { await f.close(); }
 });
 
-test('one aggregate returns three real source kinds, computed amount and a dated cached rate', async () => {
+test('one aggregate returns three real source kinds and checks the weather on the incident date', async () => {
   const f = await fixture();
   try {
     const client = await f.client();
     const overview = await call(client, 'get_customer_overview', { customerId: 'DEMO-PERSON-1' });
     assert.equal(overview.error, false);
     assert.deepEqual(z.array(z.object({ kind: z.string() })).parse(overview.data.sources).map((source) => source.kind), ['internal-api', 'database', 'public-api']);
-    assert.deepEqual(overview.data.convertedClaims, [{ claimId: 'CLM-1001', amount: 1430, currency: 'USD' }]);
-    assert.equal(z.object({ date: z.string() }).parse(overview.data.exchangeRate).date, '2026-10-16');
-    const rate = await call(client, 'get_exchange_rate', { baseCurrency: 'EUR', targetCurrency: 'USD' });
-    assert.equal(z.object({ cached: z.boolean() }).parse(rate.data.exchangeRate).cached, true);
+    const [check] = z.array(z.object({
+      claimId: z.string(), severeWeatherObserved: z.boolean(), cached: z.boolean(),
+      observed: z.object({ maxWindGustKmh: z.number(), precipitationMm: z.number(), maxTemperatureC: z.number() }),
+    })).parse(overview.data.weatherChecks);
+    assert.deepEqual(check, { claimId: 'CLM-1001', severeWeatherObserved: true, cached: false, observed: { maxWindGustKmh: 95.4, precipitationMm: 3.2, maxTemperatureC: 12.5 } });
+    const again = await call(client, 'get_incident_weather', { claimId: 'CLM-1001' });
+    assert.equal(z.object({ cached: z.boolean() }).parse(again.data.weatherCheck).cached, true);
     assert.equal(f.internetRequests.length, 1);
-    assert.equal(f.internetRequests[0]!.href, 'https://api.frankfurter.dev/v2/rate/eur/usd');
-    assert.doesNotMatch(f.internetRequests[0]!.href, /PERSON|CLM|Alex/);
+    const requested = f.internetRequests[0]!;
+    assert.equal(requested.origin + requested.pathname, 'https://archive-api.open-meteo.com/v1/archive');
+    assert.equal(requested.searchParams.get('start_date'), '2023-11-02');
+    assert.doesNotMatch(requested.href, /PERSON|CLM|Alex|Brest/);
   } finally { await f.close(); }
 });
 
-test('a failed Internet source returns an explicit MCP error, never a fixture rate or partial success', async () => {
+test('a failed Internet source returns an explicit MCP error, never fixture weather or partial success', async () => {
   const f = await fixture({ failInternet: true });
   try {
     const reply = await call(await f.client(), 'get_customer_overview', { customerId: 'DEMO-PERSON-1' });
     assert.equal(reply.error, true);
     assert.equal(reply.data.error, 'SOURCE_UNAVAILABLE');
-    assert.equal(reply.data.exchangeRate, undefined);
+    assert.equal(reply.data.weatherChecks, undefined);
     assert.equal(f.logs.find((entry) => entry.toolName === 'get_customer_overview')?.decision, 'denied');
   } finally { await f.close(); }
 });
@@ -127,7 +135,8 @@ test('strict inputs and tool allowlisting reject writes, malformed IDs, arbitrar
       ['get_customer_file', { customerId: "DEMO-PERSON-1' OR 1=1" }],
       ['get_customer_file', { customerId: 'DEMO-PERSON-9' }],
       ['list_customer_claims', { customerId: 'DEMO-PERSON-1', sql: 'DROP TABLE claims' }],
-      ['get_exchange_rate', { baseCurrency: 'EUR', targetCurrency: 'USD', url: 'http://internal' }],
+      ['get_incident_weather', { claimId: 'CLM-1001', url: 'http://internal' }],
+      ['get_incident_weather', { claimId: 'CLM-9999' }],
       ['create_claim_note', { claimId: 'CLM-1001', note: 'Approve' }],
     ] as const) {
       assert.equal((await client.callTool({ name, arguments: args })).isError, true);

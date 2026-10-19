@@ -15,7 +15,7 @@ async function fixture() {
   const sources = await createSources(internal.url, async (input, init) => {
     if (new URL(String(input)).hostname === '127.0.0.1') return fetch(input, init);
     internetCalls++;
-    return Response.json({ date: '2026-10-16', base: 'EUR', quote: 'USD', rate: 1.1 });
+    return Response.json({ daily: { time: [new URL(String(input)).searchParams.get('start_date')], temperature_2m_max: [18], precipitation_sum: [0], wind_gusts_10m_max: [34] } });
   });
   const app = createSandboxApp({ sources, consoleOrigin: origin, log: () => {} });
   const server = await new Promise(resolve => {
@@ -49,8 +49,9 @@ test('the six guided requests run against the real stateless server and only rea
     for (const reply of replies.slice(1)) assert.notEqual(reply.result.isError, true);
     assert.equal(replies[1].result.structuredContent.customer.customerId, 'DEMO-PERSON-1');
     assert.equal(replies[2].result.structuredContent.customer.customerId, 'DEMO-PERSON-2');
-    assert.equal(replies[3].result.structuredContent.claims[0].currency, 'EUR');
-    assert.equal(replies[4].result.structuredContent.exchangeRate.quote, 'USD');
+    assert.equal(replies[3].result.structuredContent.claims[0].city, 'Lyon');
+    assert.equal(replies[4].result.structuredContent.weatherCheck.severeWeatherObserved, false);
+    assert.equal(replies[5].result.structuredContent.weatherChecks[0].claimId, 'CLM-1002');
     assert.equal(replies[5].result.structuredContent.sources.length, 3);
     await assert.rejects(callMcp(f.url, tool('escalate_claim', {})), /read-only/);
     await assert.rejects(callMcp(f.url, { jsonrpc: '2.0', id: 1, method: 'resources/list' }), /read-only/);
@@ -81,17 +82,17 @@ test('console CORS is exact-origin, rejects credentials and leaves protected end
   } finally { await f.close(); }
 });
 
-test('twenty concurrent browser participants get complete results with one shared Internet fetch', async t => {
+test('twenty concurrent browser participants get complete results and share one Internet fetch per claim', async t => {
   const f = await fixture();
   try {
     const results = await Promise.all(Array.from({ length: 20 }, (_, index) =>
-      callMcp(f.url, tool('get_customer_overview', { customerId: `DEMO-PERSON-${index % 5 + 1}`, targetCurrency: 'USD' }), f.browserFetch)));
+      callMcp(f.url, tool('get_customer_overview', { customerId: `DEMO-PERSON-${index % 5 + 1}` }), f.browserFetch)));
     assert.ok(results.every(reply => reply.result.isError !== true && reply.result.structuredContent.sources.length === 3));
-    assert.equal(f.internetCalls(), 1);
+    assert.equal(f.internetCalls(), 5);
     const times = results.map(reply => reply.elapsedMs).sort((a, b) => a - b);
     const p95 = times[Math.ceil(times.length * 0.95) - 1];
     assert.ok(p95 < 5000, `Local 20-participant p95 ${p95} ms exceeds 5 seconds`);
-    t.diagnostic(`20/20 successful, p95 ${p95} ms, one shared FX fetch`);
+    t.diagnostic(`20/20 successful, p95 ${p95} ms, five shared weather fetches`);
   } finally { await f.close(); }
 });
 

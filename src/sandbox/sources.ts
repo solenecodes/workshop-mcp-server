@@ -1,28 +1,37 @@
 import type { Server } from 'node:http';
 import { z } from 'zod';
 import { createBackendApp } from '../backend/api.js';
-import { claimRecord, createBackendStore, policyRecord } from '../backend/store.js';
+import { claimRecord, createBackendStore, perilSchema, policyRecord } from '../backend/store.js';
 import { ManagedIdentityError } from '../backend/identity.js';
 
 export const customerIdSchema = z.string().regex(/^DEMO-PERSON-[1-5]$/);
-export const currencySchema = z.enum(['EUR', 'USD', 'GBP', 'CHF']);
-export const quoteCurrencySchema = z.enum(['USD', 'GBP', 'CHF']);
+export const claimIdSchema = z.string().regex(/^CLM-100[1-5]$/);
 const customerSchema = z.object({
   customerId: customerIdSchema,
   customerName: z.string(),
   dateOfBirth: z.string(),
   address: z.string(),
 }).strict();
-const rateSchema = z.object({
-  date: z.iso.date(),
-  base: currencySchema,
-  quote: currencySchema,
-  rate: z.number().positive().finite(),
-});
 const claimRowSchema = z.object({
   claimId: z.string(), policyId: z.string(), amount: z.number().nonnegative(),
-  currency: z.literal('EUR'), status: z.string(), coverage: z.string(), coverageLimit: z.number(),
+  currency: z.literal('EUR'), status: z.string(), peril: perilSchema, incidentDate: z.iso.date(),
+  city: z.string(), latitude: z.number(), longitude: z.number(), coverage: z.string(), coverageLimit: z.number(),
 });
+const dailyWeatherSchema = z.object({
+  daily: z.object({
+    time: z.tuple([z.iso.date()]),
+    temperature_2m_max: z.tuple([z.number().finite()]),
+    precipitation_sum: z.tuple([z.number().finite().nonnegative()]),
+    wind_gusts_10m_max: z.tuple([z.number().finite().nonnegative()]),
+  }),
+});
+type ClaimRow = z.infer<typeof claimRowSchema>;
+type Observation = { maxWindGustKmh: number; precipitationMm: number; maxTemperatureC: number };
+// Illustrative thresholds for the workshop, not an insurer's rules.
+const rules = {
+  storm: { label: 'Wind gusts of at least 80 km/h', severe: (o: Observation) => o.maxWindGustKmh >= 80 },
+  flooding: { label: 'At least 20 mm of rain during the day', severe: (o: Observation) => o.precipitationMm >= 20 },
+} as const;
 
 export class SourceError extends Error {
   constructor(public readonly code: string, message: string) { super(message); }
@@ -58,8 +67,8 @@ export async function createSources(internalApiUrl: string, fetcher: typeof fetc
     throw new Error('Business APIs require a loopback HTTP origin, or an HTTPS origin with service authentication.');
   }
   const shutdown = new AbortController();
-  const rates = new Map<string, { expires: number; value: z.infer<typeof rateSchema> }>();
-  const pendingRates = new Map<string, Promise<z.infer<typeof rateSchema>>>();
+  const observations = new Map<string, { expires: number; value: Observation }>();
+  const pendingObservations = new Map<string, Promise<Observation>>();
 
   async function getJson(url: URL, source: string) {
     try {
@@ -104,30 +113,51 @@ export async function createSources(internalApiUrl: string, fetcher: typeof fetc
       }
       return rows;
     },
-    async exchangeRate(baseCurrency: z.infer<typeof currencySchema>, targetCurrency: z.infer<typeof currencySchema>) {
-      const base = currencySchema.parse(baseCurrency);
-      const quote = currencySchema.parse(targetCurrency);
-      if (base === quote) throw new SourceError('INVALID_CURRENCY_PAIR', 'Choose two different currencies.');
-      const key = `${base}/${quote}`;
-      const cached = rates.get(key);
-      if (cached && cached.expires > Date.now()) return { ...cached.value, cached: true };
-      let pending = pendingRates.get(key);
-      if (!pending) {
-        pending = (async () => {
-          const url = new URL(`https://api.frankfurter.dev/v2/rate/${base.toLowerCase()}/${quote.toLowerCase()}`);
-          const parsed = rateSchema.safeParse(await getJson(url, 'Frankfurter public exchange-rate API'));
-          if (!parsed.success || parsed.data.base !== base || parsed.data.quote !== quote) {
-            throw new SourceError('INVALID_SOURCE_RESPONSE', 'Exchange-rate API returned an invalid or mismatched currency pair.');
-          }
-          rates.set(key, { value: parsed.data, expires: Date.now() + 60_000 });
-          return parsed.data;
-        })();
-        pendingRates.set(key, pending);
+    async claim(claimId: string) {
+      const id = claimIdSchema.parse(claimId);
+      const response = z.object({ data: claimRecord }).safeParse(await getJson(new URL(`/api/claims/v1/claims/${id}`, internalUrl), 'Claims API'));
+      if (!response.success || response.data.data.claimId !== id) {
+        throw new SourceError('INVALID_SOURCE_RESPONSE', 'Claims API returned an invalid or mismatched claim.');
       }
-      try { return { ...await pending, cached: false }; }
-      finally { pendingRates.delete(key); }
+      return response.data.data;
     },
-    close() { shutdown.abort(); rates.clear(); pendingRates.clear(); },
+    // Only a town's coordinates and a past date leave this server: no customer data.
+    async incidentWeather(claim: Pick<ClaimRow, 'claimId' | 'peril' | 'incidentDate' | 'city' | 'latitude' | 'longitude'>) {
+      const key = `${claim.latitude},${claim.longitude},${claim.incidentDate}`;
+      const cached = observations.get(key);
+      let observed = cached && cached.expires > Date.now() ? cached.value : undefined;
+      const wasCached = Boolean(observed);
+      if (!observed) {
+        let pending = pendingObservations.get(key);
+        if (!pending) {
+          pending = (async () => {
+            const url = new URL('https://archive-api.open-meteo.com/v1/archive');
+            url.search = new URLSearchParams({
+              latitude: String(claim.latitude), longitude: String(claim.longitude),
+              start_date: claim.incidentDate, end_date: claim.incidentDate,
+              daily: 'temperature_2m_max,precipitation_sum,wind_gusts_10m_max', timezone: 'UTC',
+            }).toString();
+            const parsed = dailyWeatherSchema.safeParse(await getJson(url, 'Open-Meteo public weather API'));
+            if (!parsed.success || parsed.data.daily.time[0] !== claim.incidentDate) {
+              throw new SourceError('INVALID_SOURCE_RESPONSE', 'Weather API returned no observation for this date and place.');
+            }
+            const { daily } = parsed.data;
+            const value = { maxWindGustKmh: daily.wind_gusts_10m_max[0], precipitationMm: daily.precipitation_sum[0], maxTemperatureC: daily.temperature_2m_max[0] };
+            observations.set(key, { value, expires: Date.now() + 3_600_000 });
+            return value;
+          })();
+          pendingObservations.set(key, pending);
+        }
+        try { observed = await pending; }
+        finally { pendingObservations.delete(key); }
+      }
+      const rule = rules[claim.peril];
+      return {
+        claimId: claim.claimId, peril: claim.peril, incidentDate: claim.incidentDate, city: claim.city,
+        observed, test: rule.label, severeWeatherObserved: rule.severe(observed), cached: wasCached,
+      };
+    },
+    close() { shutdown.abort(); observations.clear(); pendingObservations.clear(); },
   };
 }
 

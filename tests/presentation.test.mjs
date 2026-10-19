@@ -58,7 +58,7 @@ test('six guided steps build one copyable curl request each and mark only what c
   const commands = labSteps.map((_, index) => labCommand(index, settings));
   assert.equal(commands.length, 6);
   assert.deepEqual(commands.map((step) => step.request.params?.name ?? step.request.method), [
-    'tools/list', 'get_customer_file', 'get_customer_file', 'list_customer_claims', 'get_exchange_rate', 'get_customer_overview']);
+    'tools/list', 'get_customer_file', 'get_customer_file', 'list_customer_claims', 'get_incident_weather', 'get_customer_overview']);
   for (const step of commands) {
     assert.ok(step.title && step.why && step.notice && step.focus.length);
     assert.match(step.code, /^curl -s 'https:\/\/sandbox.example.org\/mcp' \\\n/);
@@ -70,7 +70,7 @@ test('six guided steps build one copyable curl request each and mark only what c
   // Step 3 differs from step 2 only by the customer.
   assert.deepEqual(commands[2].segments.filter(({ changed }) => changed).map(({ text }) => text), ['DEMO-PERSON-2']);
   assert.deepEqual(commands[5].segments.filter(({ changed }) => changed).map(({ text }) => text),
-    ['get_customer_overview', '"targetCurrency":"USD"']);
+    ['get_customer_overview', '{"customerId":"DEMO-PERSON-2"}']);
   for (const index of [-1, 6, 8]) assert.throws(() => labCommand(index, settings));
   assert.match(setupCode, /npm ci/);
 });

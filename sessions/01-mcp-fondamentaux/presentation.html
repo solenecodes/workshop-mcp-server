@@ -7,8 +7,8 @@
   <meta name="color-scheme" content="light">
   <title>MCP, from idea to first call</title>
   <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="presentation.css?v=guided-lab-1">
-  <script type="module" src="presentation.js?v=guided-lab-1"></script>
+  <link rel="stylesheet" href="presentation.css?v=weather-lab-1">
+  <script type="module" src="presentation.js?v=weather-lab-1"></script>
 </head>
 <body>
   <svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -167,15 +167,15 @@
         <p class="intro">Send six real requests to a live MCP server. Copy each command into a terminal, or run it from this page. No installation and no AI model needed.</p>
         <article class="lab-scenario" aria-labelledby="scenario-title">
           <h3 id="scenario-title"><svg class="icon"><use href="#i-chat"/></svg>The scenario</h3>
-          <p>A claims handler asks an AI assistant: <q>What is open for Robin Sample, and what is it worth in US dollars for our partner in New York?</q></p>
-          <p>The assistant knows none of this. It asks an MCP server, which gathers the answer from three systems. <strong>In this lab, you play the assistant</strong>: you send the same requests it would send, one step at a time.</p>
+          <p>Robin Sample reports storm damage to the roof of a home in Lyon on 10 June 2024. A claims handler asks an AI assistant: <q>Does the weather that day support this claim?</q></p>
+          <p>The assistant knows none of this. It asks an MCP server, which gathers the answer from three systems: the customer file, the claim, and a public weather archive. <strong>In this lab, you play the assistant</strong>: you send the same requests it would send, one step at a time.</p>
         </article>
         <div class="source-overview" aria-label="The MCP server connects to three data sources">
           <div class="source-hub"><svg class="icon"><use href="#i-server"/></svg><strong>MCP server</strong><span>One endpoint, four tools</span></div>
           <div class="source-cards">
             <article><span class="source-kind"><svg class="icon"><use href="#i-file"/></svg>Private REST API</span><strong>Customers API</strong><p>Name, date of birth and address of five fictional customers: DEMO-PERSON-1 to DEMO-PERSON-5. Reachable only from the MCP server.</p><code>GET /api/customers/v1/customers/{id}</code></article>
-            <article><span class="source-kind"><svg class="icon"><use href="#i-database"/></svg>Private REST APIs + SQLite</span><strong>Claims and Policies APIs</strong><p>Each customer's claims (amount in euros, status) and policy coverage, stored in a SQLite database behind two REST APIs.</p><code>GET /api/claims/v1/claims?customerId=…</code></article>
-            <article><span class="source-kind"><svg class="icon"><use href="#i-globe"/></svg>Public Internet API</span><strong>Exchange-rate API</strong><p>Real, dated rates from Frankfurter. Claims are in euros; a partner abroad needs dollars. Only currency codes leave the server.</p><code>GET frankfurter.dev · EUR → USD</code></article>
+            <article><span class="source-kind"><svg class="icon"><use href="#i-database"/></svg>Private REST APIs + SQLite</span><strong>Claims and Policies APIs</strong><p>Each customer's home-insurance claim (storm or flooding, date, town, amount in euros) and its policy coverage, stored in SQLite behind two REST APIs.</p><code>GET /api/claims/v1/claims?customerId=…</code></article>
+            <article><span class="source-kind"><svg class="icon"><use href="#i-globe"/></svg>Public Internet API</span><strong>Weather API</strong><p>Real observed weather for a town on a past date: wind gusts, rain, temperature. Only the town's coordinates and the date leave the server.</p><code>GET archive-api.open-meteo.com/v1/archive</code></article>
           </div>
         </div>
         <p id="endpoint-status" class="notice" role="status">The lab connects to the public workshop server. Enable JavaScript to use it.</p>

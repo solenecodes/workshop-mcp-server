@@ -4,9 +4,11 @@
 Six short chapters: why MCP exists, its architecture, an animated call, MCP vs
 API, a guided six-step live lab (copy a curl command or run it from the page), and access controls.
 
-**All customer and insurance data is invented.** The new read-only sandbox
-actually calls a public exchange-rate API. Only currency codes leave the
-server; customer IDs, names and dossiers are never sent to that API.
+**All customer and insurance data is invented.** The read-only sandbox tells one
+story: a fictional home-insurance claim (storm or flooding, a date and a town)
+checked against the weather actually observed there that day, from a public
+weather API. Only a town's coordinates and a date leave the server; customer IDs,
+names and dossiers are never sent to that API.
 
 ## Multi-source terminal lab
 
@@ -30,7 +32,7 @@ Then run these **three commands**, from the repository folder:
 ```sh
 npm run workshop -- --url 'http://127.0.0.1:3201/mcp' --anonymous tools
 npm run workshop -- --url 'http://127.0.0.1:3201/mcp' --anonymous get_customer_file '{"customerId":"DEMO-PERSON-1"}'
-npm run workshop -- --url 'http://127.0.0.1:3201/mcp' --anonymous get_customer_overview '{"customerId":"DEMO-PERSON-1","targetCurrency":"USD"}'
+npm run workshop -- --url 'http://127.0.0.1:3201/mcp' --anonymous get_customer_overview '{"customerId":"DEMO-PERSON-2"}'
 ```
 
 For a hosted workshop, participants use the presenter's HTTPS URL instead of
@@ -46,33 +48,37 @@ The presentation never receives protected-endpoint tokens.
 | 1 | `tools/list` | Four read-only tools with their names |
 | 2 | `get_customer_file` (DEMO-PERSON-1) | Alex Example, source Customers REST API |
 | 3 | same tool, DEMO-PERSON-2 | Only `customerId` changes: Robin Sample |
-| 4 | `list_customer_claims` | CLM-1002 in EUR from the Claims and Policies APIs (SQLite) |
-| 5 | `get_exchange_rate` | A dated EUR to USD rate from Frankfurter |
-| 6 | `get_customer_overview` | Customer, claim in EUR and USD, rate and three `sources` |
+| 4 | `list_customer_claims` | CLM-1002: storm damage in Lyon on 2024-06-10, 18000 EUR (Claims and Policies APIs, SQLite) |
+| 5 | `get_incident_weather` (CLM-1002) | Observed gusts and rain that day from Open-Meteo: a calm day, `severeWeatherObserved: false` |
+| 6 | `get_customer_overview` | Customer, claim, weather check and three `sources` in one answer |
 
 ```text
 Terminal / MCP SDK -> MCP server -> Customers REST API -----> SQLite
                                 -> Claims + Policies APIs -> SQLite
-                                -> Frankfurter Internet exchange-rate API
+                                -> Open-Meteo Internet weather archive
 ```
 
-The fourth tool, `list_customer_claims(customerId)`, calls the Claims and
-Policies REST APIs to combine claims with their coverage.
-`get_exchange_rate(baseCurrency, targetCurrency)` isolates the Internet call.
-Supported currencies: EUR, USD, GBP and CHF; choose different currencies.
-The overview converts the EUR fixture into USD (default), GBP or CHF.
+`list_customer_claims(customerId)` calls the Claims and Policies REST APIs to
+combine claims with their coverage. `get_incident_weather(claimId)` looks up
+the claim, then isolates the Internet call. The overview reads the customer
+and claims, then checks the weather for each incident date.
+Each claim is a storm or flooding event at a real town on a real past date.
+The illustrative test is wind gusts of at least 80 km/h (storm) or at least
+20 mm of rain (flooding). It is evidence for a human reviewer, not a coverage,
+payment or fraud decision.
 
 The three versioned REST APIs share a real SQLite database using `sql.js`.
 In local sandbox mode they run on an ephemeral **127.0.0.1** HTTP listener
 in the same process; the MCP adapter still makes real HTTP requests.
 The database is initialized once at `.workshop-data/business.sqlite` and
 survives restarts. Existing data is not replaced; corrupt or unsupported
-databases fail explicitly. The server exposes no database writes.
-Frankfurter's [documented v2 API](https://frankfurter.dev/) supplies a dated
-reference rate, not a live trading price. Rates are cached for 60 seconds and
-concurrent requests for one pair share the same fetch. Network calls time out
-after five seconds. A failed or malformed source returns `isError: true`;
-there is no made-up rate or success-shaped partial overview.
+databases fail explicitly. After this version, delete an older local
+`.workshop-data` folder so the new schema is created. The server exposes no database writes.
+[Open-Meteo's historical archive](https://open-meteo.com/en/docs/historical-weather-api)
+supplies daily observations (CC BY 4.0, free for non-commercial use). Results are
+cached for one hour and concurrent requests for one place and date share the same
+fetch. Network calls time out after five seconds. A failed or malformed source
+returns `isError: true`; there is no made-up weather or success-shaped partial overview.
 
 ### Business APIs and OpenAPI contracts
 
@@ -151,7 +157,7 @@ Participant console / MCP client
                   |
        Three OpenAPI contracts for inspecting the backend services
 
-MCP server -> Frankfurter (currency codes only)
+MCP server -> Open-Meteo (town coordinates and a date only)
 ```
 
 The environment separates business APIs, public MCP and protected
@@ -187,7 +193,7 @@ role. A participant's delegated `Mcp.Read` scope cannot authorize backend
 access. Grant `Mcp.Pii.Read` only to workloads that need full synthetic
 customer fields; otherwise the backend masks name, DOB and address.
 The MCP instance also applies its own participant-level redaction.
-Tokens are never forwarded to Frankfurter.
+Tokens are never forwarded to Open-Meteo.
 
 In a future Foundry integration, the same application-only permission is required when a project
 identity calls an API directly. Select the supported managed-identity
@@ -244,7 +250,7 @@ user/admin consent; then an attendee in the correct tenant can use:
 ```sh
 az login --tenant '<your-tenant-id>' --allow-no-subscriptions
 export MCP_TOKEN="$(az account get-access-token --scope 'api://<your-api-application-client-id>/Mcp.Read' --query accessToken -o tsv)"
-npm run workshop -- --url 'http://127.0.0.1:3202/mcp' get_customer_overview '{"customerId":"DEMO-PERSON-1","targetCurrency":"USD"}'
+npm run workshop -- --url 'http://127.0.0.1:3202/mcp' get_customer_overview '{"customerId":"DEMO-PERSON-2"}'
 unset MCP_TOKEN
 ```
 

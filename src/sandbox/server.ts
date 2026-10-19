@@ -5,28 +5,28 @@ import { createMcpExpressApp } from '@modelcontextprotocol/sdk/server/express.js
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { AuthenticationError, type Identity, type VerifyToken } from './auth.js';
-import { currencySchema, customerIdSchema, quoteCurrencySchema, SourceError, type Sources } from './sources.js';
+import { claimIdSchema, customerIdSchema, SourceError, type Sources } from './sources.js';
 
 const internalSource = { name: 'Customers REST API', kind: 'internal-api', synthetic: true };
 const sqlSource = { name: 'Claims and Policies REST APIs', kind: 'database', transport: 'HTTP', storage: 'SQLite', synthetic: true };
-const internetSource = { name: 'Frankfurter', kind: 'public-api', url: 'https://frankfurter.dev/', synthetic: false };
+const internetSource = { name: 'Open-Meteo', kind: 'public-api', url: 'https://open-meteo.com/', synthetic: false };
 const result = (data: Record<string, unknown>): CallToolResult => ({
   content: [{ type: 'text', text: JSON.stringify(data) }], structuredContent: data,
 });
 const schemas = {
   get_customer_file: z.object({ customerId: customerIdSchema }).strict(),
   list_customer_claims: z.object({ customerId: customerIdSchema }).strict(),
-  get_exchange_rate: z.object({ baseCurrency: currencySchema, targetCurrency: currencySchema }).strict(),
-  get_customer_overview: z.object({
-    customerId: customerIdSchema, targetCurrency: quoteCurrencySchema.default('USD'),
-  }).strict(),
+  get_incident_weather: z.object({ claimId: claimIdSchema }).strict(),
+  get_customer_overview: z.object({ customerId: customerIdSchema }).strict(),
 };
 const descriptions = {
   get_customer_file: 'Read a fictional customer dossier through a private HTTP API. Does not change data.',
-  list_customer_claims: 'Call the Claims and Policies REST APIs backed by SQLite. Does not change data.',
-  get_exchange_rate: 'Fetch a dated exchange rate from Frankfurter on the Internet. Only currency codes leave this server.',
-  get_customer_overview: 'Call the Customers, Claims and Policies REST APIs, then a public exchange-rate API. Returns source provenance; no model or insurance decision.',
+  list_customer_claims: 'Call the Claims and Policies REST APIs backed by SQLite: home-insurance claims with incident date, town and coverage. Does not change data.',
+  get_incident_weather: 'Look up a claim, then fetch the observed weather in that town on the incident date from the public Open-Meteo API. Only the town coordinates and the date leave this server.',
+  get_customer_overview: 'Call the Customers, Claims and Policies REST APIs, then check the weather on each incident date with a public API. Returns source provenance; no model, coverage or fraud decision.',
 };
+const weatherWarning = 'Weather observed for the town on that day: evidence for a human reviewer, not a coverage, payment or fraud decision.';
+const publicClaim = ({ latitude: _latitude, longitude: _longitude, ...claim }: Awaited<ReturnType<Sources['claims']>>[number]) => claim;
 type ToolName = keyof typeof schemas;
 
 export interface SandboxOptions {
@@ -92,7 +92,7 @@ export function createSandboxApp(options: SandboxOptions) {
   });
   app.get('/health', (_req, res) => res.json({
     status: 'ok', mode: verifyToken ? 'protected-entra' : 'public-read-only',
-    syntheticCustomerData: true, sources: ['customers-api', 'claims-api', 'policies-api', 'public-exchange-rate-api'],
+    syntheticCustomerData: true, sources: ['customers-api', 'claims-api', 'policies-api', 'public-weather-api'],
   }));
   let windowStart = now();
   let requestCount = 0;
@@ -138,11 +138,11 @@ export function createSandboxApp(options: SandboxOptions) {
     for (const name of Object.keys(schemas) as ToolName[]) {
       server.registerTool(name, {
         description: descriptions[name], inputSchema: schemas[name],
-        annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: name === 'get_exchange_rate' || name === 'get_customer_overview' },
+        annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: name === 'get_incident_weather' || name === 'get_customer_overview' },
       }, async (args: Record<string, unknown>) => {
         try {
           let data: Record<string, unknown>;
-          const customerId = name !== 'get_exchange_rate' ? customerIdSchema.parse(args.customerId) : undefined;
+          const customerId = name === 'get_incident_weather' ? undefined : customerIdSchema.parse(args.customerId);
           const redact = (customer: Awaited<ReturnType<Sources['customer']>>) => {
             if (!identity || identity.canReadPii) return customer;
             redactedFields = ['customerName', 'dateOfBirth', 'address'];
@@ -151,22 +151,16 @@ export function createSandboxApp(options: SandboxOptions) {
           if (name === 'get_customer_file' && customerId) {
             data = { customer: redact(await sources.customer(customerId)), sources: [internalSource] };
           } else if (name === 'list_customer_claims' && customerId) {
-            data = { customerId, claims: await sources.claims(customerId), sources: [sqlSource] };
-          } else if (name === 'get_exchange_rate') {
-            data = { exchangeRate: await sources.exchangeRate(currencySchema.parse(args.baseCurrency), currencySchema.parse(args.targetCurrency)), sources: [internetSource] };
+            data = { customerId, claims: (await sources.claims(customerId)).map(publicClaim), sources: [sqlSource] };
+          } else if (name === 'get_incident_weather') {
+            const claim = await sources.claim(claimIdSchema.parse(args.claimId));
+            data = { weatherCheck: await sources.incidentWeather(claim), sources: [sqlSource, internetSource], warning: weatherWarning };
           } else if (name === 'get_customer_overview' && customerId) {
-            const [customer, claims, exchangeRate] = await Promise.all([
-              sources.customer(customerId), sources.claims(customerId),
-              sources.exchangeRate('EUR', quoteCurrencySchema.parse(args.targetCurrency)),
-            ]);
+            const [customer, claims] = await Promise.all([sources.customer(customerId), sources.claims(customerId)]);
             data = {
-              customer: redact(customer), claims, exchangeRate,
-              convertedClaims: claims.map((claim) => ({
-                claimId: claim.claimId, amount: Math.round(claim.amount * exchangeRate.rate * 100) / 100,
-                currency: exchangeRate.quote,
-              })),
-              sources: [internalSource, sqlSource, internetSource],
-              warning: 'Dated reference rate, not a live trading rate or an insurance coverage/payment decision.',
+              customer: redact(customer), claims: claims.map(publicClaim),
+              weatherChecks: await Promise.all(claims.map((claim) => sources.incidentWeather(claim))),
+              sources: [internalSource, sqlSource, internetSource], warning: weatherWarning,
             };
           } else {
             throw new SourceError('INVALID_ARGUMENTS', 'Choose a documented tool and valid arguments.');

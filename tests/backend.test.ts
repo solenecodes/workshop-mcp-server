@@ -173,14 +173,14 @@ test('MCP adapter calls customers, claims and policies over HTTP and never forwa
       return fetch(f.url + url.pathname + url.search, init);
     }
     assert.equal(new Headers(init?.headers).has('authorization'), false);
-    return Response.json({ date: '2026-10-16', base: 'EUR', quote: 'USD', rate: 1.1 });
+    return Response.json({ daily: { time: [new URL(String(input)).searchParams.get('start_date')], temperature_2m_max: [12.5], precipitation_sum: [3.2], wind_gusts_10m_max: [95.4] } });
   };
   const sources = await createSources('https://backend.example', fetcher, async () => 'synthetic-test-token');
   try {
     assert.equal((await sources.customer('DEMO-PERSON-1')).customerName, 'Alex Example');
     assert.equal((await sources.claims('DEMO-PERSON-1'))[0]?.coverageLimit, 25000);
     assert.deepEqual(paths, ['/api/customers/v1/customers/DEMO-PERSON-1', '/api/claims/v1/claims', '/api/policies/v1/policies/POL-1001']);
-    assert.equal((await sources.exchangeRate('EUR', 'USD')).rate, 1.1);
+    assert.equal((await sources.incidentWeather(await sources.claim('CLM-1001'))).severeWeatherObserved, true);
     await assert.rejects(createSources('https://backend.example'), /service authentication/);
     await assert.rejects(createSources('http://backend.example'), /service authentication/);
   } finally { sources.close(); await f.close(); }
