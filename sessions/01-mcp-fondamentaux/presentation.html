@@ -7,8 +7,8 @@
   <meta name="color-scheme" content="light">
   <title>MCP, from idea to first call</title>
   <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="presentation.css?v=json-dark-1">
-  <script type="module" src="presentation.js?v=ready-console-1"></script>
+  <link rel="stylesheet" href="presentation.css?v=guided-lab-1">
+  <script type="module" src="presentation.js?v=guided-lab-1"></script>
 </head>
 <body>
   <svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -52,7 +52,7 @@
       </div>
       <div class="chapter-group practice-group">
         <p class="nav-group-label"><svg class="icon"><use href="#i-practice"/></svg>Your turn</p>
-        <a href="#lab"><span class="chapter-icon"><svg class="icon"><use href="#i-code"/></svg></span><span><small>Live console · 15 min</small> Call the server</span></a>
+        <a href="#lab"><span class="chapter-icon"><svg class="icon"><use href="#i-code"/></svg></span><span><small>Live lab · 15 min</small> Call the server</span></a>
       </div>
       <div class="chapter-group">
         <p class="nav-group-label"><svg class="icon"><use href="#i-shield"/></svg>Next session</p>
@@ -162,49 +162,45 @@
       </section>
 
       <section id="lab" class="chapter" aria-labelledby="lab-title">
-        <p class="eyebrow practice-label"><svg class="icon"><use href="#i-practice"/></svg>Your turn · Live console · 15 minutes</p>
-        <h2 id="lab-title" tabindex="-1">Try the MCP server. Right here.</h2>
-        <p class="intro">Discover the tools, read a fictional customer, then combine the APIs. Real MCP calls, directly from this page. No installation or AI model needed.</p>
+        <p class="eyebrow practice-label"><svg class="icon"><use href="#i-practice"/></svg>Your turn · Live lab · 15 minutes</p>
+        <h2 id="lab-title" tabindex="-1">Call an MCP server yourself</h2>
+        <p class="intro">Send six real requests to a live MCP server. Copy each command into a terminal, or run it from this page. No installation and no AI model needed.</p>
+        <article class="lab-scenario" aria-labelledby="scenario-title">
+          <h3 id="scenario-title"><svg class="icon"><use href="#i-chat"/></svg>The scenario</h3>
+          <p>A claims handler asks an AI assistant: <q>What is open for Robin Sample, and what is it worth in US dollars for our partner in New York?</q></p>
+          <p>The assistant knows none of this. It asks an MCP server, which gathers the answer from three systems. <strong>In this lab, you play the assistant</strong>: you send the same requests it would send, one step at a time.</p>
+        </article>
         <div class="source-overview" aria-label="The MCP server connects to three data sources">
-          <div class="source-hub"><svg class="icon"><use href="#i-server"/></svg><strong>MCP server</strong><span>One endpoint</span></div>
+          <div class="source-hub"><svg class="icon"><use href="#i-server"/></svg><strong>MCP server</strong><span>One endpoint, four tools</span></div>
           <div class="source-cards">
-            <article><svg class="icon"><use href="#i-file"/></svg><strong>Customers API</strong><span>Fictional customer dossiers</span></article>
-            <article><svg class="icon"><use href="#i-database"/></svg><strong>Claims + Policies APIs</strong><span>Persistent SQLite behind HTTP</span></article>
-            <article><svg class="icon"><use href="#i-globe"/></svg><strong>Internet API</strong><span>Real, dated exchange rates</span></article>
+            <article><span class="source-kind"><svg class="icon"><use href="#i-file"/></svg>Private REST API</span><strong>Customers API</strong><p>Name, date of birth and address of five fictional customers: DEMO-PERSON-1 to DEMO-PERSON-5. Reachable only from the MCP server.</p><code>GET /api/customers/v1/customers/{id}</code></article>
+            <article><span class="source-kind"><svg class="icon"><use href="#i-database"/></svg>Private REST APIs + SQLite</span><strong>Claims and Policies APIs</strong><p>Each customer's claims (amount in euros, status) and policy coverage, stored in a SQLite database behind two REST APIs.</p><code>GET /api/claims/v1/claims?customerId=…</code></article>
+            <article><span class="source-kind"><svg class="icon"><use href="#i-globe"/></svg>Public Internet API</span><strong>Exchange-rate API</strong><p>Real, dated rates from Frankfurter. Claims are in euros; a partner abroad needs dollars. Only currency codes leave the server.</p><code>GET frankfurter.dev · EUR → USD</code></article>
           </div>
         </div>
-        <p id="endpoint-status" class="notice" role="status">The live console connects to the public Container Apps demo. Enable JavaScript to use it, or follow the terminal alternative.</p>
+        <p id="endpoint-status" class="notice" role="status">The lab connects to the public workshop server. Enable JavaScript to use it.</p>
         <p id="endpoint-error" class="error" role="alert" hidden></p>
-        <article class="mcp-console" aria-labelledby="console-title">
-          <h3 id="console-title"><svg class="icon"><use href="#i-code"/></svg>Live MCP console</h3>
-          <form id="console-form">
-            <div class="console-fields">
-              <label>Operation<select id="console-operation"><option value="tools">1. Discover the tools</option><option value="get_customer_file">2. Read a customer</option><option value="get_customer_overview">3. Combine the APIs</option><option value="list_customer_claims">Read claims and coverage</option><option value="get_exchange_rate">Get an exchange rate</option></select></label>
-              <label id="console-customer-field" hidden>Fictional customer<select id="console-customer"><option>DEMO-PERSON-1</option><option>DEMO-PERSON-2</option><option>DEMO-PERSON-3</option><option>DEMO-PERSON-4</option><option>DEMO-PERSON-5</option></select></label>
-              <label id="console-currency-field" hidden>Convert EUR to<select id="console-currency"><option>USD</option><option>GBP</option><option>CHF</option></select></label>
-            </div>
-            <button class="button primary" id="console-run" type="submit" disabled><svg class="icon"><use href="#i-play"/></svg>Run MCP call</button>
-          </form>
-          <p id="console-status" role="status">Apply the public endpoint to enable the console.</p>
-          <pre class="console-output" tabindex="0" aria-label="MCP response"><code id="console-output">Your actual server response will appear here.</code></pre>
-          <details><summary>See the protocol request</summary><pre><code id="console-request">No request sent yet.</code></pre></details>
-          <p class="caption">Public, read-only demo. No tokens or credentials. One call at a time per browser; shared capacity is bounded.</p>
+        <article class="lab-steps" aria-labelledby="lab-steps-title">
+          <h3 id="lab-steps-title"><svg class="icon"><use href="#i-code"/></svg>Six requests, one at a time</h3>
+          <div id="lab-tabs" class="step-tabs" role="group" aria-label="Lab steps"></div>
+          <div class="lab-step-head"><span class="step-count" id="lab-count"></span><h4 id="lab-step-title"></h4><p id="lab-why"></p></div>
+          <div class="lab-split">
+            <section class="lab-col" aria-labelledby="lab-command-title">
+              <h5 id="lab-command-title"><span class="col-number">1</span>Send this request</h5>
+              <div class="copy-panel dark"><div><span>Bash · nothing to install except curl</span><button class="text-button" id="lab-copy" type="button" disabled><svg class="icon"><use href="#i-copy"/></svg>Copy command</button></div><pre tabindex="0" aria-label="Command"><code id="lab-command"></code></pre></div>
+              <p class="legend"><mark class="hl">Highlighted</mark> <span id="lab-changed-legend">is what changes from the previous step.</span></p>
+              <button class="button primary" id="lab-run" type="button" disabled><svg class="icon"><use href="#i-play"/></svg>Or run it from this page</button>
+            </section>
+            <section class="lab-col" aria-labelledby="lab-response-title">
+              <h5 id="lab-response-title"><span class="col-number">2</span>Read the server's answer <small id="lab-timing"></small></h5>
+              <pre class="console-output" tabindex="0" aria-label="MCP response"><code id="lab-output">Run this step to see the real response.</code></pre>
+              <p class="legend"><mark class="hl">Highlighted</mark> <span>is <span id="lab-notice"></span></span></p>
+            </section>
+          </div>
+          <p id="lab-status" role="status">Apply the public endpoint to enable the lab.</p>
+          <div class="lab-nav"><button class="button" id="lab-prev" type="button">← Previous step</button><button class="button primary" id="lab-next" type="button">Next step →</button></div>
+          <p class="caption">Public, read-only demo with no credentials. A real MCP client first sends an <code>initialize</code> message; this workshop server is stateless, so you can skip it. Shared capacity is bounded.</p>
         </article>
-        <details class="terminal-alternative"><summary>Prefer a terminal? Copy the three commands</summary>
-        <details class="terminal-setup"><summary>Before your first call: install the terminal client once</summary>
-          <p>Requires Node.js 20+, npm and Git. Use Bash on macOS/Linux, WSL or Git Bash. If the workshop repository is already installed, skip this setup.</p>
-          <div class="copy-panel"><div><span>One-time setup</span><button class="text-button" data-copy="setup-code">Copy</button></div><pre><code id="setup-code">git clone https://github.com/solenecodes/workshop-mcp-server.git
-cd workshop-mcp-server
-npm ci</code></pre></div>
-          <p>Run all three commands from this repository folder. With the default local URL, open a second terminal here and run <code>npm run start:sandbox</code>. With the presenter's public URL, do not start your own server.</p>
-        </details>
-        <div class="terminal-exercises">
-          <article class="terminal-exercise"><h3><span class="exercise-number">1</span><span id="lab-title-0">Discover the tools</span></h3><p id="lab-instruction-0">List what this server can do.</p><div class="copy-panel"><div><span>Bash · repository folder</span><button class="text-button" data-copy="lab-code-0"><svg class="icon"><use href="#i-copy"/></svg>Copy command</button></div><pre><code id="lab-code-0">npm run workshop -- --url 'http://127.0.0.1:3201/mcp' --anonymous tools</code></pre></div><p class="terminal-expected"><strong>Look for:</strong> <span id="lab-expected-0">Four read-only tools with input schemas.</span></p></article>
-          <article class="terminal-exercise"><h3><span class="exercise-number">2</span><span id="lab-title-1">Read a customer dossier</span></h3><p id="lab-instruction-1">This tool reads a fictional customer through the private API.</p><div class="copy-panel"><div><span>Bash · repository folder</span><button class="text-button" data-copy="lab-code-1"><svg class="icon"><use href="#i-copy"/></svg>Copy command</button></div><pre><code id="lab-code-1">npm run workshop -- --url 'http://127.0.0.1:3201/mcp' --anonymous get_customer_file '{"customerId":"DEMO-PERSON-1"}'</code></pre></div><p class="terminal-expected"><strong>Look for:</strong> <span id="lab-expected-1">Alex Example, syntheticCustomerData: true, source: internal-api.</span></p></article>
-          <article class="terminal-exercise"><h3><span class="exercise-number">3</span><span id="lab-title-2">Combine the three sources</span></h3><p id="lab-instruction-2">One tool combines the private API, SQL data and an Internet exchange rate.</p><div class="copy-panel"><div><span>Bash · repository folder</span><button class="text-button" data-copy="lab-code-2"><svg class="icon"><use href="#i-copy"/></svg>Copy command</button></div><pre><code id="lab-code-2">npm run workshop -- --url 'http://127.0.0.1:3201/mcp' --anonymous get_customer_overview '{"customerId":"DEMO-PERSON-1","targetCurrency":"USD"}'</code></pre></div><p class="terminal-expected"><strong>Look for:</strong> <span id="lab-expected-2">A dossier, claim CLM-1001, coverage, a dated EUR/USD rate and three sources. A failed source returns an explicit error, not invented data.</span></p></article>
-        </div>
-        <p class="caption">These commands run in your terminal. All customer data is fictional. Only currency codes are sent to the Internet API. The sandbox cannot write or approve anything.</p>
-        </details>
         <details class="endpoint-card"><summary>Presenter: choose endpoints and share the exercise</summary>
           <form id="endpoint-form">
             <label for="endpoint">Public read-only sandbox URL</label>
@@ -215,7 +211,7 @@ npm ci</code></pre></div>
           </form>
           <p>Use only the dedicated read-only sandbox here, never the intentionally insecure write-capable server. Remote endpoints require HTTPS. This page does not verify server availability. Shared links contain endpoint URLs only, never tokens.</p>
         </details>
-        <noscript><p class="notice">The commands above use the local sandbox. JavaScript is needed to generate commands for a presenter's remote endpoint. See the <a href="https://github.com/solenecodes/workshop-mcp-server#multi-source-terminal-lab">terminal instructions</a>.</p></noscript>
+        <noscript><p class="notice">The lab needs JavaScript to run steps and generate commands for the presenter's endpoint. See the <a href="https://github.com/solenecodes/workshop-mcp-server#multi-source-terminal-lab">terminal instructions</a>.</p></noscript>
       </section>
 
       <section id="auth" class="chapter" aria-labelledby="auth-title">
@@ -243,6 +239,12 @@ npm ci</code></pre></div>
           <h3>Try the same call on the protected endpoint</h3>
           <p id="protected-status" class="notice">No protected endpoint configured. The presenter must configure Entra ID and supply this endpoint before session 3.</p>
           <div id="protected-commands" hidden>
+            <details class="terminal-setup"><summary>One-time setup for the terminal client</summary>
+              <p>Requires Node.js 20+, npm and Git. Use Bash on macOS/Linux, WSL or Git Bash. If the workshop repository is already installed, skip this setup.</p>
+              <div class="copy-panel"><div><span>One-time setup</span><button class="text-button" data-copy="setup-code">Copy</button></div><pre><code id="setup-code">git clone https://github.com/solenecodes/workshop-mcp-server.git
+cd workshop-mcp-server
+npm ci</code></pre></div>
+            </details>
             <p><strong>Without a token:</strong> the server returns HTTP 401 before any source is queried.</p>
             <div class="copy-panel"><div><span>Bash · no identity</span><button class="text-button" data-copy="anonymous-code">Copy</button></div><pre><code id="anonymous-code"></code></pre></div>
             <p><strong>With your Entra access token:</strong> paste it only into your terminal. A reader receives masked customer fields; an invalid token returns 401 and missing <code>Mcp.Read</code> permission returns 403.</p>

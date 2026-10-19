@@ -2,7 +2,11 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { createSandboxApp } from '../src/sandbox/server.ts';
 import { createSources, startInternalApi } from '../src/sandbox/sources.ts';
-import { runConsoleOperation } from '../sessions/01-mcp-fondamentaux/mcp-console.mjs';
+import { callMcp } from '../sessions/01-mcp-fondamentaux/mcp-console.mjs';
+import { labCommand } from '../sessions/01-mcp-fondamentaux/presentation-lab.mjs';
+
+const stepRequest = (index) => labCommand(index, { endpoint: 'https://public.example/mcp' }).request;
+const tool = (name, args) => ({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name, arguments: args } });
 
 const origin = 'https://workshop.example';
 async function fixture() {
@@ -36,19 +40,22 @@ async function fixture() {
   };
 }
 
-test('browser console negotiates real MCP, discovers tools and calls only read-only operations', async () => {
+test('the six guided requests run against the real stateless server and only read-only requests can be sent', async () => {
   const f = await fixture();
   try {
-    const tools = await runConsoleOperation(f.url, 'tools', 'DEMO-PERSON-1', 'USD', f.browserFetch);
-    assert.equal(tools.result.tools.length, 4);
-    for (const operation of ['get_customer_file', 'get_customer_overview', 'list_customer_claims', 'get_exchange_rate']) {
-      const reply = await runConsoleOperation(f.url, operation, 'DEMO-PERSON-1', 'USD', f.browserFetch);
-      assert.notEqual(reply.result.isError, true);
-      assert.equal(reply.request.params.name, operation);
-      assert.ok(reply.elapsedMs >= 0);
-    }
-    await assert.rejects(runConsoleOperation(f.url, 'escalate_claim', 'DEMO-PERSON-1', 'USD'), /read-only/);
-    await assert.rejects(runConsoleOperation(f.url, 'get_customer_file', 'DEMO-PERSON-99', 'USD'), /fictional customers/);
+    const replies = [];
+    for (let index = 0; index < 6; index++) replies.push(await callMcp(f.url, stepRequest(index), f.browserFetch));
+    assert.equal(replies[0].result.tools.length, 4);
+    for (const reply of replies.slice(1)) assert.notEqual(reply.result.isError, true);
+    assert.equal(replies[1].result.structuredContent.customer.customerId, 'DEMO-PERSON-1');
+    assert.equal(replies[2].result.structuredContent.customer.customerId, 'DEMO-PERSON-2');
+    assert.equal(replies[3].result.structuredContent.claims[0].currency, 'EUR');
+    assert.equal(replies[4].result.structuredContent.exchangeRate.quote, 'USD');
+    assert.equal(replies[5].result.structuredContent.sources.length, 3);
+    await assert.rejects(callMcp(f.url, tool('escalate_claim', {})), /read-only/);
+    await assert.rejects(callMcp(f.url, { jsonrpc: '2.0', id: 1, method: 'resources/list' }), /read-only/);
+    const invalid = await callMcp(f.url, tool('get_customer_file', { customerId: 'DEMO-PERSON-99' }), f.browserFetch);
+    assert.equal(invalid.result.isError, true);
   } finally { await f.close(); }
 });
 
@@ -78,7 +85,7 @@ test('twenty concurrent browser participants get complete results with one share
   const f = await fixture();
   try {
     const results = await Promise.all(Array.from({ length: 20 }, (_, index) =>
-      runConsoleOperation(f.url, 'get_customer_overview', `DEMO-PERSON-${index % 5 + 1}`, 'USD', f.browserFetch)));
+      callMcp(f.url, tool('get_customer_overview', { customerId: `DEMO-PERSON-${index % 5 + 1}`, targetCurrency: 'USD' }), f.browserFetch)));
     assert.ok(results.every(reply => reply.result.isError !== true && reply.result.structuredContent.sources.length === 3));
     assert.equal(f.internetCalls(), 1);
     const times = results.map(reply => reply.elapsedMs).sort((a, b) => a - b);
@@ -89,12 +96,9 @@ test('twenty concurrent browser participants get complete results with one share
 });
 
 test('console surfaces HTTP limits, invalid protocol responses and transport failures explicitly', async () => {
-  await assert.rejects(runConsoleOperation('https://public.example/mcp', 'tools', 'DEMO-PERSON-1', 'USD',
-    async () => new Response('', { status: 429, headers: { 'Retry-After': '12' } })), /12 seconds/);
-  await assert.rejects(runConsoleOperation('https://public.example/mcp', 'tools', 'DEMO-PERSON-1', 'USD',
-    async () => Response.json({ jsonrpc: '2.0', id: 99, result: {} })), /invalid MCP response/);
-  await assert.rejects(runConsoleOperation('https://public.example/mcp', 'tools', 'DEMO-PERSON-1', 'USD',
-    async () => { throw new Error('Network offline'); }), /Network offline/);
-  await assert.rejects(runConsoleOperation('https://public.example/mcp', 'tools', 'DEMO-PERSON-1', 'USD',
-    async () => { throw new DOMException('signal timed out', 'TimeoutError'); }), /within 60 seconds.*starting/);
+  const call = (fetcher) => callMcp('https://public.example/mcp', stepRequest(0), fetcher);
+  await assert.rejects(call(async () => new Response('', { status: 429, headers: { 'Retry-After': '12' } })), /12 seconds/);
+  await assert.rejects(call(async () => Response.json({ jsonrpc: '2.0', id: 99, result: {} })), /invalid MCP response/);
+  await assert.rejects(call(async () => { throw new Error('Network offline'); }), /Network offline/);
+  await assert.rejects(call(async () => { throw new DOMException('signal timed out', 'TimeoutError'); }), /within 60 seconds.*starting/);
 });

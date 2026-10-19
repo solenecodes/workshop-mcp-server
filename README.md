@@ -2,7 +2,7 @@
 
 **Start with the [visual presentation & participant lab](https://solenecodes.github.io/workshop-mcp-server/).**
 Six short chapters: why MCP exists, its architecture, an animated call, MCP vs
-API, a live participant console with a terminal alternative, and access controls.
+API, a guided six-step live lab (copy a curl command or run it from the page), and access controls.
 
 **All customer and insurance data is invented.** The new read-only sandbox
 actually calls a public exchange-rate API. Only currency codes leave the
@@ -36,15 +36,19 @@ npm run workshop -- --url 'http://127.0.0.1:3201/mcp' --anonymous get_customer_o
 For a hosted workshop, participants use the presenter's HTTPS URL instead of
 loopback and do **not** start their own server. No hosted endpoint is bundled
 or claimed to be live. The presentation's collapsed presenter panel generates
-the three commands and a shareable link from the actual URLs, never credentials.
-The browser console calls the configured anonymous MCP endpoint directly.
+the six steps and a shareable link from the actual URLs, never credentials.
+The lab sends one stateless JSON-RPC request per step to the configured
+anonymous MCP endpoint, either from a copied `curl` command or directly from the page.
 The presentation never receives protected-endpoint tokens.
 
-| Call | What to observe |
-| --- | --- |
-| `tools` | Four read-only tools, their descriptions and input schemas |
-| `get_customer_file` | Alex Example, `syntheticCustomerData: true`, source `internal-api` |
-| `get_customer_overview` | CLM-1001, its coverage, a dated exchange rate, converted amount and three `sources` |
+| Step | Request | What to observe |
+| --- | --- | --- |
+| 1 | `tools/list` | Four read-only tools with their names |
+| 2 | `get_customer_file` (DEMO-PERSON-1) | Alex Example, source Customers REST API |
+| 3 | same tool, DEMO-PERSON-2 | Only `customerId` changes: Robin Sample |
+| 4 | `list_customer_claims` | CLM-1002 in EUR from the Claims and Policies APIs (SQLite) |
+| 5 | `get_exchange_rate` | A dated EUR to USD rate from Frankfurter |
+| 6 | `get_customer_overview` | Customer, claim in EUR and USD, rate and three `sources` |
 
 ```text
 Terminal / MCP SDK -> MCP server -> Customers REST API -----> SQLite

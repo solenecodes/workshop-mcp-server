@@ -27,31 +27,65 @@ export function shareUrl(pageUrl, settings) {
   return url.href;
 }
 
-export function labStep(index, settings) {
+const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+export const labSteps = [
+  {
+    short: 'Discover', title: 'Ask the server what it can do',
+    why: 'Before reading any data, a client asks the server for its list of tools. The server describes itself: this is what an API alone does not do.',
+    method: 'tools/list', changes: ['tools/list'], focus: ['name'],
+    notice: 'the name of each of the four tools the server offers.',
+  },
+  {
+    short: 'Customer', title: 'Read one customer',
+    why: 'Now call a tool. The MCP server forwards the request to the private Customers API and returns the dossier. All people here are fictional.',
+    tool: 'get_customer_file', args: { customerId: 'DEMO-PERSON-1' },
+    changes: ['tools/call', 'get_customer_file', 'DEMO-PERSON-1'], focus: ['customerName', 'name'],
+    notice: 'the customer, and the source that answered (Customers REST API).',
+  },
+  {
+    short: 'Another customer', title: 'Change one value',
+    why: 'Same tool, one different input. The database holds five fictional customers so you can see that a tool is reusable: only the customerId changes.',
+    tool: 'get_customer_file', args: { customerId: 'DEMO-PERSON-2' },
+    changes: ['DEMO-PERSON-2'], focus: ['customerId', 'customerName'],
+    notice: 'a different customer, returned by the same tool.',
+  },
+  {
+    short: 'Claims', title: 'Read the claims of that customer',
+    why: 'A second tool reads a second system: the Claims and Policies APIs, backed by a SQLite database. Amounts are stored in euros.',
+    tool: 'list_customer_claims', args: { customerId: 'DEMO-PERSON-2' },
+    changes: ['list_customer_claims'], focus: ['claimId', 'amount', 'currency', 'status', 'name'],
+    notice: 'the claim, its amount in EUR and its status.',
+  },
+  {
+    short: 'Internet', title: 'Ask a public Internet API',
+    why: 'A third source is outside the company: a public exchange-rate API. A partner abroad may need the amount in dollars, which requires a dated rate. Only currency codes leave the server.',
+    tool: 'get_exchange_rate', args: { baseCurrency: 'EUR', targetCurrency: 'USD' },
+    changes: ['get_exchange_rate', '{"baseCurrency":"EUR","targetCurrency":"USD"}'], focus: ['date', 'rate', 'base', 'quote', 'name'],
+    notice: 'the date of the rate, EUR to USD, and the source (Frankfurter).',
+  },
+  {
+    short: 'Combine', title: 'Combine the three sources in one call',
+    why: 'This is the call an AI assistant would make for the question in the scenario. One tool reads the customer, the claims and the exchange rate, then converts the amount.',
+    tool: 'get_customer_overview', args: { customerId: 'DEMO-PERSON-2', targetCurrency: 'USD' },
+    changes: ['get_customer_overview', '"targetCurrency":"USD"'], focus: ['customerName', 'amount', 'currency', 'rate', 'name'],
+    notice: 'the claim in EUR, the same claim converted to USD, and the three sources used.',
+  },
+];
+
+function segments(code, changes) {
+  const pattern = new RegExp(`(${changes.map(escapeRegExp).join('|')})`);
+  return code.split(pattern).filter(Boolean).map((text) => ({ text, changed: changes.includes(text) }));
+}
+
+export function labCommand(index, settings) {
   const { endpoint } = validateEndpoint(settings.endpoint);
-  const steps = [
-    {
-      title: 'Discover the tools',
-      instruction: 'List what this server can do. No agent or model is involved.',
-      command: 'tools',
-      expected: 'Four read-only tools, with descriptions and input schemas. No customer record has been read yet.',
-    },
-    {
-      title: 'Read a customer dossier',
-      instruction: 'This tool calls the private dossier API. Alex Example is a fictional customer.',
-      command: `get_customer_file ${quote('{"customerId":"DEMO-PERSON-1"}')}`,
-      expected: 'customerName: Alex Example, syntheticCustomerData: true, and a source labelled internal-api.',
-    },
-    {
-      title: 'Combine the three sources',
-      instruction: 'One tool calls the Customers, Claims and Policies APIs, then fetches a dated EUR/USD exchange rate.',
-      command: `get_customer_overview ${quote('{"customerId":"DEMO-PERSON-1","targetCurrency":"USD"}')}`,
-      expected: 'The dossier, claim CLM-1001, coverage, a dated exchange rate and three sources. If the Internet API is unavailable, an explicit tool error replaces the result.',
-    },
-  ];
-  const step = steps[index];
+  const step = labSteps[index];
   if (!step) throw new Error('Unknown practice step.');
-  return { ...step, code: `npm run workshop -- --url ${quote(endpoint)} --anonymous ${step.command}` };
+  const request = { jsonrpc: '2.0', id: 1, method: step.method ?? 'tools/call',
+    ...(step.tool ? { params: { name: step.tool, arguments: step.args } } : {}) };
+  const code = `curl -s ${quote(endpoint)} \\\n  -H 'Content-Type: application/json' \\\n  -H 'Accept: application/json, text/event-stream' \\\n  -d ${quote(JSON.stringify(request))}`;
+  return { ...step, request, code, segments: segments(code, step.changes) };
 }
 
 export function securityCode(endpoint) {

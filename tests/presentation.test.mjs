@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { defaultEndpoint, defaultProtectedEndpoint, labStep, securityCode, setupCode, shareUrl, validateEndpoint } from '../sessions/01-mcp-fondamentaux/presentation-lab.mjs';
+import { defaultEndpoint, defaultProtectedEndpoint, labCommand, labSteps, securityCode, setupCode, shareUrl, validateEndpoint } from '../sessions/01-mcp-fondamentaux/presentation-lab.mjs';
 import { jsonTokens } from '../sessions/01-mcp-fondamentaux/mcp-console.mjs';
 
 test('JSON highlighting preserves actual formatted data and classifies JSON values without HTML', () => {
@@ -14,6 +14,15 @@ test('JSON highlighting preserves actual formatted data and classifies JSON valu
   assert.equal(tokens.find(({ text }) => text === '"enabled"').kind, 'key');
   assert.equal(tokens.find(({ text }) => text === 'null').kind, 'null');
   assert.equal(tokens.find(({ text }) => text.includes('<script>')).kind, 'string');
+  assert.ok(tokens.every(({ focus }) => focus === false));
+});
+
+test('focused keys highlight only their own line, values included', () => {
+  const tokens = jsonTokens({ customer: { customerName: 'Alex', customerId: 'ID' }, rate: 1.1 }, ['customerName', 'rate']);
+  const focused = tokens.filter(({ focus }) => focus).map(({ text }) => text).join('');
+  assert.match(focused, /"customerName": "Alex",?/);
+  assert.match(focused, /"rate": 1\.1/);
+  assert.doesNotMatch(focused, /customerId/);
 });
 
 test('public sandbox URLs allow HTTPS and loopback HTTP, but never credentials or remote HTTP', () => {
@@ -44,19 +53,25 @@ test('shared links preserve both endpoints but never page parameters or credenti
   assert.throws(() => shareUrl(url.href, { endpoint: defaultEndpoint, protectedEndpoint: 'https://protected.example.org/?token=secret' }));
 });
 
-test('exactly three terminal exercises discover, read and aggregate; public calls never send a token', () => {
+test('six guided steps build one copyable curl request each and mark only what changed', () => {
   const settings = { endpoint: 'https://sandbox.example.org/mcp' };
-  const commands = Array.from({ length: 3 }, (_, index) => labStep(index, settings));
-  assert.match(commands[0].code, /--anonymous tools$/);
-  assert.match(commands[1].code, /--anonymous get_customer_file/);
-  assert.match(commands[2].code, /--anonymous get_customer_overview/);
-  assert.match(commands[2].expected, /three sources/);
+  const commands = labSteps.map((_, index) => labCommand(index, settings));
+  assert.equal(commands.length, 6);
+  assert.deepEqual(commands.map((step) => step.request.params?.name ?? step.request.method), [
+    'tools/list', 'get_customer_file', 'get_customer_file', 'list_customer_claims', 'get_exchange_rate', 'get_customer_overview']);
   for (const step of commands) {
-    assert.ok(step.title && step.instruction && step.expected);
-    assert.match(step.code, /--url 'https:\/\/sandbox.example.org\/mcp'/);
-    assert.doesNotMatch(step.code, /MCP_TOKEN|demo-.*-token|Copilot|Inspector/);
+    assert.ok(step.title && step.why && step.notice && step.focus.length);
+    assert.match(step.code, /^curl -s 'https:\/\/sandbox.example.org\/mcp' \\\n/);
+    assert.ok(step.code.includes(`-d '${JSON.stringify(step.request)}'`));
+    assert.equal(step.segments.map(({ text }) => text).join(''), step.code);
+    assert.ok(step.segments.some(({ changed }) => changed), 'each step highlights something');
+    assert.doesNotMatch(step.code, /MCP_TOKEN|Authorization|demo-.*-token/i);
   }
-  for (const index of [-1, 3, 8]) assert.throws(() => labStep(index, settings));
+  // Step 3 differs from step 2 only by the customer.
+  assert.deepEqual(commands[2].segments.filter(({ changed }) => changed).map(({ text }) => text), ['DEMO-PERSON-2']);
+  assert.deepEqual(commands[5].segments.filter(({ changed }) => changed).map(({ text }) => text),
+    ['get_customer_overview', '"targetCurrency":"USD"']);
+  for (const index of [-1, 6, 8]) assert.throws(() => labCommand(index, settings));
   assert.match(setupCode, /npm ci/);
 });
 
@@ -69,12 +84,13 @@ test('protected commands contrast no identity and prompted identity without putt
   assert.throws(() => securityCode('http://protected.example.org/mcp'));
 });
 
-test('shell-quoted endpoints cannot become shell expansion and static markup contains the three commands', () => {
-  const step = labStep(0, { endpoint: "https://sandbox.example.org/a'b" });
+test('shell-quoted endpoints cannot become shell expansion and the page contains the guided lab and no French', () => {
+  const step = labCommand(0, { endpoint: "https://sandbox.example.org/a'b" });
   assert.match(step.code, /a'\\''b/);
   const html = readFileSync(new URL('../sessions/01-mcp-fondamentaux/presentation.html', import.meta.url), 'utf8');
-  assert.equal((html.match(/class="terminal-exercise"/g) ?? []).length, 3);
-  assert.equal((html.match(/id="lab-code-[0-2]"/g) ?? []).length, 3);
-  assert.doesNotMatch(html, /data-lab-step|id="lab-prev"|id="access"/);
-  for (const command of ['--anonymous tools', '--anonymous get_customer_file', '--anonymous get_customer_overview']) assert.ok(html.includes(command));
+  for (const id of ['lab-tabs', 'lab-command', 'lab-output', 'lab-run', 'lab-copy', 'scenario-title']) assert.ok(html.includes(`id="${id}"`));
+  assert.doesNotMatch(html, /id="console-(form|operation)"|class="terminal-exercise"/);
+  const visible = [html, readFileSync(new URL('../sessions/01-mcp-fondamentaux/presentation-lab.mjs', import.meta.url), 'utf8')].join('\n');
+  assert.doesNotMatch(visible, /[àâçéèêëîïôûùüœ]|\b(?:le|la|les|des|pour|avec|votre|vous|une?)\b(?=\s+[a-z])/i);
+  for (const customer of ['DEMO-PERSON-1', 'DEMO-PERSON-5']) assert.ok(html.includes(customer));
 });

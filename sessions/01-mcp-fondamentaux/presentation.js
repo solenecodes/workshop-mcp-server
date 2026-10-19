@@ -1,13 +1,13 @@
-import { defaultEndpoint, defaultProtectedEndpoint, labStep, securityCode, setupCode, shareUrl, validateEndpoint } from './presentation-lab.mjs?v=aca-live-1';
-import { jsonTokens, runConsoleOperation } from './mcp-console.mjs?v=ready-console-1';
+import { defaultEndpoint, defaultProtectedEndpoint, labCommand, labSteps, securityCode, setupCode, shareUrl, validateEndpoint } from './presentation-lab.mjs?v=guided-lab-1';
+import { callMcp, jsonTokens } from './mcp-console.mjs?v=guided-lab-1';
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 const format = (value) => typeof value === 'string' ? value : JSON.stringify(value, null, 2);
-function renderJson(element, value) {
-  element.replaceChildren(...jsonTokens(value).map(({ text, kind }) => {
+function renderJson(element, value, focus = []) {
+  element.replaceChildren(...jsonTokens(value, focus).map(({ text, kind, focus: focused }) => {
     const token = document.createElement('span');
-    token.className = `json-${kind}`;
+    token.className = `json-${kind}${focused ? ' json-focus' : ''}`;
     token.textContent = text;
     return token;
   }));
@@ -290,7 +290,7 @@ function showChapter(focus = false) {
   $('#chapter-prev').textContent = chapterIndex === 4 ? '← Back to course' : chapterIndex === 5 ? '← Back to exercises' : '← Previous lesson';
   $('#chapter-next').textContent = chapterIndex < 3 ? 'Next lesson →' : chapterIndex === 3 ? 'Start hands-on →' : chapterIndex === 4 ? 'Next: security →' : 'End of workshop';
   $('#chapter-count').textContent = chapterIndex < 4 ? `Course · Lesson ${chapterIndex + 1} of 4`
-    : chapterIndex === 4 ? 'Your turn · Live console' : 'Next session · Security';
+    : chapterIndex === 4 ? 'Your turn · Live lab' : 'Next session · Security';
   requestAnimationFrame(() => controllers.forEach((controller) => controller.redraw()));
   if (focus) {
     $('h1,h2', chapters[chapterIndex]).focus({ preventScroll: true });
@@ -420,22 +420,65 @@ controllers.push(createIntegrationAnimation());
 
 let settings;
 let consoleBusy = false;
+let currentStep = 0;
+let stepResults = [];
 const endpointInput = $('#endpoint');
 const protectedInput = $('#protected-endpoint');
-const codeTargets = ['lab-code-0', 'lab-code-1', 'lab-code-2', 'anonymous-code', 'authenticated-code'];
+const codeTargets = ['anonymous-code', 'authenticated-code'];
 $('#setup-code').textContent = setupCode;
+
+const tabs = $('#lab-tabs');
+labSteps.forEach((step, index) => {
+  const tab = document.createElement('button');
+  tab.type = 'button';
+  tab.className = 'step-tab';
+  const number = document.createElement('span');
+  number.textContent = String(index + 1);
+  tab.append(number, document.createTextNode(step.short));
+  tab.addEventListener('click', () => { currentStep = index; renderStep(); });
+  tabs.append(tab);
+});
+function renderStep() {
+  const step = labSteps[currentStep];
+  $$('.step-tab', tabs).forEach((tab, index) => {
+    tab.setAttribute('aria-pressed', String(index === currentStep));
+    tab.classList.toggle('done', stepResults[index] !== undefined);
+  });
+  $('#lab-count').textContent = `Step ${currentStep + 1} of ${labSteps.length}`;
+  $('#lab-step-title').textContent = step.title;
+  $('#lab-why').textContent = step.why;
+  $('#lab-notice').textContent = step.notice;
+  $('#lab-changed-legend').textContent = currentStep === 0
+    ? 'is the request: ask the server for its list of tools.' : 'is what changes from the previous step.';
+  $('#lab-prev').disabled = currentStep === 0;
+  $('#lab-next').disabled = currentStep === labSteps.length - 1;
+  const command = $('#lab-command');
+  if (settings) {
+    const { segments } = labCommand(currentStep, settings);
+    command.replaceChildren(...segments.map(({ text, changed }) => {
+      const part = document.createElement(changed ? 'mark' : 'span');
+      if (changed) part.className = 'hl';
+      part.textContent = text;
+      return part;
+    }));
+  } else {
+    command.textContent = 'Apply a valid endpoint to generate this command.';
+  }
+  $('#lab-copy').disabled = !settings;
+  $('#lab-run').disabled = !settings || consoleBusy;
+  const stored = stepResults[currentStep];
+  const output = $('#lab-output');
+  $('#lab-timing').textContent = stored ? `· ${stored.elapsedMs} ms` : '';
+  if (stored) renderJson(output, stored.result.structuredContent ?? stored.result, step.focus);
+  else output.textContent = 'Run this step to see the real response.';
+}
+$('#lab-prev').addEventListener('click', () => { currentStep = Math.max(0, currentStep - 1); renderStep(); });
+$('#lab-next').addEventListener('click', () => { currentStep = Math.min(labSteps.length - 1, currentStep + 1); renderStep(); });
 function renderLab() {
   if (!settings) return;
-  $('#console-run').disabled = consoleBusy;
-  $('#console-status').textContent = consoleBusy ? 'Finishing the current call...' : 'Ready. Choose an operation and select Run MCP call.';
-  $('#console-status').dataset.error = 'false';
-  for (let index = 0; index < 3; index++) {
-    const current = labStep(index, settings);
-    $(`#lab-title-${index}`).textContent = current.title;
-    $(`#lab-instruction-${index}`).textContent = current.instruction;
-    $(`#lab-code-${index}`).textContent = current.code;
-    $(`#lab-expected-${index}`).textContent = current.expected;
-  }
+  $('#lab-status').textContent = consoleBusy ? 'Finishing the current call...' : 'Ready. Copy the command, or run it from this page.';
+  $('#lab-status').dataset.error = 'false';
+  renderStep();
   $('#protected-commands').hidden = !settings.protectedEndpoint;
   $('#protected-status').textContent = settings.protectedEndpoint
     ? `Configured protected endpoint: ${settings.protectedEndpoint}. Availability and Entra setup are not verified by this page.`
@@ -456,18 +499,20 @@ function applyEndpoint() {
       ? validateEndpoint(protectedInput.value.trim()).endpoint : undefined;
     if (protectedEndpoint === validated.endpoint) throw new Error('Use separate public and protected endpoints.');
     settings = { ...validated, protectedEndpoint };
+    stepResults = [];
     endpointInput.value = settings.endpoint;
     protectedInput.value = protectedEndpoint ?? '';
     $('#endpoint-error').hidden = true;
     $('#endpoint-status').textContent = settings.local
       ? `Local sandbox: ${settings.endpoint}. Start npm run start:sandbox in a second terminal. This is not a public workshop endpoint.`
-      : `Public workshop endpoint: ${settings.endpoint}. Select an operation and run the call below.`;
+      : `Public workshop endpoint: ${settings.endpoint}. The six steps below call this server.`;
     $$('[data-copy],#share').forEach((button) => { button.disabled = false; });
     renderLab();
     return true;
   } catch (error) {
     settings = undefined;
-    $('#console-run').disabled = true;
+    stepResults = [];
+    renderStep();
     codeTargets.forEach((id) => { document.getElementById(id).textContent = 'Apply a valid endpoint to generate this command.'; });
     $('#participant-link')?.remove();
     $('#endpoint-error').textContent = error.message;
@@ -480,7 +525,8 @@ function applyEndpoint() {
 }
 function markEndpointDirty() {
   settings = undefined;
-  $('#console-run').disabled = true;
+  stepResults = [];
+  renderStep();
   codeTargets.forEach((id) => { document.getElementById(id).textContent = 'Apply the endpoint changes to regenerate this command.'; });
   $('#participant-link')?.remove();
   $('#endpoint-status').textContent = 'Changes not applied. Select “Apply endpoints” to regenerate all commands.';
@@ -496,41 +542,37 @@ endpointInput.value = params.get('endpoint') ?? defaultEndpoint;
 protectedInput.value = params.get('protectedEndpoint') ?? defaultProtectedEndpoint;
 applyEndpoint();
 
-$('#console-operation').addEventListener('change', () => {
-  const operation = $('#console-operation').value;
-  $('#console-customer-field').hidden = ['tools', 'get_exchange_rate'].includes(operation);
-  $('#console-currency-field').hidden = !['get_customer_overview', 'get_exchange_rate'].includes(operation);
+$('#lab-copy').addEventListener('click', () => {
+  if (settings) void copy(labCommand(currentStep, settings).code, 'Copied. Paste it into a Bash terminal (Git Bash or WSL on Windows).');
 });
-$('#console-form').addEventListener('submit', async (event) => {
-  event.preventDefault();
+$('#lab-run').addEventListener('click', async () => {
   if (!settings || consoleBusy) return;
   consoleBusy = true;
   const endpoint = settings.endpoint;
-  const status = $('#console-status');
-  $('#console-run').disabled = true;
-  $('#console-form').setAttribute('aria-busy', 'true');
+  const index = currentStep;
+  const status = $('#lab-status');
+  $('#lab-run').disabled = true;
   status.dataset.error = 'false';
-  status.textContent = 'Connecting and running your request. If the server is starting, this may take up to 60 seconds...';
-  $('#console-output').textContent = 'Waiting for the server...';
-  $('#console-request').textContent = 'Negotiating the MCP connection...';
+  status.textContent = 'Sending the request. If the server is starting, this may take up to 60 seconds...';
+  $('#lab-output').textContent = 'Waiting for the server...';
+  let failed = false;
   try {
-    const reply = await runConsoleOperation(endpoint, $('#console-operation').value,
-      $('#console-customer').value, $('#console-currency').value);
+    const reply = await callMcp(endpoint, labCommand(index, settings).request);
     if (settings?.endpoint !== endpoint) throw new Error('The endpoint changed. Apply it and run the call again.');
-    renderJson($('#console-request'), reply.request);
-    renderJson($('#console-output'), reply.result.structuredContent ?? reply.result);
+    stepResults[index] = reply;
     status.dataset.error = String(reply.result.isError === true);
     status.textContent = reply.result.isError
-      ? `The server returned a tool error (${reply.elapsedMs} ms). See the actual response below.`
-      : `Response received in ${reply.elapsedMs} ms, including MCP connection negotiation.`;
+      ? `The server returned a tool error (${reply.elapsedMs} ms). See the actual response.`
+      : `Response received in ${reply.elapsedMs} ms.`;
   } catch (error) {
+    failed = true;
     status.dataset.error = 'true';
     status.textContent = 'The call failed. No demo response was substituted.';
-    $('#console-output').textContent = error.message;
+    if (currentStep === index) $('#lab-output').textContent = error.message;
   } finally {
     consoleBusy = false;
-    $('#console-run').disabled = !settings;
-    $('#console-form').removeAttribute('aria-busy');
+    if (failed || currentStep !== index) $('#lab-run').disabled = !settings;
+    else renderStep();
   }
 });
 
