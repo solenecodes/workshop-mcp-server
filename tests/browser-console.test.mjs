@@ -95,4 +95,6 @@ test('console surfaces HTTP limits, invalid protocol responses and transport fai
     async () => Response.json({ jsonrpc: '2.0', id: 99, result: {} })), /invalid MCP response/);
   await assert.rejects(runConsoleOperation('https://public.example/mcp', 'tools', 'DEMO-PERSON-1', 'USD',
     async () => { throw new Error('Network offline'); }), /Network offline/);
+  await assert.rejects(runConsoleOperation('https://public.example/mcp', 'tools', 'DEMO-PERSON-1', 'USD',
+    async () => { throw new DOMException('signal timed out', 'TimeoutError'); }), /within 60 seconds.*starting/);
 });

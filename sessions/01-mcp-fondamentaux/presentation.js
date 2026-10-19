@@ -1,5 +1,5 @@
 import { defaultEndpoint, defaultProtectedEndpoint, labStep, securityCode, setupCode, shareUrl, validateEndpoint } from './presentation-lab.mjs?v=aca-live-1';
-import { jsonTokens, runConsoleOperation } from './mcp-console.mjs?v=json-dark-1';
+import { jsonTokens, runConsoleOperation } from './mcp-console.mjs?v=ready-console-1';
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -510,7 +510,7 @@ $('#console-form').addEventListener('submit', async (event) => {
   $('#console-run').disabled = true;
   $('#console-form').setAttribute('aria-busy', 'true');
   status.dataset.error = 'false';
-  status.textContent = 'Connecting to the MCP server and running your request...';
+  status.textContent = 'Connecting and running your request. If the server is starting, this may take up to 60 seconds...';
   $('#console-output').textContent = 'Waiting for the server...';
   $('#console-request').textContent = 'Negotiating the MCP connection...';
   try {
@@ -526,7 +526,7 @@ $('#console-form').addEventListener('submit', async (event) => {
   } catch (error) {
     status.dataset.error = 'true';
     status.textContent = 'The call failed. No demo response was substituted.';
-    $('#console-output').textContent = `${error.message}\nUse the approved public endpoint. If browser access is blocked, the terminal client is available below.`;
+    $('#console-output').textContent = error.message;
   } finally {
     consoleBusy = false;
     $('#console-run').disabled = !settings;

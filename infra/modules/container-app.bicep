@@ -16,6 +16,9 @@ param backendApiUrl string
 param publicApiUrl string
 param consoleOrigin string
 param tags object
+@minValue(0)
+@maxValue(2)
+param minReplicas int = 0
 
 var placeholderImage = 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
 var isPlaceholder = containerImage == placeholderImage
@@ -62,7 +65,7 @@ resource app 'Microsoft.App/containerApps@2026-07-01' = {
     }
     template: {
       scale: {
-        minReplicas: 0
+        minReplicas: minReplicas
         maxReplicas: 2
       }
       containers: [

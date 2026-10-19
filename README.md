@@ -157,6 +157,17 @@ synthetic and read-only. Without a persistent volume, replacement containers
 recreate the original seed; this must be acknowledged before provisioning.
 This workshop store is not a production HA database.
 
+For the live workshop, `workshopAlwaysReady=true` keeps one public MCP replica
+and one internal API replica running to avoid chained cold-start timeouts.
+This incurs additional idle compute charges; the protected MCP still scales
+to zero. Set the parameter to `false` and redeploy to restore scale-to-zero
+for all three apps. The browser allows 60 seconds for a call and reports
+timeouts explicitly; source failures never become synthetic successes.
+At the quoted idle rates, these two 0.5-vCPU/1-GiB replicas cost roughly
+US$0.0324/hour (US$23.65 for 730 idle hours), before shared free grants.
+Active usage and the approximately US$5/month registry are additional;
+this is an estimate, not a billing guarantee.
+
 For remote business API hosting, configure `HOST`, `PORT`,
 `PUBLIC_API_URL=https://<actual-business-api-host>`, `BACKEND_MODE=entra`,
 `ENTRA_TENANT_ID`, `BACKEND_CLIENT_ID` and `BACKEND_DATABASE_PATH`.

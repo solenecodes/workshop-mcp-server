@@ -17,17 +17,25 @@ export async function runConsoleOperation(endpoint, operation, customerId, targe
   if (!/^DEMO-PERSON-[1-5]$/.test(customerId) || !['USD', 'GBP', 'CHF'].includes(targetCurrency)) {
     throw new Error('Select one of the fictional customers and a supported currency.');
   }
-  const signal = AbortSignal.timeout(15000);
+  const signal = AbortSignal.timeout(60000);
   let protocol = '2025-03-26';
   let session;
   async function send(method, params, id) {
     const request = { jsonrpc: '2.0', ...(id === undefined ? {} : { id }), method, ...(params ? { params } : {}) };
-    const response = await fetcher(url, {
-      method: 'POST', credentials: 'omit', redirect: 'error', signal,
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/event-stream',
-        'MCP-Protocol-Version': protocol, ...(session ? { 'Mcp-Session-Id': session } : {}) },
-      body: JSON.stringify(request),
-    });
+    let response;
+    try {
+      response = await fetcher(url, {
+        method: 'POST', credentials: 'omit', redirect: 'error', signal,
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/event-stream',
+          'MCP-Protocol-Version': protocol, ...(session ? { 'Mcp-Session-Id': session } : {}) },
+        body: JSON.stringify(request),
+      });
+    } catch (error) {
+      if (signal.aborted || error?.name === 'TimeoutError') {
+        throw new Error('The MCP server did not respond within 60 seconds. It may be starting or temporarily unavailable. Retry the call; no demo response was substituted.', { cause: error });
+      }
+      throw error;
+    }
     if (!response.ok) {
       throw new Error(response.status === 429
         ? `Workshop capacity reached. Retry after ${response.headers.get('retry-after') ?? '60'} seconds.`

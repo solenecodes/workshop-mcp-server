@@ -17,6 +17,8 @@ param backendAppName string
 param consoleOrigin string = 'https://example.invalid'
 param entraClientId string = '00000000-0000-0000-0000-000000000000'
 param containerImage string = 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
+@description('Keep the public MCP and internal APIs ready during a live workshop; incurs idle compute charges.')
+param workshopAlwaysReady bool = false
 
 var tags = {
   'app-onboard-skill': 'true'
@@ -60,6 +62,7 @@ module publicApp './modules/container-app.bicep' = {
     environmentId: environment.outputs.resourceId
     containerImage: containerImage
     mode: 'public'
+    minReplicas: workshopAlwaysReady ? 1 : 0
     appPort: 8080
     acrLoginServer: registry.outputs.loginServer
     entraTenantId: tenant().tenantId
@@ -100,6 +103,7 @@ module backendApp './modules/container-app.bicep' = {
     environmentId: environment.outputs.resourceId
     containerImage: containerImage
     mode: 'backend'
+    minReplicas: workshopAlwaysReady ? 1 : 0
     appPort: 8080
     acrLoginServer: registry.outputs.loginServer
     entraTenantId: tenant().tenantId
