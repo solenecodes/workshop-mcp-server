@@ -1,8 +1,8 @@
-# MCP Workshop: three sources, one endpoint
+# MCP Workshop: real APIs, one MCP endpoint
 
 **Start with the [visual presentation & participant lab](https://solenecodes.github.io/workshop-mcp-server/).**
 Six short chapters: why MCP exists, its architecture, an animated call, MCP vs
-API, three terminal calls, and access controls.
+API, a live participant console with a terminal alternative, and access controls.
 
 **All customer and insurance data is invented.** The new read-only sandbox
 actually calls a public exchange-rate API. Only currency codes leave the
@@ -37,7 +37,8 @@ For a hosted workshop, participants use the presenter's HTTPS URL instead of
 loopback and do **not** start their own server. No hosted endpoint is bundled
 or claimed to be live. The presentation's collapsed presenter panel generates
 the three commands and a shareable link from the actual URLs, never credentials.
-No MCP call or token passes through the presentation.
+The browser console calls the configured anonymous MCP endpoint directly.
+The presentation never receives protected-endpoint tokens.
 
 | Call | What to observe |
 | --- | --- |
@@ -46,25 +47,149 @@ No MCP call or token passes through the presentation.
 | `get_customer_overview` | CLM-1001, its coverage, a dated exchange rate, converted amount and three `sources` |
 
 ```text
-Terminal / MCP SDK -> MCP server -> private synthetic dossier HTTP API
-                                -> SQLite claims + policies
+Terminal / MCP SDK -> MCP server -> Customers REST API -----> SQLite
+                                -> Claims + Policies APIs -> SQLite
                                 -> Frankfurter Internet exchange-rate API
 ```
 
-The fourth tool, `list_customer_claims(customerId)`, isolates the SQL query.
+The fourth tool, `list_customer_claims(customerId)`, calls the Claims and
+Policies REST APIs to combine claims with their coverage.
 `get_exchange_rate(baseCurrency, targetCurrency)` isolates the Internet call.
 Supported currencies: EUR, USD, GBP and CHF; choose different currencies.
 The overview converts the EUR fixture into USD (default), GBP or CHF.
 
-This is a real SQLite database using `sql.js`, seeded in memory and set to
-query-only. The dossier API really runs as a separate HTTP listener on an
-ephemeral **127.0.0.1** port in the same process. It is not an enterprise API
-and is not exposed by the public ingress. Restarting resets the SQL fixture.
+The three versioned REST APIs share a real SQLite database using `sql.js`.
+In local sandbox mode they run on an ephemeral **127.0.0.1** HTTP listener
+in the same process; the MCP adapter still makes real HTTP requests.
+The database is initialized once at `.workshop-data/business.sqlite` and
+survives restarts. Existing data is not replaced; corrupt or unsupported
+databases fail explicitly. The server exposes no database writes.
 Frankfurter's [documented v2 API](https://frankfurter.dev/) supplies a dated
 reference rate, not a live trading price. Rates are cached for 60 seconds and
 concurrent requests for one pair share the same fetch. Network calls time out
 after five seconds. A failed or malformed source returns `isError: true`;
 there is no made-up rate or success-shaped partial overview.
+
+### Business APIs and OpenAPI contracts
+
+To inspect the APIs independently of MCP, start this separate process:
+
+```sh
+npm run start:apis
+```
+
+Its default URL is `http://127.0.0.1:3210`. Only synthetic records exist:
+five customers, five policies and five claims.
+
+| API | Read operations | OpenAPI 3.0.3 contract |
+| --- | --- | --- |
+| Customers | `/api/customers/v1/customers`, `/api/customers/v1/customers/{customerId}` | `/openapi/customers.json` |
+| Policies | `/api/policies/v1/policies`, `/api/policies/v1/policies/{policyId}` | `/openapi/policies.json` |
+| Claims | `/api/claims/v1/claims`, `/api/claims/v1/claims/{claimId}`, `/api/claims/v1/claims/{claimId}/documents` | `/openapi/claims.json` |
+
+```sh
+curl -fsS 'http://127.0.0.1:3210/api/customers/v1/customers/DEMO-PERSON-1'
+curl -fsS 'http://127.0.0.1:3210/api/claims/v1/claims?customerId=DEMO-PERSON-1&limit=10'
+curl -fsS 'http://127.0.0.1:3210/api/policies/v1/policies/POL-1001'
+curl -fsS 'http://127.0.0.1:3210/openapi/claims.json'
+```
+
+Lists support `limit` (1–100) and `offset`; Policies and Claims also accept
+`customerId`. Responses contain `data` and `meta` with `synthetic: true`,
+a request ID and pagination where relevant. Malformed inputs return 400;
+unknown records return 404; writes return 405. Error bodies use
+`application/problem+json`. Request IDs correlate with structured logs,
+which omit tokens and customer/document contents. A shared in-memory limit
+of 1,200 API requests/minute returns 429 and `Retry-After`.
+
+Claim documents deliberately include a prompt-injection example, returned
+as untrusted evidence with a warning. This is not an approval instruction,
+nor a complete prompt-injection defence. Claim summaries exclude document
+text, internal notes and medical details.
+
+### Azure hosting reset: Container Apps
+
+**The previous App Service and Foundry deployment has been deleted.**
+The project resource group, its three web apps, hosting plan, Foundry account
+and project, and its dedicated Entra application/service principal were removed;
+their absence was verified. The old endpoints must not be used.
+
+The replacement Container Apps deployment is **live and verified**. Its
+scope is two separate HTTPS MCP endpoints (anonymous read-only and
+Entra-protected), backed by the same synthetic business APIs. Foundry and APIM
+are excluded from this hosting reset; they can be integrated separately later.
+Both endpoints run the same four read-only tools:
+
+- Public: `https://ca-mcp-public-dev-7af4.orangebeach-99baafe8.francecentral.azurecontainerapps.io/mcp`
+- Protected: `https://ca-mcp-auth-dev-7af4.orangebeach-99baafe8.francecentral.azurecontainerapps.io/mcp`
+
+Verified: anonymous discovery/read/aggregate; missing token returns 401;
+a real Entra token succeeds with customer name, birth date and address masked;
+20 concurrent cloud aggregates succeed (warm p95 854 ms, maximum 874 ms).
+Exact participant-page origin is allowed by public CORS.
+These timings are a workshop acceptance measurement, not an SLA.
+
+Use ordinary Container Apps for stable public endpoints.
+[Dynamic Sessions](https://learn.microsoft.com/azure/container-apps/sessions)
+provide disposable isolated execution environments, not the simple anonymous
+public MCP hosting needed for this workshop.
+
+The new target separates these responsibilities:
+
+```text
+Participant console / MCP client
+                  |
+            MCP endpoint (public or Entra-protected)
+                  |
+            managed service identity
+                  |
+       Customers / Policies / Claims REST APIs -> persistent SQLite
+                  |
+       Three OpenAPI contracts for inspecting the backend services
+
+MCP server -> Frankfurter (currency codes only)
+```
+
+The environment separates business APIs, public MCP and protected
+MCP. All three APIs share one backend application; they are distinct contracts,
+not three independently deployed microservices. The SQLite dataset is entirely
+synthetic and read-only. Without a persistent volume, replacement containers
+recreate the original seed; this must be acknowledged before provisioning.
+This workshop store is not a production HA database.
+
+For remote business API hosting, configure `HOST`, `PORT`,
+`PUBLIC_API_URL=https://<actual-business-api-host>`, `BACKEND_MODE=entra`,
+`ENTRA_TENANT_ID`, `BACKEND_CLIENT_ID` and `BACKEND_DATABASE_PATH`.
+Anonymous API mode refuses a non-loopback bind.
+
+For each hosted MCP instance, set `BACKEND_API_URL` to that HTTPS origin
+and `BACKEND_CLIENT_ID` to the backend API registration. Its managed identity
+obtains a separate service token using the platform-local identity endpoint
+(`IDENTITY_ENDPOINT`, `IDENTITY_HEADER`, API version `2019-08-01`, supported
+by both App Service and Container Apps). Grant that identity the
+`Mcp.Backend.Read` application
+role. A participant's delegated `Mcp.Read` scope cannot authorize backend
+access. Grant `Mcp.Pii.Read` only to workloads that need full synthetic
+customer fields; otherwise the backend masks name, DOB and address.
+The MCP instance also applies its own participant-level redaction.
+Tokens are never forwarded to Frankfurter.
+
+In a future Foundry integration, the same application-only permission is required when a project
+identity calls an API directly. Select the supported managed-identity
+authentication configuration when adding its OpenAPI tool; the bearer
+scheme in the OpenAPI contract alone does not grant access.
+The three contracts have distinct titles and seven unique operation IDs.
+After hosting, verify their actual HTTPS URLs before importing them.
+Local loopback URLs are not reachable from Foundry.
+
+Foundry tool governance uses an APIM-backed AI gateway; it is not automatic
+protection for a directly exposed backend. Its current preview limitations
+and gateway routing must be checked in the deployed environment. APIM remains
+the colleague's session, not an implicitly provisioned extra service.
+See [remote MCP hosting](https://learn.microsoft.com/azure/foundry/mcp/build-your-own-mcp-server)
+and [Foundry tool governance](https://learn.microsoft.com/azure/foundry/agents/how-to/tools/governance).
+New infrastructure, model usage, permissions and costs need a fresh approval;
+the cancelled deployment's approval does not carry over.
 
 ### Separate protected endpoint for session 3
 
@@ -131,9 +256,33 @@ add gateway limits as needed, and stop/delete resources afterwards. The
 public version intentionally reveals full **fictional** dossiers so session
 3 can contrast redaction. No real customer system belongs here.
 
-Cloud resources, application registration, participant consent and hosting
-cost require separate approval/configuration. They have not been provisioned
-by these application changes.
+Replacement cloud resources, application registration, participant consent
+and hosting cost require separate approval/configuration. The deleted
+deployment's approval does not authorize the replacement.
+
+### Container Apps infrastructure
+
+The [Bicep entry point](infra/main.bicep) now prepares an environment,
+an ACR Basic registry and three Container Apps: public MCP, protected MCP and
+internal business APIs. The [parameter example](infra/main.parameters.json)
+deliberately contains placeholders: **do not deploy it unchanged**. Actual
+approved names and identity settings belong in the ignored deployment session.
+
+The [container build](infra/Dockerfile) runs Node 24 as a non-root user and
+copies only the sandbox, backend and synthetic-data modules. Its
+[upload exclusions](.dockerignore) exclude credentials, local state,
+tests, unrelated experiments and both legacy write-capable Claims editions.
+Build from the repository root with `--file infra/Dockerfile`.
+
+Deployment has two phases: initialize hosting and managed identities, then
+build the real image and redeploy it after registry and API permissions are
+assigned. Placeholder hosting is not a working workshop endpoint. Resource creation requires deployment approval; the current deployment has
+passed real MCP checks and 20 simultaneous participant flows before sharing
+the URLs above.
+
+The discarded App Service ZIP deployment path is not used for Container Apps.
+The presentation defaults to the verified endpoints above. Local development
+can still be selected explicitly with `http://127.0.0.1:3201/mcp`.
 
 ## Advanced local Claims security demo
 

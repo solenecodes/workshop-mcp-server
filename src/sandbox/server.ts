@@ -7,8 +7,8 @@ import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { AuthenticationError, type Identity, type VerifyToken } from './auth.js';
 import { currencySchema, customerIdSchema, quoteCurrencySchema, SourceError, type Sources } from './sources.js';
 
-const internalSource = { name: 'Synthetic customer dossier API', kind: 'internal-api', synthetic: true };
-const sqlSource = { name: 'SQLite claims and policies', kind: 'database', synthetic: true };
+const internalSource = { name: 'Customers REST API', kind: 'internal-api', synthetic: true };
+const sqlSource = { name: 'Claims and Policies REST APIs', kind: 'database', transport: 'HTTP', storage: 'SQLite', synthetic: true };
 const internetSource = { name: 'Frankfurter', kind: 'public-api', url: 'https://frankfurter.dev/', synthetic: false };
 const result = (data: Record<string, unknown>): CallToolResult => ({
   content: [{ type: 'text', text: JSON.stringify(data) }], structuredContent: data,
@@ -23,9 +23,9 @@ const schemas = {
 };
 const descriptions = {
   get_customer_file: 'Read a fictional customer dossier through a private HTTP API. Does not change data.',
-  list_customer_claims: 'Query fictional claims and policy coverage from SQLite. Does not change data.',
+  list_customer_claims: 'Call the Claims and Policies REST APIs backed by SQLite. Does not change data.',
   get_exchange_rate: 'Fetch a dated exchange rate from Frankfurter on the Internet. Only currency codes leave this server.',
-  get_customer_overview: 'Combine the private dossier API, SQLite claims and a public exchange rate. Returns source provenance; no model or insurance decision.',
+  get_customer_overview: 'Call the Customers, Claims and Policies REST APIs, then a public exchange-rate API. Returns source provenance; no model or insurance decision.',
 };
 type ToolName = keyof typeof schemas;
 
@@ -34,6 +34,7 @@ export interface SandboxOptions {
   verifyToken?: VerifyToken;
   host?: string;
   publicUrl?: string;
+  consoleOrigin?: string;
   requestLimit?: number;
   now?: () => number;
   log?: (entry: Record<string, unknown>) => void;
@@ -50,6 +51,14 @@ export function createSandboxApp(options: SandboxOptions) {
   if (!['127.0.0.1', 'localhost', '::1'].includes(host) && !publicUrl) {
     throw new Error('A non-loopback bind requires PUBLIC_MCP_URL for explicit Host validation.');
   }
+  if (options.consoleOrigin) {
+    const origin = new URL(options.consoleOrigin);
+    const local = ['127.0.0.1', 'localhost', '[::1]'].includes(origin.hostname);
+    if (verifyToken || origin.origin !== options.consoleOrigin ||
+        (origin.protocol !== 'https:' && !(local && origin.protocol === 'http:'))) {
+      throw new Error('The browser console requires an exact HTTPS origin (or loopback HTTP), on the public read-only endpoint only.');
+    }
+  }
   const app = createMcpExpressApp({
     host, ...(publicUrl ? { allowedHosts: [publicUrl.hostname, '127.0.0.1', 'localhost', '[::1]'] } : {}),
   });
@@ -57,14 +66,33 @@ export function createSandboxApp(options: SandboxOptions) {
   app.use((req, res, next) => {
     res.setHeader('Cache-Control', 'no-store');
     if (req.headers.origin) {
-      res.status(403).json({ error: 'BROWSER_ORIGIN_DENIED', message: 'Run the workshop commands in a terminal.' });
-      return;
+      res.vary('Origin');
+      if (req.headers.origin !== options.consoleOrigin || req.path !== '/mcp' ||
+          !['POST', 'OPTIONS'].includes(req.method) || req.headers.authorization) {
+        res.status(403).json({ error: 'BROWSER_ORIGIN_DENIED', message: 'Use the approved public workshop console or the terminal client.' });
+        return;
+      }
+      res.setHeader('Access-Control-Allow-Origin', options.consoleOrigin);
+      res.setHeader('Access-Control-Expose-Headers', 'Retry-After, Mcp-Session-Id');
+      if (req.method === 'OPTIONS') {
+        const headers = (req.get('access-control-request-headers') ?? '').toLowerCase().split(',').map((header) => header.trim()).filter(Boolean);
+        if (req.get('access-control-request-method') !== 'POST' ||
+            headers.some((header) => !['content-type', 'mcp-protocol-version', 'mcp-session-id'].includes(header))) {
+          res.status(403).json({ error: 'CONSOLE_PREFLIGHT_DENIED' });
+          return;
+        }
+        res.setHeader('Access-Control-Allow-Methods', 'POST');
+        res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Mcp-Protocol-Version, Mcp-Session-Id');
+        res.setHeader('Access-Control-Max-Age', '600');
+        res.status(204).end();
+        return;
+      }
     }
     next();
   });
   app.get('/health', (_req, res) => res.json({
     status: 'ok', mode: verifyToken ? 'protected-entra' : 'public-read-only',
-    syntheticCustomerData: true, sources: ['private-http-api', 'sqlite', 'public-exchange-rate-api'],
+    syntheticCustomerData: true, sources: ['customers-api', 'claims-api', 'policies-api', 'public-exchange-rate-api'],
   }));
   let windowStart = now();
   let requestCount = 0;
@@ -123,13 +151,14 @@ export function createSandboxApp(options: SandboxOptions) {
           if (name === 'get_customer_file' && customerId) {
             data = { customer: redact(await sources.customer(customerId)), sources: [internalSource] };
           } else if (name === 'list_customer_claims' && customerId) {
-            data = { customerId, claims: sources.claims(customerId), sources: [sqlSource] };
+            data = { customerId, claims: await sources.claims(customerId), sources: [sqlSource] };
           } else if (name === 'get_exchange_rate') {
             data = { exchangeRate: await sources.exchangeRate(currencySchema.parse(args.baseCurrency), currencySchema.parse(args.targetCurrency)), sources: [internetSource] };
           } else if (name === 'get_customer_overview' && customerId) {
-            const customer = await sources.customer(customerId);
-            const claims = sources.claims(customerId);
-            const exchangeRate = await sources.exchangeRate('EUR', quoteCurrencySchema.parse(args.targetCurrency));
+            const [customer, claims, exchangeRate] = await Promise.all([
+              sources.customer(customerId), sources.claims(customerId),
+              sources.exchangeRate('EUR', quoteCurrencySchema.parse(args.targetCurrency)),
+            ]);
             data = {
               customer: redact(customer), claims, exchangeRate,
               convertedClaims: claims.map((claim) => ({

@@ -4,8 +4,10 @@ __pycache__/
 node_modules/
 local.settings.json
 .azurite/
+.github/
 .azure/
 .copilot-azure/
+.workshop-data/
 dist/
 *.tsbuildinfo
 .env

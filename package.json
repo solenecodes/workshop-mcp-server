@@ -10,6 +10,7 @@
     "workshop": "tsx src/workshop-client.ts",
     "start": "node dist/src/sandbox/start.js",
     "start:sandbox": "tsx src/sandbox/start.ts",
+    "start:apis": "tsx src/backend/start.ts",
     "start:insecure": "tsx src/insecure/server.ts",
     "start:secure": "tsx src/secure/server.ts"
   },

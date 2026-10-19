@@ -1,4 +1,5 @@
-export const defaultEndpoint = 'http://127.0.0.1:3201/mcp';
+export const defaultEndpoint = 'https://ca-mcp-public-dev-7af4.orangebeach-99baafe8.francecentral.azurecontainerapps.io/mcp';
+export const defaultProtectedEndpoint = 'https://ca-mcp-auth-dev-7af4.orangebeach-99baafe8.francecentral.azurecontainerapps.io/mcp';
 export const setupCode = 'git clone https://github.com/solenecodes/workshop-mcp-server.git\ncd workshop-mcp-server\nnpm ci';
 const quote = (value) => `'${value.replaceAll("'", "'\\''")}'`;
 
@@ -43,7 +44,7 @@ export function labStep(index, settings) {
     },
     {
       title: 'Combine the three sources',
-      instruction: 'One tool calls the dossier API, queries SQLite and fetches a dated EUR/USD exchange rate.',
+      instruction: 'One tool calls the Customers, Claims and Policies APIs, then fetches a dated EUR/USD exchange rate.',
       command: `get_customer_overview ${quote('{"customerId":"DEMO-PERSON-1","targetCurrency":"USD"}')}`,
       expected: 'The dossier, claim CLM-1001, coverage, a dated exchange rate and three sources. If the Internet API is unavailable, an explicit tool error replaces the result.',
     },

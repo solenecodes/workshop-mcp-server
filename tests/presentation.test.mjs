@@ -1,11 +1,14 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { defaultEndpoint, labStep, securityCode, setupCode, shareUrl, validateEndpoint } from '../sessions/01-mcp-fondamentaux/presentation-lab.mjs';
+import { defaultEndpoint, defaultProtectedEndpoint, labStep, securityCode, setupCode, shareUrl, validateEndpoint } from '../sessions/01-mcp-fondamentaux/presentation-lab.mjs';
 
 test('public sandbox URLs allow HTTPS and loopback HTTP, but never credentials or remote HTTP', () => {
   assert.equal(validateEndpoint('https://sandbox.example.org/mcp').local, false);
-  assert.equal(defaultEndpoint, 'http://127.0.0.1:3201/mcp');
+  assert.equal(validateEndpoint(defaultEndpoint).local, false);
+  assert.equal(validateEndpoint(defaultProtectedEndpoint).local, false);
+  assert.notEqual(defaultEndpoint, defaultProtectedEndpoint);
+  assert.match(defaultEndpoint, /\.azurecontainerapps\.io\/mcp$/);
   for (const endpoint of ['http://127.0.0.1:3201/mcp', 'http://localhost:3201/mcp', 'http://[::1]:3201/mcp']) {
     assert.equal(validateEndpoint(endpoint).local, true);
   }

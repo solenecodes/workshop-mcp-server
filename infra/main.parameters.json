@@ -1,0 +1,20 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "environmentName": { "value": "mcp-dev" },
+    "location": { "value": "region-placeholder" },
+    "sessionId": { "value": "00000000-0000-0000-0000-000000000000" },
+    "deployedBy": { "value": "workshop-owner" },
+    "createdAt": { "value": "2026-10-19T10:42:05+02:00" },
+    "resourceGroupName": { "value": "rg-mcp-dev" },
+    "managedEnvironmentName": { "value": "cae-mcp-dev" },
+    "registryName": { "value": "crmcpdev0000" },
+    "publicAppName": { "value": "ca-mcp-public-dev" },
+    "protectedAppName": { "value": "ca-mcp-auth-dev" },
+    "backendAppName": { "value": "ca-mcp-apis-dev" },
+    "consoleOrigin": { "value": "https://example.invalid" },
+    "entraClientId": { "value": "00000000-0000-0000-0000-000000000000" },
+    "containerImage": { "value": "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest" }
+  }
+}

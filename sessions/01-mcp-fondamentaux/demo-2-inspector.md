@@ -8,10 +8,11 @@ Keep the same read-only sandbox and terminal client as demo 1.
 npm run workshop -- --url 'http://127.0.0.1:3201/mcp' --anonymous get_customer_overview '{"customerId":"DEMO-PERSON-1","targetCurrency":"USD"}'
 ```
 
-1. Point at the private API, SQLite and Internet API icons on the page.
+1. Point at the Customers API, Claims + Policies APIs and Internet API icons on the page.
 2. Show the three `sources` in the actual JSON result.
-3. The dossier comes from loopback HTTP; claims and coverage come from a real
-   SQLite query. The exchange rate comes from Frankfurter on the Internet.
+3. The dossier comes from the Customers REST API. Claims and coverage come
+   from the Claims and Policies REST APIs; those services query SQLite.
+   The exchange rate comes from Frankfurter on the Internet.
 4. Show the rate's date and the converted synthetic claim amount. It is a
    reference-rate calculation, not an insurance decision.
 5. Explain that no customer details are sent to Frankfurter; only EUR and USD.

@@ -1,4 +1,5 @@
-import { defaultEndpoint, labStep, securityCode, setupCode, shareUrl, validateEndpoint } from './presentation-lab.mjs?v=console-sources-2';
+import { defaultEndpoint, defaultProtectedEndpoint, labStep, securityCode, setupCode, shareUrl, validateEndpoint } from './presentation-lab.mjs?v=aca-live-1';
+import { runConsoleOperation } from './mcp-console.mjs';
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -281,7 +282,7 @@ function showChapter(focus = false) {
   $('#chapter-prev').textContent = chapterIndex === 4 ? '← Back to course' : chapterIndex === 5 ? '← Back to exercises' : '← Previous lesson';
   $('#chapter-next').textContent = chapterIndex < 3 ? 'Next lesson →' : chapterIndex === 3 ? 'Start hands-on →' : chapterIndex === 4 ? 'Next: security →' : 'End of workshop';
   $('#chapter-count').textContent = chapterIndex < 4 ? `Course · Lesson ${chapterIndex + 1} of 4`
-    : chapterIndex === 4 ? 'Your turn · 3 commands' : 'Next session · Security';
+    : chapterIndex === 4 ? 'Your turn · Live console' : 'Next session · Security';
   requestAnimationFrame(() => controllers.forEach((controller) => controller.redraw()));
   if (focus) {
     $('h1,h2', chapters[chapterIndex]).focus({ preventScroll: true });
@@ -410,12 +411,16 @@ function createIntegrationAnimation() {
 controllers.push(createIntegrationAnimation());
 
 let settings;
+let consoleBusy = false;
 const endpointInput = $('#endpoint');
 const protectedInput = $('#protected-endpoint');
 const codeTargets = ['lab-code-0', 'lab-code-1', 'lab-code-2', 'anonymous-code', 'authenticated-code'];
 $('#setup-code').textContent = setupCode;
 function renderLab() {
   if (!settings) return;
+  $('#console-run').disabled = consoleBusy;
+  $('#console-status').textContent = consoleBusy ? 'Finishing the current call...' : 'Ready. Choose an operation and select Run MCP call.';
+  $('#console-status').dataset.error = 'false';
   for (let index = 0; index < 3; index++) {
     const current = labStep(index, settings);
     $(`#lab-title-${index}`).textContent = current.title;
@@ -448,12 +453,13 @@ function applyEndpoint() {
     $('#endpoint-error').hidden = true;
     $('#endpoint-status').textContent = settings.local
       ? `Local sandbox: ${settings.endpoint}. Start npm run start:sandbox in a second terminal. This is not a public workshop endpoint.`
-      : `Workshop sandbox: ${settings.endpoint}. Run the three commands below. This page does not test availability.`;
+      : `Public workshop endpoint: ${settings.endpoint}. Select an operation and run the call below.`;
     $$('[data-copy],#share').forEach((button) => { button.disabled = false; });
     renderLab();
     return true;
   } catch (error) {
     settings = undefined;
+    $('#console-run').disabled = true;
     codeTargets.forEach((id) => { document.getElementById(id).textContent = 'Apply a valid endpoint to generate this command.'; });
     $('#participant-link')?.remove();
     $('#endpoint-error').textContent = error.message;
@@ -466,6 +472,7 @@ function applyEndpoint() {
 }
 function markEndpointDirty() {
   settings = undefined;
+  $('#console-run').disabled = true;
   codeTargets.forEach((id) => { document.getElementById(id).textContent = 'Apply the endpoint changes to regenerate this command.'; });
   $('#participant-link')?.remove();
   $('#endpoint-status').textContent = 'Changes not applied. Select “Apply endpoints” to regenerate all commands.';
@@ -478,8 +485,46 @@ protectedInput.addEventListener('input', markEndpointDirty);
 
 const params = new URLSearchParams(location.search);
 endpointInput.value = params.get('endpoint') ?? defaultEndpoint;
-protectedInput.value = params.get('protectedEndpoint') ?? '';
+protectedInput.value = params.get('protectedEndpoint') ?? defaultProtectedEndpoint;
 applyEndpoint();
+
+$('#console-operation').addEventListener('change', () => {
+  const operation = $('#console-operation').value;
+  $('#console-customer-field').hidden = ['tools', 'get_exchange_rate'].includes(operation);
+  $('#console-currency-field').hidden = !['get_customer_overview', 'get_exchange_rate'].includes(operation);
+});
+$('#console-form').addEventListener('submit', async (event) => {
+  event.preventDefault();
+  if (!settings || consoleBusy) return;
+  consoleBusy = true;
+  const endpoint = settings.endpoint;
+  const status = $('#console-status');
+  $('#console-run').disabled = true;
+  $('#console-form').setAttribute('aria-busy', 'true');
+  status.dataset.error = 'false';
+  status.textContent = 'Connecting to the MCP server and running your request...';
+  $('#console-output').textContent = 'Waiting for the server...';
+  $('#console-request').textContent = 'Negotiating the MCP connection...';
+  try {
+    const reply = await runConsoleOperation(endpoint, $('#console-operation').value,
+      $('#console-customer').value, $('#console-currency').value);
+    if (settings?.endpoint !== endpoint) throw new Error('The endpoint changed. Apply it and run the call again.');
+    $('#console-request').textContent = format(reply.request);
+    $('#console-output').textContent = format(reply.result.structuredContent ?? reply.result);
+    status.dataset.error = String(reply.result.isError === true);
+    status.textContent = reply.result.isError
+      ? `The server returned a tool error (${reply.elapsedMs} ms). See the actual response below.`
+      : `Response received in ${reply.elapsedMs} ms, including MCP connection negotiation.`;
+  } catch (error) {
+    status.dataset.error = 'true';
+    status.textContent = 'The call failed. No demo response was substituted.';
+    $('#console-output').textContent = `${error.message}\nUse the approved public endpoint. If browser access is blocked, the terminal client is available below.`;
+  } finally {
+    consoleBusy = false;
+    $('#console-run').disabled = !settings;
+    $('#console-form').removeAttribute('aria-busy');
+  }
+});
 
 let toastTimer;
 function notify(message) {

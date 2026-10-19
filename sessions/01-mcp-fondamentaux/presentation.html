@@ -7,8 +7,8 @@
   <meta name="color-scheme" content="light">
   <title>MCP, from idea to first call</title>
   <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="presentation.css?v=console-sources-2">
-  <script type="module" src="presentation.js?v=console-sources-2"></script>
+  <link rel="stylesheet" href="presentation.css?v=aca-live-1">
+  <script type="module" src="presentation.js?v=aca-live-1"></script>
 </head>
 <body>
   <svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -52,7 +52,7 @@
       </div>
       <div class="chapter-group practice-group">
         <p class="nav-group-label"><svg class="icon"><use href="#i-practice"/></svg>Your turn</p>
-        <a href="#lab"><span class="chapter-icon"><svg class="icon"><use href="#i-code"/></svg></span><span><small>3 commands · 15 min</small> Call the server</span></a>
+        <a href="#lab"><span class="chapter-icon"><svg class="icon"><use href="#i-code"/></svg></span><span><small>Live console · 15 min</small> Call the server</span></a>
       </div>
       <div class="chapter-group">
         <p class="nav-group-label"><svg class="icon"><use href="#i-shield"/></svg>Next session</p>
@@ -162,19 +162,35 @@
       </section>
 
       <section id="lab" class="chapter" aria-labelledby="lab-title">
-        <p class="eyebrow practice-label"><svg class="icon"><use href="#i-practice"/></svg>Your turn · Terminal · 15 minutes</p>
-        <h2 id="lab-title" tabindex="-1">Three commands. One MCP server.</h2>
-        <p class="intro">Open a Bash terminal. Copy each command below, run it, then check the JSON response. No AI agent, VS Code configuration or model is needed.</p>
+        <p class="eyebrow practice-label"><svg class="icon"><use href="#i-practice"/></svg>Your turn · Live console · 15 minutes</p>
+        <h2 id="lab-title" tabindex="-1">Try the MCP server. Right here.</h2>
+        <p class="intro">Discover the tools, read a fictional customer, then combine the APIs. Real MCP calls, directly from this page. No installation or AI model needed.</p>
         <div class="source-overview" aria-label="The MCP server connects to three data sources">
           <div class="source-hub"><svg class="icon"><use href="#i-server"/></svg><strong>MCP server</strong><span>One endpoint</span></div>
           <div class="source-cards">
-            <article><svg class="icon"><use href="#i-file"/></svg><strong>Private API</strong><span>Fictional customer dossiers</span></article>
-            <article><svg class="icon"><use href="#i-database"/></svg><strong>SQLite database</strong><span>Fictional claims and coverage</span></article>
+            <article><svg class="icon"><use href="#i-file"/></svg><strong>Customers API</strong><span>Fictional customer dossiers</span></article>
+            <article><svg class="icon"><use href="#i-database"/></svg><strong>Claims + Policies APIs</strong><span>Persistent SQLite behind HTTP</span></article>
             <article><svg class="icon"><use href="#i-globe"/></svg><strong>Internet API</strong><span>Real, dated exchange rates</span></article>
           </div>
         </div>
-        <p id="endpoint-status" class="notice" role="status">No public server has been deployed. The default URL is a local sandbox.</p>
+        <p id="endpoint-status" class="notice" role="status">The live console connects to the public Container Apps demo. Enable JavaScript to use it, or follow the terminal alternative.</p>
         <p id="endpoint-error" class="error" role="alert" hidden></p>
+        <article class="mcp-console" aria-labelledby="console-title">
+          <h3 id="console-title"><svg class="icon"><use href="#i-code"/></svg>Live MCP console</h3>
+          <form id="console-form">
+            <div class="console-fields">
+              <label>Operation<select id="console-operation"><option value="tools">1. Discover the tools</option><option value="get_customer_file">2. Read a customer</option><option value="get_customer_overview">3. Combine the APIs</option><option value="list_customer_claims">Read claims and coverage</option><option value="get_exchange_rate">Get an exchange rate</option></select></label>
+              <label id="console-customer-field" hidden>Fictional customer<select id="console-customer"><option>DEMO-PERSON-1</option><option>DEMO-PERSON-2</option><option>DEMO-PERSON-3</option><option>DEMO-PERSON-4</option><option>DEMO-PERSON-5</option></select></label>
+              <label id="console-currency-field" hidden>Convert EUR to<select id="console-currency"><option>USD</option><option>GBP</option><option>CHF</option></select></label>
+            </div>
+            <button class="button primary" id="console-run" type="submit" disabled><svg class="icon"><use href="#i-play"/></svg>Run MCP call</button>
+          </form>
+          <p id="console-status" role="status">Apply the public endpoint to enable the console.</p>
+          <pre class="console-output" tabindex="0" aria-label="MCP response"><code id="console-output">Your actual server response will appear here.</code></pre>
+          <details><summary>See the protocol request</summary><pre><code id="console-request">No request sent yet.</code></pre></details>
+          <p class="caption">Public, read-only demo. No tokens or credentials. One call at a time per browser; shared capacity is bounded.</p>
+        </article>
+        <details class="terminal-alternative"><summary>Prefer a terminal? Copy the three commands</summary>
         <details class="terminal-setup"><summary>Before your first call: install the terminal client once</summary>
           <p>Requires Node.js 20+, npm and Git. Use Bash on macOS/Linux, WSL or Git Bash. If the workshop repository is already installed, skip this setup.</p>
           <div class="copy-panel"><div><span>One-time setup</span><button class="text-button" data-copy="setup-code">Copy</button></div><pre><code id="setup-code">git clone https://github.com/solenecodes/workshop-mcp-server.git
@@ -187,7 +203,8 @@ npm ci</code></pre></div>
           <article class="terminal-exercise"><h3><span class="exercise-number">2</span><span id="lab-title-1">Read a customer dossier</span></h3><p id="lab-instruction-1">This tool reads a fictional customer through the private API.</p><div class="copy-panel"><div><span>Bash · repository folder</span><button class="text-button" data-copy="lab-code-1"><svg class="icon"><use href="#i-copy"/></svg>Copy command</button></div><pre><code id="lab-code-1">npm run workshop -- --url 'http://127.0.0.1:3201/mcp' --anonymous get_customer_file '{"customerId":"DEMO-PERSON-1"}'</code></pre></div><p class="terminal-expected"><strong>Look for:</strong> <span id="lab-expected-1">Alex Example, syntheticCustomerData: true, source: internal-api.</span></p></article>
           <article class="terminal-exercise"><h3><span class="exercise-number">3</span><span id="lab-title-2">Combine the three sources</span></h3><p id="lab-instruction-2">One tool combines the private API, SQL data and an Internet exchange rate.</p><div class="copy-panel"><div><span>Bash · repository folder</span><button class="text-button" data-copy="lab-code-2"><svg class="icon"><use href="#i-copy"/></svg>Copy command</button></div><pre><code id="lab-code-2">npm run workshop -- --url 'http://127.0.0.1:3201/mcp' --anonymous get_customer_overview '{"customerId":"DEMO-PERSON-1","targetCurrency":"USD"}'</code></pre></div><p class="terminal-expected"><strong>Look for:</strong> <span id="lab-expected-2">A dossier, claim CLM-1001, coverage, a dated EUR/USD rate and three sources. A failed source returns an explicit error, not invented data.</span></p></article>
         </div>
-        <p class="caption">Calls run in your terminal, not in this page. All customer data is fictional. Only currency codes are sent to the Internet API. The sandbox cannot write or approve anything.</p>
+        <p class="caption">These commands run in your terminal. All customer data is fictional. Only currency codes are sent to the Internet API. The sandbox cannot write or approve anything.</p>
+        </details>
         <details class="endpoint-card"><summary>Presenter: choose endpoints and share the exercise</summary>
           <form id="endpoint-form">
             <label for="endpoint">Public read-only sandbox URL</label>

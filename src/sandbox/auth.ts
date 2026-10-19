@@ -11,7 +11,8 @@ export class AuthenticationError extends Error {
   constructor(public readonly status: 401 | 403 | 503, public readonly code: string) { super(code); }
 }
 
-export function createEntraVerifier(tenantId: string, audience: string, key?: JWTVerifyGetKey): VerifyToken {
+export function createEntraVerifier(tenantId: string, audience: string, key?: JWTVerifyGetKey,
+  requiredPermission: 'Mcp.Read' | 'Mcp.Backend.Read' = 'Mcp.Read'): VerifyToken {
   const tenant = z.uuid().parse(tenantId);
   const clientId = z.uuid().parse(audience);
   const issuer = `https://login.microsoftonline.com/${tenant}/v2.0`;
@@ -35,8 +36,8 @@ export function createEntraVerifier(tenantId: string, audience: string, key?: JW
     // A valid signature is not sufficient: require the API's delegated scope or application role.
     const scopes = typeof payload.scp === 'string' ? payload.scp.split(' ') : [];
     const roles = Array.isArray(payload.roles) ? payload.roles.filter((role: unknown): role is string => typeof role === 'string') : [];
-    if (!scopes.includes('Mcp.Read') && !roles.includes('Mcp.Read')) {
-      throw new AuthenticationError(403, 'MISSING_MCP_READ_PERMISSION');
+    if (requiredPermission === 'Mcp.Backend.Read' ? !roles.includes(requiredPermission) : !scopes.includes('Mcp.Read') && !roles.includes('Mcp.Read')) {
+      throw new AuthenticationError(403, requiredPermission === 'Mcp.Read' ? 'MISSING_MCP_READ_PERMISSION' : 'MISSING_BACKEND_READ_PERMISSION');
     }
     return { userId: payload.oid, canReadPii: roles.includes('Mcp.Pii.Read') };
   };

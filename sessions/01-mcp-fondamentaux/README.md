@@ -43,7 +43,8 @@ client support and authentication requirements must be checked separately.
 
 The sandbox has four tools: `get_customer_file`, `list_customer_claims`,
 `get_exchange_rate`, `get_customer_overview`. The overview combines a real
-loopback HTTP dossier API, a real SQLite query and Frankfurter's public rate API.
+Customers REST API, Claims and Policies REST APIs backed by persistent SQLite,
+and Frankfurter's public rate API. The MCP adapter uses HTTP, not direct SQL.
 Only currency codes leave for Frankfurter. Customer records are fictional;
 the exchange rate is real and dated. There are no write actions.
 
