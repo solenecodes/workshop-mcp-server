@@ -1,9 +1,17 @@
 import { defaultEndpoint, defaultProtectedEndpoint, labStep, securityCode, setupCode, shareUrl, validateEndpoint } from './presentation-lab.mjs?v=aca-live-1';
-import { runConsoleOperation } from './mcp-console.mjs';
+import { jsonTokens, runConsoleOperation } from './mcp-console.mjs?v=json-dark-1';
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 const format = (value) => typeof value === 'string' ? value : JSON.stringify(value, null, 2);
+function renderJson(element, value) {
+  element.replaceChildren(...jsonTokens(value).map(({ text, kind }) => {
+    const token = document.createElement('span');
+    token.className = `json-${kind}`;
+    token.textContent = text;
+    return token;
+  }));
+}
 const motion = matchMedia('(prefers-reduced-motion: reduce)');
 const svgNS = 'http://www.w3.org/2000/svg';
 $$('svg.icon').forEach((icon) => {
@@ -509,8 +517,8 @@ $('#console-form').addEventListener('submit', async (event) => {
     const reply = await runConsoleOperation(endpoint, $('#console-operation').value,
       $('#console-customer').value, $('#console-currency').value);
     if (settings?.endpoint !== endpoint) throw new Error('The endpoint changed. Apply it and run the call again.');
-    $('#console-request').textContent = format(reply.request);
-    $('#console-output').textContent = format(reply.result.structuredContent ?? reply.result);
+    renderJson($('#console-request'), reply.request);
+    renderJson($('#console-output'), reply.result.structuredContent ?? reply.result);
     status.dataset.error = String(reply.result.isError === true);
     status.textContent = reply.result.isError
       ? `The server returned a tool error (${reply.elapsedMs} ms). See the actual response below.`

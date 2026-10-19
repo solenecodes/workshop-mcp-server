@@ -2,6 +2,19 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { defaultEndpoint, defaultProtectedEndpoint, labStep, securityCode, setupCode, shareUrl, validateEndpoint } from '../sessions/01-mcp-fondamentaux/presentation-lab.mjs';
+import { jsonTokens } from '../sessions/01-mcp-fondamentaux/mcp-console.mjs';
+
+test('JSON highlighting preserves actual formatted data and classifies JSON values without HTML', () => {
+  const value = { 'escaped"key': '</span><script>alert("demo")</script>', count: -1.25e20, enabled: true, disabled: false, empty: null, nested: ['line\nbreak', {}] };
+  const tokens = jsonTokens(value);
+  assert.equal(tokens.map(({ text }) => text).join(''), JSON.stringify(value, null, 2));
+  for (const kind of ['key', 'string', 'number', 'boolean', 'null', 'plain']) {
+    assert.ok(tokens.some((token) => token.kind === kind));
+  }
+  assert.equal(tokens.find(({ text }) => text === '"enabled"').kind, 'key');
+  assert.equal(tokens.find(({ text }) => text === 'null').kind, 'null');
+  assert.equal(tokens.find(({ text }) => text.includes('<script>')).kind, 'string');
+});
 
 test('public sandbox URLs allow HTTPS and loopback HTTP, but never credentials or remote HTTP', () => {
   assert.equal(validateEndpoint('https://sandbox.example.org/mcp').local, false);

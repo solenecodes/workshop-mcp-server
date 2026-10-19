@@ -2,6 +2,15 @@ import { validateEndpoint } from './presentation-lab.mjs';
 
 const operations = new Set(['tools', 'get_customer_file', 'get_customer_overview', 'list_customer_claims', 'get_exchange_rate']);
 
+export function jsonTokens(value) {
+  const json = JSON.stringify(value, null, 2);
+  const pattern = /(?<key>"(?:\\.|[^"\\])*")(?=\s*:)|(?<string>"(?:\\.|[^"\\])*")|(?<number>-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)|(?<boolean>true|false)|(?<null>null)|(?<plain>\s+|[\s\S])/g;
+  return [...json.matchAll(pattern)].map((match) => ({
+    text: match[0],
+    kind: Object.keys(match.groups).find((kind) => match.groups[kind] !== undefined),
+  }));
+}
+
 export async function runConsoleOperation(endpoint, operation, customerId, targetCurrency, fetcher = fetch) {
   const url = validateEndpoint(endpoint).endpoint;
   if (!operations.has(operation)) throw new Error('Select a documented read-only workshop operation.');

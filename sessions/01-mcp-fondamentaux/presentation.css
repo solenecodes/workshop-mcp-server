@@ -202,8 +202,16 @@ html:not(.enhanced) #integration-play { display:none; }
 .console-fields label { display:flex; flex:1 1 170px; flex-direction:column; gap:8px; min-width:0; }
 .console-fields label[hidden] { display:none; }
 .console-fields select { width:100%; }
-.console-output { max-height:440px; overflow:auto; border:1px solid var(--border); background:var(--blue-soft); white-space:pre-wrap; overflow-wrap:anywhere; }
+.console-output { max-height:440px; overflow:auto; border:1px solid #30363d; white-space:pre-wrap; overflow-wrap:anywhere; }
 .mcp-console details pre { white-space:pre-wrap; overflow-wrap:anywhere; }
+.mcp-console .console-output, .mcp-console details pre { background:#0d1117; color:#e6edf3; color-scheme:dark; font-size:.85rem; line-height:1.7; }
+.mcp-console pre code { background:transparent; color:inherit; }
+.mcp-console .json-key { color:#9cdcfe; }
+.mcp-console .json-string { color:#ce9178; }
+.mcp-console .json-number { color:#b5cea8; }
+.mcp-console .json-boolean { color:#569cd6; }
+.mcp-console .json-null { color:#c586c0; }
+.mcp-console pre ::selection { background:#264f78; color:#fff; }
 #console-status { font-size:.875rem; margin:16px 0 10px; }
 #console-status[data-error="true"] { color:var(--red,#a4262c); font-weight:600; }
 .terminal-alternative { margin-top:24px; }
