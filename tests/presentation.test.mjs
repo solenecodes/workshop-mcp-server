@@ -56,9 +56,9 @@ test('shared links preserve both endpoints but never page parameters or credenti
 test('six guided steps build one copyable curl request each and mark only what changed', () => {
   const settings = { endpoint: 'https://sandbox.example.org/mcp' };
   const commands = labSteps.map((_, index) => labCommand(index, settings));
-  assert.equal(commands.length, 4);
+  assert.equal(commands.length, 3);
   assert.deepEqual(commands.map((step) => step.request.params?.name ?? step.request.method), [
-    'tools/list', 'list_tickets', 'get_ticket', 'get_ticket']);
+    'tools/list', 'list_tickets', 'get_ticket']);
   for (const step of commands) {
     assert.ok(step.title && step.why && step.notice && step.focus.length);
     assert.match(step.code, /^curl -s 'https:\/\/sandbox.example.org\/mcp' \\\n/);
@@ -67,10 +67,9 @@ test('six guided steps build one copyable curl request each and mark only what c
     assert.ok(step.segments.some(({ changed }) => changed), 'each step highlights something');
     assert.doesNotMatch(step.code, /MCP_TOKEN|Authorization|demo-.*-token/i);
   }
-  // The last step differs from the previous one only by the ticket identifier.
-  assert.deepEqual(commands[3].segments.filter(({ changed }) => changed).map(({ text }) => text), ['CT-9999']);
+  assert.deepEqual(commands[2].segments.filter(({ changed }) => changed).map(({ text }) => text), ['get_ticket', '{"ticketId":"CT-1001"}']);
   assert.deepEqual(commands[1].request.params, { name: 'list_tickets', arguments: {} });
-  for (const index of [-1, 4, 8]) assert.throws(() => labCommand(index, settings));
+  for (const index of [-1, 3, 8]) assert.throws(() => labCommand(index, settings));
   assert.match(setupCode, /npm ci/);
 });
 

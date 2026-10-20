@@ -50,13 +50,6 @@ export const labSteps = [
     changes: ['get_ticket', '{"ticketId":"CT-1001"}'], focus: ['id', 'title', 'severity', 'status', 'service'],
     notice: 'the ticket: its title, severity, status and affected service.',
   },
-  {
-    short: 'Unknown ticket', title: 'Ask for a ticket that does not exist',
-    why: 'When the identifier is well formed but unknown, the server returns an explicit tool error. It never invents or substitutes a ticket. Edit the identifier to try your own.',
-    tool: 'get_ticket', args: { ticketId: 'CT-9999' },
-    changes: ['CT-9999'], focus: ['error', 'message'], expectsError: true,
-    notice: 'the error code and message. This error is the expected result of this step.',
-  },
 ];
 
 function segments(code, changes) {

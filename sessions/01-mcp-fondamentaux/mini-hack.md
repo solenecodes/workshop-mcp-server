@@ -31,15 +31,13 @@ npm run workshop -- --url 'http://127.0.0.1:3201/mcp' --anonymous get_ticket '{"
 Find the three tickets, then CT-1001 (VPN gateway timeouts, severity high).
 Both are real HTTP requests to the private **synthetic** Contoso Tickets API.
 
-## 3. Change one value, then ask for a missing ticket
+## 3. Change one value
 
 ```sh
 npm run workshop -- --url 'http://127.0.0.1:3201/mcp' --anonymous get_ticket '{"ticketId":"CT-1002"}'
-npm run workshop -- --url 'http://127.0.0.1:3201/mcp' --anonymous get_ticket '{"ticketId":"CT-9999"}'
 ```
 
-CT-1002 is a different ticket from the same tool. CT-9999 returns an explicit
-`TICKET_NOT_FOUND` error, not fake data.
+CT-1002 is a different ticket from the same tool. Only the input changed.
 
 **Debrief:** the MCP endpoint hides the REST API, but the tool's implementation
 still maps each tool to one operation. No LLM ran inside the server and no write

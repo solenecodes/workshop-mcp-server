@@ -1,5 +1,5 @@
-import { defaultEndpoint, defaultProtectedEndpoint, labCommand, labSteps, parseCommandRequest, securityCode, setupCode, shareUrl, validateEndpoint } from './presentation-lab.mjs?v=tickets-lab-3';
-import { callMcp, jsonTokens } from './mcp-console.mjs?v=tickets-lab-3';
+import { defaultEndpoint, defaultProtectedEndpoint, labCommand, labSteps, parseCommandRequest, securityCode, setupCode, shareUrl, validateEndpoint } from './presentation-lab.mjs?v=tickets-lab-4';
+import { callMcp, jsonTokens } from './mcp-console.mjs?v=tickets-lab-4';
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -471,10 +471,9 @@ function renderStep() {
   const status = $('#lab-status');
   if (settings && !consoleBusy) {
     const failed = stored?.result.isError === true;
-    status.dataset.error = String(failed && !step.expectsError);
+    status.dataset.error = String(failed);
     status.textContent = !stored ? 'Ready. Copy the command, or run it from this page.'
-      : failed ? (step.expectsError ? `The server returned the expected tool error (${stored.elapsedMs} ms).`
-        : `The server returned a tool error (${stored.elapsedMs} ms). See the actual response.`)
+      : failed ? `The server returned a tool error (${stored.elapsedMs} ms). See the actual response.`
         : `Response received in ${stored.elapsedMs} ms.`;
   }
 }
@@ -512,7 +511,7 @@ function applyEndpoint() {
     $('#endpoint-error').hidden = true;
     $('#endpoint-status').textContent = settings.local
       ? `Local sandbox: ${settings.endpoint}. Start npm run start:sandbox in a second terminal. This is not a public workshop endpoint.`
-      : `Public workshop endpoint: ${settings.endpoint}. The four steps below call this server.`;
+      : `Public workshop endpoint: ${settings.endpoint}. The three steps below call this server.`;
     $$('[data-copy],#share').forEach((button) => { button.disabled = false; });
     renderLab();
     return true;

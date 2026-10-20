@@ -40,17 +40,18 @@ async function fixture() {
   };
 }
 
-test('the four guided requests run against the real stateless server and only read-only requests can be sent', async () => {
+test('the three guided requests run against the real stateless server and only read-only requests can be sent', async () => {
   const f = await fixture();
   try {
     const replies = [];
-    for (let index = 0; index < 4; index++) replies.push(await callMcp(f.url, stepRequest(index), f.browserFetch));
+    for (let index = 0; index < 3; index++) replies.push(await callMcp(f.url, stepRequest(index), f.browserFetch));
     assert.deepEqual(replies[0].result.tools.map((tool) => tool.name).sort(), ['get_ticket', 'list_tickets']);
     assert.deepEqual(replies[1].result.structuredContent.tickets.map((ticket) => ticket.id), ['CT-1001', 'CT-1002', 'CT-1003']);
     assert.equal(replies[2].result.structuredContent.ticket.id, 'CT-1001');
-    assert.equal(replies[3].result.isError, true);
-    assert.equal(replies[3].result.structuredContent.error, 'TICKET_NOT_FOUND');
-    for (const reply of replies.slice(0, 3)) assert.notEqual(reply.result.isError, true);
+    for (const reply of replies) assert.notEqual(reply.result.isError, true);
+    const unknown = await callMcp(f.url, parseCommandRequest(labCommand(2, { endpoint: f.url }).code.replace('CT-1001', 'CT-9999')), f.browserFetch);
+    assert.equal(unknown.result.isError, true);
+    assert.equal(unknown.result.structuredContent.error, 'TICKET_NOT_FOUND');
     const edited = parseCommandRequest(labCommand(2, { endpoint: f.url }).code.replace('CT-1001', 'CT-1002'));
     assert.equal((await callMcp(f.url, edited, f.browserFetch)).result.structuredContent.ticket.id, 'CT-1002');
     await assert.rejects(callMcp(f.url, tool('close_ticket', {})), /read-only/);
