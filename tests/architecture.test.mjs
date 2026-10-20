@@ -53,7 +53,7 @@ test('every walk-through step says one plain sentence, then the detail, on nodes
   const fallback = html.match(/<details class="flow-fallback" open><summary>Read the sequence<\/summary><ol>([\s\S]*?)<\/ol>/)[1];
   assert.equal([...fallback.matchAll(/<li>/g)].length, doorSteps.length, 'the no-JavaScript sequence has every step');
   for (const [term, label] of [['REST API as MCP', 'Preview'], ['Azure API Center', 'Preview'], ['Built-in MCP', 'Preview']]) {
-    assert.match(html, new RegExp(`${term}[\\s\\S]{0,120}${label}`), `${term} is labelled ${label}`);
+    assert.match(html, new RegExp(`${term}[\\s\\S]{0,120}${label}`), `${term} is labeled ${label}`);
   }
 });
 
