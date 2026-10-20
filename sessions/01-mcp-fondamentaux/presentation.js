@@ -1,10 +1,10 @@
-import { defaultEndpoint, defaultProtectedEndpoint, labCommand, labSteps, parseCommandRequest, securityCode, setupCode, shareUrl, validateEndpoint } from './presentation-lab.mjs?v=session3-4';
-import { callMcp, jsonTokens } from './mcp-console.mjs?v=session3-4';
-import { securityChapters, securityPractice } from './presentation-security.mjs?v=session3-4';
+import { defaultEndpoint, defaultProtectedEndpoint, labCommand, labSteps, parseCommandRequest, shareUrl, validateEndpoint } from './presentation-lab.mjs?v=session3-four-slides-1';
+import { callMcp, jsonTokens } from './mcp-console.mjs?v=session3-four-slides-1';
+import { securityAliases, securityChapters } from './presentation-security.mjs?v=session3-four-slides-1';
+import { initializeAgenda } from './presentation-agenda.mjs?v=agenda-collapse-1';
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
-const format = (value) => typeof value === 'string' ? value : JSON.stringify(value, null, 2);
 function renderJson(element, value, focus = []) {
   element.replaceChildren(...jsonTokens(value, focus).map(({ text, kind, focus: focused }) => {
     const token = document.createElement('span');
@@ -13,262 +13,26 @@ function renderJson(element, value, focus = []) {
     return token;
   }));
 }
-const motion = matchMedia('(prefers-reduced-motion: reduce)');
-const svgNS = 'http://www.w3.org/2000/svg';
 $$('svg.icon').forEach((icon) => {
   icon.setAttribute('aria-hidden', 'true');
   icon.setAttribute('focusable', 'false');
 });
-const controllers = [];
-const request = (method, params = {}, id = 3) => ({ jsonrpc: '2.0', id, method, params });
-const step = (title, text, from, to, wire, options = {}) => ({ title, text, from, to, wire, ...options });
-
-function callSteps(mode) {
-  const write = mode === 'write';
-  const name = write ? 'propose_document_update' : 'search_documents';
-  const args = write ? { path: 'deployment.md', text: 'Draft: add the rollback checklist.' } : { query: 'deployment guide' };
-  return [
-    step(write ? 'You ask for a change.' : 'You ask a question.', 'The application needs a capability outside the model. Assume you have already connected a trusted document server.', 'user', 'app',
-      write ? 'Propose a rollback checklist for the deployment guide.' : 'Find the deployment guide.'),
-    step('The app discovers what the server can do.', 'The server describes its available tools and the information each needs. Reading a tool description does not run it.', 'server', 'app',
-      { request: request('tools/list', {}, 2), responseExcerpt: { tools: [
-        { name, inputSchema: {
-          type: 'object', properties: write ? { path: { type: 'string' }, text: { type: 'string' } } : { query: { type: 'string' } },
-          required: Object.keys(args),
-        } },
-      ] } }),
-    step('The app asks the LLM.', 'The agent sends the question and available tool descriptions to the model. This uses the model API, not an MCP connection.', 'app', 'model',
-      { connection: 'Model API, not MCP', question: write ? 'Propose a rollback checklist.' : 'Find the deployment guide.', availableTools: [name] }),
-    step('The LLM proposes a tool call.', 'The model suggests a tool name and arguments. This is a proposal, not an executed operation; the model does not call the MCP server directly.', 'model', 'app',
-      { toolProposal: { name, arguments: args }, executed: false }),
-    step('The agent checks, then calls.', 'The application validates the proposed call and applies its permissions and any required user confirmation. Its MCP client then sends the request.', 'app', 'server',
-      request('tools/call', { name, arguments: args })),
-    step(write ? 'The server prepares a proposal.' : 'The server searches the documents.', write
-      ? 'In this example, the server checks access and saves a proposal for human review. Requiring review is an application policy, not automatic MCP behavior.'
-      : 'The server checks access and runs its own search code. It can use files, an index or an existing API.', 'server', 'data',
-      write ? { document: 'deployment.md', requiresApproval: true, published: false }
-        : { results: [{ title: 'Deployment guide', path: 'deployment.md' }] }),
-    step('The server returns what happened.', write
-      ? 'The response says the proposal is awaiting review, not that the document was published.'
-      : 'The client receives a matching document. The result comes from the external system, not model memory.', 'server', 'app',
-      { jsonrpc: '2.0', id: 3, result: { content: [{ type: 'text', text: JSON.stringify(write
-        ? { requiresApproval: true, document: 'deployment.md', published: false }
-        : { title: 'Deployment guide', path: 'deployment.md' }) }] } }),
-    step('The agent gives the result to the LLM.', 'The application sends the tool result back through the model API as external evidence, not as new instructions.', 'app', 'model',
-      { connection: 'Model API, not MCP', toolResult: write ? { requiresApproval: true, published: false } : { title: 'Deployment guide', path: 'deployment.md' } }),
-    step('The LLM drafts the answer.', 'The model uses the observed result to prepare a response. It must not invent a successful operation when the result only reports a proposal.', 'model', 'app',
-      write ? 'Your proposal is ready for review. The document has not been published.' : 'Here is the deployment guide: deployment.md.'),
-    step(write ? '“Your proposal is ready for review.”' : '“Here is the deployment guide.”', 'The application displays the answer. The LLM proposed and explained; the agent orchestrated; the MCP server ran the operation.', 'app', 'user',
-      write ? 'The original document is unchanged until an authorized human approves.' : 'Found: deployment.md. Open and review the actual source.'),
-  ];
-}
-
-function authSteps(mode) {
-  const anonymous = mode === 'anonymous';
-  const denied = mode === 'denied';
-  const base = [
-    step('Identify the caller.', anonymous ? 'No token was supplied. The protected endpoint stops before running any tool.'
-      : 'The client sends a Microsoft Entra access token. The server checks its signature, issuer, audience and expiry.', 'user', 'app',
-    anonymous ? 'No Authorization header.' : { credential: '[not displayed]', issuer: 'Microsoft Entra ID', audience: 'this MCP server', expired: false }),
-  ];
-  if (anonymous) return [...base,
-    step('401. Nothing executes.', 'A network connection is not authentication. Without a valid token the server returns 401 and the ticket API is never reached.', 'app', 'user',
-      { httpStatus: 401, error: 'MISSING_ACCESS_TOKEN', ticketsRead: 0 }, { blocked: true }),
-  ];
-  base.push(step('Check the permission.', denied ? 'The token is valid, but it does not carry the Mcp.Read permission this server requires.'
-    : 'The token carries the Mcp.Read permission this server requires.', 'app', 'server',
-  { requiredPermission: 'Mcp.Read', granted: !denied }));
-  if (denied) return [...base,
-    step('403. Nothing executes.', 'Authentication succeeded, authorization failed: the caller is known but not allowed.', 'server', 'user',
-      { httpStatus: 403, error: 'MISSING_MCP_READ_PERMISSION', ticketsRead: 0 }, { blocked: true }),
-  ];
-  return [...base,
-    step('Call the private ticket API.', 'The MCP server reaches the ticket API with its own managed identity. The caller token is never forwarded.', 'server', 'data',
-      { backendCredential: 'managed identity with a backend app role', callerTokenForwarded: false }),
-    step('Return the tickets.', 'Every tool is read-only and its inputs are validated. The result comes from the ticket API.', 'data', 'user',
-      'CT-1001, CT-1002, CT-1003'),
-  ];
-}
-
-function createFlow(root) {
-  const diagram = $('.flow-diagram', root);
-  const nodes = new Map($$('[data-node]', root).map((element) => [element.dataset.node, element]));
-  const pathGroup = $('[data-paths]', root);
-  const activePath = $('[data-active-path]', root);
-  const packet = $('[data-packet]', root);
-  const play = $('[data-play]', root);
-  const select = $('[data-scenario]', root);
-  let steps = [];
-  let index = 0;
-  let playing = false;
-  let timer;
-  let frame;
-  let picks = [];
-
-  function route(from, to) {
-    if (!from || !to) return '';
-    const box = diagram.getBoundingClientRect();
-    const a = nodes.get(from).getBoundingClientRect();
-    const b = nodes.get(to).getBoundingClientRect();
-    const x1 = a.left + a.width / 2 - box.left;
-    const x2 = b.left + b.width / 2 - box.left;
-    const y1 = a.top + a.height / 2 - box.top;
-    const y2 = b.top + b.height / 2 - box.top;
-    if (Math.abs(y1 - y2) < 16) {
-      const direction = x2 > x1 ? 1 : -1;
-      return `M ${x1 + direction * a.width / 2} ${y1} L ${x2 - direction * b.width / 2} ${y2}`;
-    }
-    if (Math.abs(x1 - x2) < 16) {
-      const direction = y2 > y1 ? 1 : -1;
-      return `M ${x1} ${y1 + direction * a.height / 2} L ${x2} ${y2 - direction * b.height / 2}`;
-    }
-    const start = (y2 > y1 ? a.bottom : a.top) - box.top;
-    const end = (y2 > y1 ? b.top : b.bottom) - box.top;
-    const middle = (start + end) / 2;
-    return `M ${x1} ${start} L ${x1} ${middle} L ${x2} ${middle} L ${x2} ${end}`;
-  }
-
-  function stopPacket() {
-    cancelAnimationFrame(frame);
-    frame = undefined;
-    packet.setAttribute('visibility', 'hidden');
-  }
-
-  function draw(animate = false) {
-    stopPacket();
-    if (!diagram.getBoundingClientRect().width) return;
-    pathGroup.replaceChildren();
-    const connections = [['user', 'app'], ['app', 'server'], ['server', 'data']];
-    if (nodes.has('model')) connections.push(['app', 'model']);
-    for (const [from, to] of connections) {
-      const path = document.createElementNS(svgNS, 'path');
-      path.setAttribute('d', route(from, to));
-      if (from === 'model' || to === 'model') path.classList.add('model-connection');
-      pathGroup.append(path);
-    }
-    const current = steps[index];
-    const path = route(current.from, current.to);
-    activePath.setAttribute('d', path);
-    activePath.classList.toggle('blocked', Boolean(current.blocked));
-    activePath.classList.toggle('model-connection', current.from === 'model' || current.to === 'model');
-    if (!animate || motion.matches || !path) return;
-    const length = activePath.getTotalLength();
-    let started;
-    function tick(time) {
-      started ??= time;
-      const progress = Math.min((time - started) / 1100, 1);
-      const point = activePath.getPointAtLength(progress * length);
-      packet.setAttribute('cx', point.x);
-      packet.setAttribute('cy', point.y);
-      packet.setAttribute('visibility', 'visible');
-      if (progress < 1) frame = requestAnimationFrame(tick);
-      else stopPacket();
-    }
-    frame = requestAnimationFrame(tick);
-  }
-
-  function updatePlay() {
-    $('span', play).textContent = playing ? 'Pause' : index === steps.length - 1 ? 'Replay' : 'Play';
-    $('use', play).setAttribute('href', playing ? '#i-pause' : '#i-play');
-    play.setAttribute('aria-pressed', String(playing));
-  }
-  function pause() {
-    clearTimeout(timer);
-    playing = false;
-    stopPacket();
-    updatePlay();
-  }
-  function render(animate = false) {
-    const current = steps[index];
-    root.dataset.step = String(index + 1);
-    $('[data-step-title]', root).textContent = `${index + 1}. ${current.title}`;
-    $('[data-step-text]', root).textContent = current.text;
-    $('[data-wire]', root).textContent = format(current.wire);
-    $('.flow-count', root).textContent = `${index + 1} / ${steps.length}`;
-    $('[data-prev]', root).disabled = index === 0;
-    $('[data-next]', root).disabled = index === steps.length - 1;
-    nodes.forEach((element, id) => {
-      const active = id === current.from || id === current.to;
-      element.classList.toggle('active', active);
-      element.classList.toggle('blocked', active && Boolean(current.blocked));
-    });
-    picks.forEach((button, position) => button.setAttribute('aria-pressed', String(position === index)));
-    updatePlay();
-    draw(animate);
-  }
-  function schedule() {
-    timer = setTimeout(() => {
-      if (!playing) return;
-      index++;
-      render(true);
-      if (index === steps.length - 1) { playing = false; updatePlay(); }
-      else schedule();
-    }, 3200);
-  }
-  function rebuild() {
-    pause();
-    steps = root.dataset.flow === 'call' ? callSteps(select.value) : authSteps(select.value);
-    index = 0;
-    const dots = $('.flow-dots', root);
-    dots.replaceChildren();
-    picks = steps.map((item, position) => {
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.textContent = String(position + 1);
-      button.setAttribute('aria-label', `Step ${position + 1}: ${item.title}`);
-      button.addEventListener('click', () => { pause(); index = position; render(true); });
-      dots.append(button);
-      return button;
-    });
-    if (root.dataset.flow === 'call') {
-      const heading = $('#mcp-title');
-      const accent = document.createElement('span');
-      const write = select.value === 'write';
-      accent.textContent = write ? 'to the deployment guide.”' : 'deployment guide.”';
-      heading.replaceChildren(document.createTextNode(write ? '“Propose an update' : '“Find the'), document.createElement('br'), accent);
-    }
-    render();
-  }
-  play.addEventListener('click', () => {
-    if (playing) { pause(); return; }
-    controllers.forEach((controller) => controller.pause());
-    if (index === steps.length - 1) index = 0;
-    playing = true;
-    render(true);
-    schedule();
-  });
-  $('[data-next]', root).addEventListener('click', () => { pause(); index = Math.min(index + 1, steps.length - 1); render(true); });
-  $('[data-prev]', root).addEventListener('click', () => { pause(); index = Math.max(0, index - 1); render(true); });
-  $('[data-reset]', root).addEventListener('click', () => { pause(); index = 0; render(); });
-  select.addEventListener('change', rebuild);
-  function updateMotion() {
-    pause();
-    play.disabled = motion.matches;
-    $('.motion-note', root).hidden = !motion.matches;
-  }
-  motion.addEventListener('change', updateMotion);
-  rebuild();
-  updateMotion();
-  if ('ResizeObserver' in window) new ResizeObserver(() => draw(frame !== undefined)).observe(diagram);
-  else window.addEventListener('resize', () => draw(frame !== undefined));
-  if ('IntersectionObserver' in window) new IntersectionObserver((entries) => {
-    if (!entries[0].isIntersecting) pause();
-  }).observe(root);
-  return { pause, redraw: () => draw() };
-}
-
-$$('[data-flow]').forEach((root) => controllers.push(createFlow(root)));
-$$('.flow-fallback,.lab-fallback').forEach((element) => { element.open = false; });
+$$('.lab-fallback').forEach((element) => { element.open = false; });
 
 const chapters = $$('.chapter:not(.agenda-panel)');
+const courseChapters = chapters.filter((chapter) => chapter.dataset.course === 'fundamentals');
+const securityCourse = securityChapters;
 const agendaPanels = $$('.agenda-panel');
 const navigation = $$('.chapters a:not(.agenda-row)');
+initializeAgenda();
 let activePanel;
 let chapterIndex = 0;
 function showChapter(focus = false) {
-  const target = chapters.findIndex((chapter) => `#${chapter.id}` === location.hash);
+  const requestedId = location.hash.slice(1);
+  const targetId = securityAliases[requestedId] ?? requestedId;
+  if (targetId !== requestedId) history.replaceState(null, '', `#${targetId}`);
+  const target = chapters.findIndex((chapter) => chapter.id === targetId);
   chapterIndex = target === -1 ? 0 : target;
-  controllers.forEach((controller) => controller.pause());
   activePanel = agendaPanels.find((panel) => `#${panel.id}` === location.hash);
   chapters.forEach((chapter, index) => { chapter.hidden = Boolean(activePanel) || index !== chapterIndex; });
   agendaPanels.forEach((panel) => { panel.hidden = panel !== activePanel; });
@@ -278,6 +42,7 @@ function showChapter(focus = false) {
     else link.removeAttribute('aria-current');
   });
   const securityIndex = securityChapters.findIndex(({ id }) => id === chapters[chapterIndex].id);
+  const securityLesson = securityCourse.findIndex(({ id }) => id === chapters[chapterIndex].id);
   const agendaKey = activePanel ? activePanel.id.replace('day-', '') : securityIndex >= 0 ? 'session-3' : 'session-1';
   $$('.agenda li[data-key]').forEach((item) => {
     const active = item.dataset.key === agendaKey;
@@ -285,7 +50,7 @@ function showChapter(focus = false) {
     if (active) item.setAttribute('aria-current', 'true');
     else item.removeAttribute('aria-current');
   });
-  const currentLink = $('.chapters a[aria-current="step"]') ?? $('.agenda li.current .agenda-row');
+  const currentLink = $('.agenda-sub:not([hidden]) a[aria-current="step"]') ?? $('.agenda li.current .agenda-row');
   const menu = $('.chapters');
   if (currentLink && menu.scrollHeight > menu.clientHeight) {
     const top = currentLink.getBoundingClientRect().top - menu.getBoundingClientRect().top + menu.scrollTop;
@@ -293,13 +58,16 @@ function showChapter(focus = false) {
   }
   $('#chapter-prev').disabled = chapterIndex === 0;
   $('#chapter-next').disabled = chapterIndex === chapters.length - 1;
-  $('#chapter-prev').textContent = chapterIndex === 4 ? '← Back to course' : securityIndex === 0 ? '← Back to exercises' : '← Previous lesson';
+  const currentChapter = chapters[chapterIndex];
+  const courseIndex = courseChapters.indexOf(currentChapter);
+  const isLab = currentChapter.id === 'lab';
+  $('#chapter-prev').textContent = isLab ? '← Back to course' : securityIndex === 0 ? '← Back to exercises' : '← Previous lesson';
   $('#chapter-next').textContent = chapterIndex === chapters.length - 1 ? 'Session complete'
-    : chapterIndex === 3 ? 'Start hands-on →' : chapterIndex === 4 ? 'Next: security →'
+    : courseIndex === courseChapters.length - 1 ? 'Start live examples →' : isLab ? 'Next: security →'
       : 'Next lesson →';
-  $('#chapter-count').textContent = chapterIndex < 4 ? `Course · Lesson ${chapterIndex + 1} of 4`
-    : chapterIndex === 4 ? 'Your turn · Live lab' : `Session 3 · ${securityIndex + 1} of ${securityChapters.length}`;
-  requestAnimationFrame(() => controllers.forEach((controller) => controller.redraw()));
+  $('#chapter-count').textContent = courseIndex >= 0 ? `Course · Lesson ${courseIndex + 1} of ${courseChapters.length}`
+    : isLab ? 'Your turn · Live lab'
+      : `Session 3 · Slide ${securityLesson + 1} of ${securityCourse.length}`;
   if (focus) {
     $('h1,h2', activePanel ?? chapters[chapterIndex]).focus({ preventScroll: true });
     window.scrollTo({ top: 0, behavior: 'instant' });
@@ -314,7 +82,7 @@ $('#chapter-next').addEventListener('click', () => changeChapter(1));
 window.addEventListener('hashchange', () => showChapter(true));
 document.addEventListener('keydown', (event) => {
   if (event.altKey || event.ctrlKey || event.metaKey || !(event.target instanceof Element)) return;
-  if (event.target.closest('input,select,textarea,button,[contenteditable],summary')) return;
+  if (event.target.closest('input,select,textarea,button,[contenteditable],summary,.foundation-table-scroll')) return;
   if (activePanel) return;
   if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') {
     event.preventDefault();
@@ -322,182 +90,13 @@ document.addEventListener('keydown', (event) => {
   }
 });
 
-function createIntegrationAnimation() {
-  const board = $('.integration-board');
-  const panels = $$('.integration-panel', board).map((panel) => ({
-    mcp: panel.dataset.integration === 'mcp',
-    map: $('.integration-map', panel),
-    svg: $('.integration-lines', panel),
-    paths: $$('.integration-lines path', panel),
-    packets: $$('.integration-dots>span', panel),
-  }));
-  const play = $('#integration-play');
-  const caption = $('#integration-caption');
-  let elapsed = 0;
-  let previousTime;
-  let frame;
-  let playing = false;
-  let complete = false;
-
-  function updatePlay() {
-    $('span', play).textContent = playing ? 'Pause' : complete ? 'Replay' : elapsed > 0 ? 'Resume' : 'Play';
-    $('use', play).setAttribute('href', playing ? '#i-pause' : '#i-play');
-    play.setAttribute('aria-pressed', String(playing));
-    board.dataset.playing = String(playing);
-  }
-  function pause() {
-    playing = false;
-    cancelAnimationFrame(frame);
-    previousTime = undefined;
-    updatePlay();
-  }
-  function clear() {
-    panels.forEach(({ packets }) => packets.forEach((packet) => { packet.hidden = true; }));
-  }
-  function draw() {
-    if (complete || motion.matches || !board.getBoundingClientRect().width) return;
-    const phase = Math.floor(elapsed / 1800);
-    const returning = phase % 2 === 1;
-    const progress = Math.min((elapsed % 1800) / 1500, 1);
-    const position = returning ? 1 - progress : progress;
-    board.dataset.direction = returning ? 'response' : 'request';
-    panels.forEach(({ mcp, map, svg, paths, packets }) => {
-      const bounds = map.getBoundingClientRect();
-      const matrix = svg.getScreenCTM();
-      if (!matrix) return;
-      packets.forEach((packet, system) => {
-        // Each side of the server is a separate exchange; do not cross the server card.
-        const upstream = mcp && position < .4;
-        const path = mcp ? paths[upstream ? 0 : system + 1] : paths[system];
-        const fraction = mcp ? upstream ? position / .4 : (position - .4) / .6 : position;
-        const point = path.getPointAtLength(path.getTotalLength() * fraction);
-        const screenPoint = new DOMPoint(point.x, point.y).matrixTransform(matrix);
-        packet.hidden = false;
-        packet.style.transform = `translate(${screenPoint.x - bounds.left}px, ${screenPoint.y - bounds.top}px) translate(-50%, -50%)`;
-      });
-    });
-    caption.textContent = returning ? 'Results return to the application.' : 'Requests travel to your systems.';
-    board.dataset.exchange = String(phase + 1);
-  }
-  function tick(time) {
-    if (!playing) return;
-    if (previousTime !== undefined) elapsed += time - previousTime;
-    previousTime = time;
-    if (elapsed >= 10800) {
-      complete = true;
-      pause();
-      clear();
-      caption.textContent = 'Same systems. A shared interface for AI applications.';
-      return;
-    }
-    draw();
-    frame = requestAnimationFrame(tick);
-  }
-  function start() {
-    if (motion.matches) return;
-    controllers.forEach((controller) => controller.pause());
-    if (complete) { elapsed = 0; complete = false; }
-    playing = true;
-    updatePlay();
-    draw();
-    frame = requestAnimationFrame(tick);
-  }
-  play.addEventListener('click', () => {
-    if (playing) pause();
-    else start();
-  });
-  function updateMotion() {
-    pause();
-    if (motion.matches) clear();
-    play.disabled = motion.matches;
-    play.title = motion.matches ? 'Reduced motion: compare the two static diagrams.' : 'Animate illustrative exchanges; no network calls.';
-    caption.textContent = 'Same systems. A shared interface for AI applications.';
-  }
-  motion.addEventListener('change', updateMotion);
-  const redraw = () => {
-    if (playing || elapsed > 0) draw();
-  };
-  if ('ResizeObserver' in window) new ResizeObserver(redraw).observe(board);
-  else window.addEventListener('resize', redraw);
-  if ('IntersectionObserver' in window) new IntersectionObserver((entries) => {
-    if (!entries[0].isIntersecting) pause();
-  }).observe(board);
-  updateMotion();
-  return { pause, redraw: () => { if (elapsed > 0) draw(); } };
-}
-controllers.push(createIntegrationAnimation());
-
 let settings;
 let consoleBusy = false;
 let currentStep = 0;
 let stepResults = [];
 let stepEdits = [];
-let practiceCase = 0;
-let practiceEdit;
-let practiceResult;
-let practiceBusy = false;
 const endpointInput = $('#endpoint');
 const protectedInput = $('#protected-endpoint');
-const codeTargets = ['anonymous-code', 'authenticated-code', 'acquired-code'];
-$('#setup-code').textContent = setupCode;
-
-const practiceTabs = $('#security-tabs');
-securityPractice({ endpoint: defaultEndpoint, protectedEndpoint: defaultProtectedEndpoint }).forEach((item, index) => {
-  const tab = document.createElement('button');
-  tab.type = 'button';
-  tab.className = 'step-tab';
-  const number = document.createElement('span');
-  number.textContent = String(index + 1);
-  tab.append(number, document.createTextNode(item.short));
-  tab.addEventListener('click', () => { practiceCase = index; renderSecurityPractice(); });
-  practiceTabs.append(tab);
-});
-function renderSecurityPractice() {
-  const item = settings ? securityPractice(settings)[practiceCase] : undefined;
-  const browser = practiceCase === 0;
-  $$('.step-tab', practiceTabs).forEach((tab, index) => {
-    tab.setAttribute('aria-pressed', String(index === practiceCase));
-    tab.disabled = practiceBusy;
-  });
-  $('#security-count').textContent = `Case ${practiceCase + 1} of 4`;
-  $('#security-step-title').textContent = item?.title ?? 'Apply valid endpoints before testing';
-  $('#security-why').textContent = item?.why ?? 'Open the presenter settings in the session 1 lab. No request has been sent.';
-  $('#security-question').textContent = item?.question ?? 'What should you observe?';
-  $('#security-answer').textContent = item?.answer ?? 'Apply valid endpoints before comparing access decisions.';
-  $('#security-observation').open = false;
-  $('#security-command-kind').textContent = browser ? 'Bash · public request · editable' : 'Bash · protected request · terminal only';
-  $('#security-output-kind').textContent = browser ? 'Actual public response' : 'Expected outcome · observe actual output in terminal';
-  const command = $('#security-command');
-  if (browser && item && practiceEdit === undefined) {
-    command.replaceChildren(...item.segments.map(({ text, changed }) => {
-      const span = document.createElement(changed ? 'mark' : 'span');
-      if (changed) span.className = 'hl';
-      span.textContent = text;
-      return span;
-    }));
-  } else command.textContent = (browser ? practiceEdit ?? item?.code : item?.code)
-    ?? 'Configure separate public and protected endpoints in the presenter settings.';
-  command.contentEditable = browser && settings && !practiceBusy ? 'plaintext-only' : 'false';
-  $('#security-copy').disabled = !item?.code;
-  $('#security-reset').hidden = !browser || practiceEdit === undefined;
-  $('#security-reset').disabled = practiceBusy;
-  $('#security-run').hidden = !browser;
-  $('#security-run').disabled = !settings || practiceBusy;
-  const output = $('#security-output');
-  const failed = browser && Boolean(practiceResult?.error || practiceResult?.reply?.result.isError);
-  if (browser && practiceResult?.reply) {
-    const { result } = practiceResult.reply;
-    renderJson(output, result.structuredContent ?? result, ['id', 'title', 'status', 'error', 'message']);
-  } else output.textContent = browser && practiceResult?.error ? practiceResult.error
-    : item?.output ?? 'Apply valid endpoints. No server response is available.';
-  const status = $('#security-status');
-  status.className = failed ? 'error' : '';
-  status.textContent = practiceBusy ? 'Waiting up to 60 seconds for the actual public response...'
-    : !settings ? 'Endpoints are invalid or have unapplied changes. Requests are disabled.'
-      : failed ? 'Actual request failed or the tool reported an error. No substitute response was used.'
-        : browser && practiceResult?.reply ? `Actual response received in ${practiceResult.reply.elapsedMs} ms.`
-          : 'Public calls run here. Protected calls and tokens stay in your terminal. Expected outcomes are not live results.';
-}
 
 const tabs = $('#lab-tabs');
 labSteps.forEach((step, index) => {
@@ -564,24 +163,6 @@ function renderLab() {
   $('#lab-status').textContent = consoleBusy ? 'Finishing the current call...' : 'Ready. Copy the command, or run it from this page.';
   $('#lab-status').dataset.error = 'false';
   renderStep();
-  $('#protected-commands').hidden = !settings.protectedEndpoint;
-  if (settings.protectedEndpoint) {
-    const endpoint = document.createElement('code');
-    endpoint.textContent = settings.protectedEndpoint;
-    $('#protected-status').replaceChildren('Configured protected endpoint: ', endpoint,
-      '. Availability and Entra setup are not verified by this page.');
-  } else $('#protected-status').textContent = 'No protected endpoint configured. The presenter must configure Entra ID and supply this endpoint before session 3.';
-  if (settings.protectedEndpoint) {
-    const commands = securityCode(settings.protectedEndpoint);
-    $('#anonymous-code').textContent = commands.anonymous;
-    $('#authenticated-code').textContent = commands.authenticated;
-    $('#acquired-code').textContent = commands.withToken;
-  } else {
-    $('#anonymous-code').textContent = '';
-    $('#authenticated-code').textContent = '';
-    $('#acquired-code').textContent = '';
-  }
-  renderSecurityPractice();
 }
 function applyEndpoint() {
   try {
@@ -592,33 +173,25 @@ function applyEndpoint() {
     settings = { ...validated, protectedEndpoint };
     stepResults = [];
     stepEdits = [];
-    practiceEdit = undefined;
-    practiceResult = undefined;
     endpointInput.value = settings.endpoint;
     protectedInput.value = protectedEndpoint ?? '';
     $('#endpoint-error').hidden = true;
     $('#endpoint-status').textContent = settings.local
       ? `Local sandbox: ${settings.endpoint}. Start npm run start:sandbox in a second terminal. This is not a public workshop endpoint.`
       : `Public workshop endpoint: ${settings.endpoint}. The three steps below call this server.`;
-    $$('[data-copy],#share').forEach((button) => { button.disabled = false; });
+    $('#share').disabled = false;
     renderLab();
     return true;
   } catch (error) {
     settings = undefined;
     stepResults = [];
     stepEdits = [];
-    practiceEdit = undefined;
-    practiceResult = undefined;
     renderStep();
-    renderSecurityPractice();
-    codeTargets.forEach((id) => { document.getElementById(id).textContent = 'Apply a valid endpoint to generate this command.'; });
     $('#participant-link')?.remove();
     $('#endpoint-error').textContent = error.message;
     $('#endpoint-error').hidden = false;
     $('#endpoint-status').textContent = 'Commands disabled. Correct the URLs, then apply endpoints.';
-    $('#protected-commands').hidden = true;
-    $('#protected-status').textContent = 'Protected commands disabled. Correct the URLs in the presenter settings, then apply endpoints.';
-    $$('[data-copy]:not([data-copy="setup-code"]),#share').forEach((button) => { button.disabled = true; });
+    $('#share').disabled = true;
     return false;
   }
 }
@@ -626,16 +199,10 @@ function markEndpointDirty() {
   settings = undefined;
   stepResults = [];
   stepEdits = [];
-  practiceEdit = undefined;
-  practiceResult = undefined;
   renderStep();
-  renderSecurityPractice();
-  codeTargets.forEach((id) => { document.getElementById(id).textContent = 'Apply the endpoint changes to regenerate this command.'; });
   $('#participant-link')?.remove();
   $('#endpoint-status').textContent = 'Changes not applied. Select “Apply endpoints” to regenerate all commands.';
-  $('#protected-commands').hidden = true;
-  $('#protected-status').textContent = 'Endpoint changes are not applied. Apply endpoints in the presenter settings before using protected commands.';
-  $$('[data-copy]:not([data-copy="setup-code"]),#share').forEach((button) => { button.disabled = true; });
+  $('#share').disabled = true;
 }
 $('#endpoint-form').addEventListener('submit', (event) => { event.preventDefault(); applyEndpoint(); });
 endpointInput.addEventListener('input', markEndpointDirty);
@@ -684,45 +251,6 @@ $('#lab-run').addEventListener('click', async () => {
   }
 });
 
-$('#security-command').addEventListener('input', () => {
-  if (!settings || practiceCase !== 0) return;
-  practiceEdit = $('#security-command').innerText.replace(/\r/g, '').replace(/\n$/, '');
-  practiceResult = undefined;
-  $('#security-reset').hidden = false;
-  $('#security-output').textContent = 'Command changed. Run it to see the actual response.';
-  $('#security-status').className = '';
-  $('#security-status').textContent = 'Only the JSON after -d is used. The configured public endpoint does not change.';
-});
-$('#security-reset').addEventListener('click', () => {
-  practiceEdit = undefined;
-  practiceResult = undefined;
-  renderSecurityPractice();
-});
-$('#security-copy').addEventListener('click', () => {
-  if (!settings) return;
-  const item = securityPractice(settings)[practiceCase];
-  if (item.code) void copy(practiceCase === 0 ? practiceEdit ?? item.code : item.code);
-});
-$('#security-run').addEventListener('click', async () => {
-  if (!settings || practiceCase !== 0 || practiceBusy) return;
-  const config = settings;
-  const command = practiceEdit ?? securityPractice(config)[0].code;
-  practiceBusy = true;
-  practiceResult = undefined;
-  renderSecurityPractice();
-  $('#security-output').textContent = 'Waiting for the actual public server...';
-  try {
-    const reply = await callMcp(config.endpoint, parseCommandRequest(command));
-    if (settings !== config) throw new Error('Endpoints changed during the request. Apply settings and run again.');
-    practiceResult = { reply };
-  } catch (error) {
-    practiceResult = { error: error.message };
-  } finally {
-    practiceBusy = false;
-    renderSecurityPractice();
-  }
-});
-
 let toastTimer;
 function notify(message) {
   clearTimeout(toastTimer);
@@ -737,10 +265,6 @@ async function copy(text, message = 'Copied. Paste into your Bash terminal in th
     notify('Clipboard unavailable. Select the visible code and copy it manually.');
   }
 }
-$$('[data-copy]').forEach((button) => button.addEventListener('click', () => {
-  if (button.dataset.copy !== 'setup-code' && (!settings || !codeTargets.includes(button.dataset.copy))) return;
-  void copy(document.getElementById(button.dataset.copy).textContent);
-}));
 $('#share').addEventListener('click', () => {
   if (!settings) return;
   const url = shareUrl(location.href, settings);
@@ -760,13 +284,8 @@ $('#share').addEventListener('click', () => {
     : settings.local ? 'Copied. This endpoint points to each participant’s own machine, not yours.' : 'Participant link copied. No credentials are included.');
 });
 
-document.addEventListener('visibilitychange', () => {
-  if (document.hidden) controllers.forEach((controller) => controller.pause());
-});
-window.addEventListener('pagehide', () => controllers.forEach((controller) => controller.pause()));
 let printState;
 function preparePrint() {
-  controllers.forEach((controller) => controller.pause());
   if (printState) return;
   printState = $$('details').map((element) => ({ element, open: element.open }));
   printState.forEach(({ element }) => { element.open = true; });

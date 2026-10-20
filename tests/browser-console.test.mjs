@@ -84,6 +84,22 @@ test('console CORS is exact-origin, rejects credentials and leaves protected end
   } finally { await f.close(); }
 });
 
+test('the session 3 live inventory exposes the real strict read-only capability boundary, not approval or identity features', async () => {
+  const f = await fixture();
+  try {
+    const request = labCommand(0, { endpoint: f.url }).request;
+    const { result } = await callMcp(f.url, request, f.browserFetch);
+    assert.deepEqual(result.tools.map(({ name }) => name).sort(), ['get_ticket', 'list_tickets']);
+    for (const tool of result.tools) {
+      assert.equal(tool.annotations.readOnlyHint, true);
+      assert.equal(tool.inputSchema.additionalProperties, false);
+    }
+    assert.equal(result.tools.some(({ name }) => name === 'close_ticket'), false);
+    assert.equal((await callMcp(f.url, stepRequest(2), f.browserFetch)).result.structuredContent.ticket.id, 'CT-1001');
+    assert.equal(f.internetCalls(), 0);
+  } finally { await f.close(); }
+});
+
 test('twenty concurrent browser participants get complete results without any Internet call', async t => {
   const f = await fixture();
   try {

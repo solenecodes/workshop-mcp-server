@@ -24,6 +24,7 @@ test('the Session 2 page keeps the day agenda of Session 1 and links back to its
   }
   const sessionTwo = theirs.find(({ key }) => key === 'session-2');
   assert.equal(sessionTwo.href, '../02-architecture/presentation.html#decisions', 'the Session 1 agenda opens this page');
+  assert.equal(mine.find(({ key }) => key === 'session-3').href, '../01-mcp-fondamentaux/presentation.html#rights', 'the next session starts with identity choices, not the optional authentication reminder');
   assert.equal(theirs.find(({ key }) => key === 'hands-on').href, handsOn, 'the Session 1 agenda opens the hands-on guide');
   assert.match(sessionOne, new RegExp(`id="day-hands-on"[\\s\\S]*?href="${handsOn.replace(/[?.]/g, '\\$&')}">Open the hands-on guide`));
 });
@@ -90,8 +91,8 @@ test('cache suffixes match between the page and its module import', () => {
   const version = html.match(/architecture\.js\?v=([\w-]+)/)[1];
   assert.match(html, new RegExp(`architecture\\.css\\?v=${version}`));
   assert.match(script, new RegExp(`architecture-steps\\.mjs\\?v=${version}`));
-  assert.match(html, /\.\.\/01-mcp-fondamentaux\/presentation\.css\?v=day-strip-2/);
-  assert.match(sessionOne, /presentation\.css\?v=day-strip-2/, 'the shared stylesheet version exists on Session 1');
+  const sharedVersion = sessionOne.match(/presentation\.css\?v=([\w-]+)/)[1];
+  assert.match(html, new RegExp(`\\.\\./01-mcp-fondamentaux/presentation\\.css\\?v=${sharedVersion}`), 'both pages use the same shared stylesheet version');
 });
 
 test('the token walk-through shows one badge per hop with placeholder fields only', () => {

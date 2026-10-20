@@ -1,145 +1,142 @@
-# Session 3 - Whose rights does the agent use?
+# Session 3 - Identity, permissions and control
 
-[Workshop](../../README.md) · **11:00–11:30 · 30 minutes**
+[Workshop](../../README.md) · **11:00–11:15 · 15 minutes**
 
-**[Open session 3 at the Tickets experiment](../01-mcp-fondamentaux/presentation.html#security-lab).**
-The original theme and website agenda are retained. The original auth animation
-is optional; the new identity/token-hop animations and unsigned-JWT decoder have
-been removed. Start with an observed result, then introduce only the concepts
-needed to explain it. Session 2 covers platform architecture, not these per-call
-decisions. The older Word document supplies topics, not timings.
+[Open the four slides](../01-mcp-fondamentaux/presentation.html#rights).
+The slides are in English; the presenter notes below are in French.
+The website timetable remains authoritative. No APIM or new tenant setup is
+required for this presentation.
 
-| Duration | Topic |
-| --- | --- |
-| 10 min | Predict and test the same ticket request in four access cases |
-| 3 min | Explain the observed 401, permitted call and 403; locate enforcement |
-| 4 min | Explain token acquisition, intended API and read permission |
-| 3 min | Choose delegated user or application access for a concrete job |
-| 4 min | Follow the second API call: implemented service identity vs conceptual OBO |
-| 3 min | Discuss an instruction inside a ticket; least privilege, approval and audit |
-| 3 min | Name the agent's owner, bound its access and introduce Agent ID |
+| Time | Duration | Slide |
+| --- | ---: | --- |
+| 11:00–11:03 | 3 min | [Whose rights?](../01-mcp-fondamentaux/presentation.html#rights) |
+| 11:03–11:07 | 4 min | [OBO or service access?](../01-mcp-fondamentaux/presentation.html#token-hops) |
+| 11:07–11:11 | 4 min | [Risks and controls](../01-mcp-fondamentaux/presentation.html#mcp-threats) |
+| 11:11–11:15 | 4 min | [Entra Agent ID](../01-mcp-fondamentaux/presentation.html#agent-identities) |
 
-## Teaching progression and sources
+There are exactly four slides, with at most 115 words per slide and 400 words
+across the course. Dense explanations, quizzes, expandable panels, token claims,
+animations and the duplicate security lab have been removed from the page.
+The original Session 1 real browser lab remains unchanged.
 
-The course adapts three public teaching approaches, not their lesson text or code:
+## Presenter notes - French
 
-- [Official MCP authorization tutorial](https://modelcontextprotocol.io/docs/tutorials/security/authorization):
-  begin with a refused request and follow it toward authorized access. Its complete
-  OAuth discovery/sign-in flow is **not** implemented by our prepared-token client.
-- [Microsoft Sherpa workshop](https://github.com/Azure-Samples/sherpa):
-  observe a problem, apply a control and test again. We retain that causal
-  progression without deploying attack exercises or repeating its gateway/platform
-  chapters, which overlap session 2.
-- [MCP for Beginners: simple auth](https://github.com/microsoft/mcp-for-beginners/tree/main/03-GettingStarted/11-simple-auth):
-  introduce credentials and enforcement incrementally. We do **not** adopt its
-  simplified shared-secret examples or status-code handling; the real server
-  validates Entra tokens and distinguishes failed validation (401) from a missing
-  permission after validation (403).
+### 1. Qui porte les droits ? - 3 minutes
 
-Use one sentence before each test: **"We keep get_ticket and CT-1001; what changes,
-and what do you predict?"** After the test, inspect the actual result, then open
-the case's explanation. Do not lecture about JWT encoding before the first request.
-The claim excerpts are explicitly fictional explanatory data, not credentials or
-live verification results.
+Ouverture : « Olivier a explique les controles d'acces. Maintenant, choisissons
+de qui sont les droits, jusqu'a l'API metier. »
 
-## Interactive comparison
+- Alice demande CT-1001 : si le resultat doit respecter ses droits, partir sur
+  un acces delegue. Le LLM propose une action ; il ne s'attribue pas de droits.
+- Un traitement tourne la nuit : utiliser une identite applicative dediee et
+  limiter ses permissions. Ne pas emprunter le compte d'un ingenieur.
+- Un agent a besoin de sa propre boite mail : envisager un agent user account
+  lie a son identite. Ce compte est optionnel, pas cree automatiquement par
+  Agent ID, et ce n'est pas le compte d'Alice. Verifier Frontier preview,
+  licences, provisionnement des ressources, support du produit et consent.
 
-The [comparison lab](../01-mcp-fondamentaux/presentation.html#security-lab)
-uses `get_ticket` with `CT-1001` in four cases:
+Faire choisir le public : « Le meme agent repond a Alice puis prepare un bilan
+nocturne. Faut-il forcement le meme modele d'acces pour les deux operations ? »
+Reponse : non, le choix depend de l'operation et des droits a respecter.
 
-1. **Public:** an editable curl command and actual JSON result, run from the page.
-2. **Protected, no token:** a copyable terminal command; expected HTTP 401.
-3. **Protected, allowed:** the same tool with a valid token carrying the
-   `Mcp.Read` delegated scope or app role; expected ticket response.
-4. **Protected, missing permission:** the same tool with a separately prepared
-   valid Entra API token lacking `Mcp.Read`; expected HTTP 403.
+### 2. Quels droits arrivent jusqu'a l'API ? - 4 minutes
 
-Only case 1 runs in the browser. Protected outcomes are labelled as expectations,
-never live or substituted JSON. Tokens and protected output stay in the terminal.
-The same server implementation exposes identical tools and synthetic data under
-the two access policies; this is not a user-selectable production policy switch.
-Session 1's public endpoint remains available.
+Suivre les deux chemins dessines, sans refaire l'animation OAuth de la session 2.
 
-### Presenter prerequisites
+- Delegation / OBO : lorsque l'API aval doit appliquer les droits d'Alice,
+  l'application obtient un nouveau jeton pour cette API dans son contexte.
+  Les registrations, permissions deleguees, consentements et le code doivent
+  permettre cet echange. OBO ne cree pas de droits supplementaires pour Alice.
+- Service : le serveur MCP utilise sa propre identite pour acceder a un jeu
+  de donnees autorise. Dans notre hebergement, l'API Tickets est appelee avec
+  l'identite managee du service et le role Mcp.Backend.Read.
 
-- Configure separate public and protected endpoints in session 1's presenter panel.
-  Both labs use those settings. Keep the existing website timetable.
-- Prepare participant/client consent and a real Entra v2 API access token for the
-  MCP resource. Do not use a Graph token or an ID token.
-- If Azure CLI is the approved, preauthorized client, the page provides a
-  tenant/client-ID prompt and token-acquisition command that does not print tokens.
-  After successful acquisition, use the supplied already-exported-token command,
-  not the masked token prompt. Otherwise use the organization's approved
-  acquisition flow and enter the token only in the terminal's masked prompt.
-- For a real 403, prepare a separate valid token for the same API without
-  `Mcp.Read`. Do not alter a token: that invalidates its signature and gives 401.
-- Never project bearer tokens, commit them, put them in URLs or paste them into
-  the page. Protected commands use a masked Bash prompt and unset `MCP_TOKEN`.
-- Install the terminal client and prepare tenant consent **before** the session.
-  Ten minutes assumes this setup is ready; it is not time to provision a tenant.
-- If tenant access or the missing-permission identity is unavailable, say so.
-  Run the public experiment and the available protected cases; mark the rest as
-  expected outcomes rather than claiming live verification.
+Le jeton destine a MCP n'est pas automatiquement valable pour une autre API :
+les ressources et audiences doivent correspondre. Un transfert APIM vers MCP
+pour la meme ressource logique n'est pas un echange OBO vers une autre API.
 
-The token lesson uses short, invented claim excerpts, with no generated JWT,
-token input or decoder. OBO is a static architectural explanation; the hosted
-sandbox calls its API with a managed identity. Agent ID provisioning, write
-approvals and per-ticket ACLs are not implemented by this read-only sandbox.
+Question : « Alice donne l'identifiant d'un ticket d'une autre equipe. Qui
+verifie son droit sur ce ticket ? » Reponse : le service/API qui applique la
+politique d'acces au record. Un scope de lecture ne suffit pas.
 
-For local page testing, serve the repository at `http://127.0.0.1:4173`, then run
-`PORT=4174 PUBLIC_CONSOLE_ORIGIN=http://127.0.0.1:4173 npm run start:sandbox`.
-Open the page with
-`?endpoint=http%3A%2F%2F127.0.0.1%3A4174%2Fmcp&time=11:15#security-lab`.
-The hosted public endpoint accepts only its approved page origin, not localhost.
+Limite de la demo : les appelants autorises voient les memes tickets fictifs.
+Pas d'OBO, de per-ticket ACLs ou de filtrage propre a Alice. Le sandbox local
+utilise une API loopback synthetique, pas un echange Entra reel.
 
-## Continue the session 1 sandbox
+### 3. Quels risques MCP et quelles reponses ? - 4 minutes
 
-Configure the [protected sandbox](../../README.md#separate-protected-endpoint-for-session-3)
-as a separate instance of the same code. Keep the public endpoint for session 1;
-do not change its authentication halfway through participant practice.
+Presenter une seule situation par ligne :
 
-1. Use the page's configured protected endpoint without a token: HTTP 401;
-   the ticket API is never reached.
-2. Obtain an Entra API access token outside the page. Repeat `list_tickets`:
-   the same three tickets return for a caller holding `Mcp.Read`.
-3. Compare a valid token without `Mcp.Read`: HTTP 403, not access by default.
-4. Explain least privilege: the MCP server reaches the ticket API with its own
-   managed identity and a separate `Mcp.Backend.Read` role; the caller token is
-   never forwarded.
+- Texte de ticket non fiable : une phrase demandant une autre action reste
+  une donnee, pas une autorisation. L'authentification ne neutralise pas une
+  injection de prompt ; ne pas executer une attaque pour illustrer ce point.
+- Service trop puissant : expliquer le confused deputy. Le service ne doit
+  pas preter ses droits plus larges a un appelant pour une action non autorisee.
+  Appliquer le moindre privilege et les controles sur les donnees cibles.
+- Action sensible : comparer get_ticket, implemente en lecture seule, avec
+  close_ticket, hypothetique. Il faudrait un droit d'ecriture, une approval
+  humaine liee a l'acteur, l'outil, la cible et au contenu exact de l'action,
+  puis une nouvelle verification avant execution.
+- Serveur inconnu : approuver les serveurs et revoir dependances, versions et
+  changements de descriptions d'outils. Une annotation readOnlyHint ne remplace
+  pas un controle d'autorisation cote serveur.
 
-The resource server validates real signed Entra v2 tokens. The Entra application,
-client consent, participant identities and hosted URL must be configured first;
-tests use locally signed test JWTs, not a claim of live tenant sign-in.
-The read-only ticket server has no per-record policy, write actions or approval
-queue. Those controls belong to the separate advanced demo below.
+Faire participer : « Un utilisateur a approuve la fermeture de CT-1001.
+L'agent change la cible en CT-1002. L'accord reste-t-il valable ? » Non.
 
-## Advanced local Claims controls
+Pour l'audit, garder des metadonnees minimales : acteur, outil, decision,
+correlation et reference d'approbation si applicable. Jamais de jetons, secrets,
+prompts ou resultats bruts. Notre serveur journalise userId, methode, outil et
+decision ; pas une piste complete Agent ID/blueprint/approval.
 
-Follow the [tested local Claims script](../../README.md#step-by-step-presenter-script).
-Public demo bearer tokens model identities and roles **only**. They do not
-perform Entra sign-in, validate JWTs or demonstrate an OBO exchange. Do not
-present a local role switch as delegated authentication.
+### 4. Qu'apporte Entra Agent ID ? - 4 minutes
 
-For the token explanation, show claim names with invented values, never a real
-token on screen or in logs:
+Utiliser Tickets helper comme exemple de blueprint, tickets-helper-network
+comme instance et le responsable reseau comme sponsor. Ce sont des exemples
+de conception, pas des objets provisionnes par la page.
 
-```text
-aud: the intended MCP resource
-scp: delegated permissions for this resource
-roles: application permissions / app roles as configured
-```
+- Blueprint : type d'agent et frontiere de credentials partages. Les
+  credentials sont portes ici, pas individuellement par chaque agent.
+- Agent identity : instance distincte, identifiable et attribuable.
+- Sponsor : responsable qui connait le besoin et revoit les acces.
+- Lifecycle : creer, autoriser, revoir, retirer les acces et mettre a la retraite.
 
-In a real architecture, the MCP server validates the issuer, signature,
-audience and lifetime, then applies scopes/roles and record access. A downstream
-Graph/API call requires a token for **that downstream resource**, not reuse
-of the MCP access token. OBO carries user context; application identity uses
-the application's own permissions. The Claims edition has no downstream calls; the sandbox uses a private
-synthetic loopback API without forwarding the MCP token.
+Declarer une permission ne l'accorde pas. Le consentement et les grants restent
+necessaires. L'heritage concerne uniquement les permissions compatibles et
+explicitement configurees ; les roles Azure RBAC sont affectes aux identites
+individuelles. Un nom different ne cree pas un filtrage par equipe.
 
-Discuss tool injection, confused-deputy risks, excessive scopes, unapproved
-servers and dependency supply chain. Demonstrate that untrusted documents are
-not trusted instructions and that a tool picker cannot substitute for RBAC.
-Keep supervisor tokens out of autonomous agents and review actual action payloads.
+En OBO, distinguer l'utilisateur concerne de l'agent acteur ; en autonome,
+l'identite d'agent agit pour elle-meme. Agent ID ne bloque pas a lui seul les
+injections et ne remplace pas l'autorisation sur les donnees.
 
-Entra app registration, attendee consent and hosting still require approved
-preparation. No Azure resources or identities are created by running the local server.
+Question de cloture : « Le sponsor quitte l'equipe : qui revoit l'agent et ses
+droits ? » Prevoir un processus de revue et de retrait. Des issued tokens
+peuvent rester valides : verifier la revocation effective. Desactiver un
+blueprint partage peut affecter toutes ses instances.
+
+Transition : « Nous avons choisi l'identite, limite l'action et identifie un
+responsable. Agent 365 passe a la gouvernance a l'echelle du tenant. »
+
+## Delivery boundaries
+
+- Session 2 retains token validation, scopes/roles, 401/403 and gateway mechanics.
+- Session 3 explains decisions; no authentication switch or fake live response.
+- Agent 365 starts at 11:15 and covers tenant-wide governance.
+- No Agent ID objects, mailbox, OBO exchange, write tool or approval queue are
+  deployed. Managed identity hosting is not an Agent ID deployment.
+- For a real tool call, return to [Session 1's lab](../01-mcp-fondamentaux/presentation.html#lab).
+  Protected calls remain terminal-only; follow the repository's existing setup.
+- Old links to auth, tokens, security-lab and tool-policy resolve to the new
+  slides, without adding old chapters or extra sidebar entries.
+
+## References
+
+- [Blueprints and credentials](https://learn.microsoft.com/entra/agent-id/agent-blueprint)
+- [Declared, granted and inherited permissions](https://learn.microsoft.com/entra/agent-id/concept-inheritable-permissions)
+- [Agent identity and agent user accounts](https://learn.microsoft.com/microsoft-agent-365/developer/identity)
+- [OAuth OBO](https://learn.microsoft.com/entra/identity-platform/v2-oauth2-on-behalf-of-flow)
+- [MCP security best practices](https://modelcontextprotocol.io/specification/2025-11-25/basic/security_best_practices)
+
+Agent ID teaching references checked on 2026-10-20. Verify current product,
+license and tenant support before a real deployment.

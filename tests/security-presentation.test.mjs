@@ -1,89 +1,93 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { securityChapters, securityPractice } from '../sessions/01-mcp-fondamentaux/presentation-security.mjs';
-import { parseCommandRequest, securityCode } from '../sessions/01-mcp-fondamentaux/presentation-lab.mjs';
+import { securityAliases, securityChapters } from '../sessions/01-mcp-fondamentaux/presentation-security.mjs';
 
 const html = readFileSync(new URL('../sessions/01-mcp-fondamentaux/presentation.html', import.meta.url), 'utf8');
 const script = readFileSync(new URL('../sessions/01-mcp-fondamentaux/presentation.js', import.meta.url), 'utf8');
-const settings = { endpoint: 'https://public.example/mcp', protectedEndpoint: 'https://protected.example/mcp' };
+const notes = readFileSync(new URL('../sessions/03-security/README.md', import.meta.url), 'utf8');
+const chapter = (id) => {
+  const start = html.indexOf(`<section id="${id}"`);
+  assert.ok(start >= 0, `Missing slide ${id}`);
+  return html.slice(start, html.indexOf('</section>', start));
+};
+const text = (value) => value.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
 
-test('the 30-minute course starts with the experiment and preserves the website agenda', () => {
-  assert.equal(securityChapters.reduce((sum, { minutes }) => sum + minutes, 0), 30);
-  assert.equal(securityChapters[0].minutes, 10);
-  const chapters = [...html.matchAll(/<section id="([^"]+)" class="chapter" data-session="session-3"/g)].map(([, id]) => id);
-  assert.deepEqual(chapters, securityChapters.map(({ id }) => id));
-  assert.equal(chapters[0], 'security-lab');
+test('session 3 is exactly four concise slides, timed 3/4/4/4, with the old content removed', () => {
+  assert.deepEqual(securityChapters, [
+    { id: 'rights', minutes: 3 }, { id: 'token-hops', minutes: 4 },
+    { id: 'mcp-threats', minutes: 4 }, { id: 'agent-identities', minutes: 4 },
+  ]);
+  assert.equal(securityChapters.reduce((sum, slide) => sum + slide.minutes, 0), 15);
+  assert.deepEqual([...html.matchAll(/<section id="([^"]+)" class="chapter security-slide" data-session="session-3"/g)].map(([, id]) => id), securityChapters.map(({ id }) => id));
+  let totalWords = 0;
+  for (const [index, { id, minutes }] of securityChapters.entries()) {
+    const slide = chapter(id);
+    assert.match(slide, new RegExp(`Slide ${index + 1} of 4 · ${minutes} minutes`));
+    const words = text(slide).split(/\s+/).length;
+    assert.ok(words <= 115, `${id}: ${words} words exceeds the 115-word slide budget`);
+    totalWords += words;
+    assert.doesNotMatch(slide, /<details\b|<form\b|<select\b|<input\b|<pre\b|contenteditable|data-flow=/);
+  }
+  assert.ok(totalWords <= 400, `${totalWords} words exceeds the 400-word course budget`);
+  assert.doesNotMatch(html + script, /identity-case|identity-feedback|policy-output|security-tabs|security-observation|teachingToken|decodeTeachingToken/);
+  assert.doesNotMatch(script, /identityFeedback|securityPractice|renderPolicyInspection|authSteps|createFlow/);
+});
+
+test('each slide answers the assigned questions and labels implemented versus illustrative behavior', () => {
+  const rights = chapter('rights');
+  assert.equal((rights.match(/<article>/g) ?? []).length, 3);
+  for (const phrase of ['Delegated access', 'Dedicated application identity', 'Agent user account', 'Optional · prerequisites apply', 'LLM does not grant permissions']) {
+    assert.ok(rights.includes(phrase), phrase);
+  }
+  const hops = chapter('token-hops');
+  assert.equal((hops.match(/class="security-route"/g) ?? []).length, 2);
+  for (const phrase of ['Design option', "enforce Alice's rights", 'Managed identity', 'Mcp.Backend.Read', 'A token for MCP is not a token for a separate API', 'No OBO or per-ticket ACLs']) {
+    assert.ok(hops.includes(phrase), phrase);
+  }
+  const threats = chapter('mcp-threats');
+  assert.equal((threats.match(/<dt>/g) ?? []).length, 4);
+  for (const phrase of ['Data, not an instruction', 'Least privilege + record checks', 'human approval + audit', 'Approved servers + dependency review', 'get_ticket', 'Read · implemented', 'close_ticket', 'Write · not implemented']) {
+    assert.ok(threats.includes(phrase), phrase);
+  }
+  const agents = chapter('agent-identities');
+  assert.equal((agents.match(/<article>/g) ?? []).length, 4);
+  for (const phrase of ['Blueprint', 'Agent identity', 'Sponsor', 'Lifecycle', 'shared credentials', 'An identity is not a data-access policy', 'no Agent ID deployment', '#day-session-4']) {
+    assert.ok(agents.includes(phrase), phrase);
+  }
+  for (const phrase of ['Frontier', 'consent', 'approval', 'issued tokens', 'blueprint']) assert.ok(notes.includes(phrase), `Presenter notes retain ${phrase}`);
+});
+
+test('old links resolve to the four slides without retaining old lessons in navigation', () => {
   const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map(([, id]) => id);
   assert.equal(ids.length, new Set(ids).size);
   for (const [, id] of html.matchAll(/href="#([^"]+)"/g)) assert.ok(ids.includes(id), `Unresolved #${id}`);
-  for (const { id } of securityChapters) assert.ok(html.includes(`href="#${id}"`));
-  const agenda = [...html.matchAll(/data-key="([^"]+)"[^>]*data-start="([^"]+)" data-end="([^"]+)"/g)]
-    .map(([, key, start, end]) => [key, start, end]);
+  assert.deepEqual(securityAliases, {
+    auth: 'rights', 'security-lab': 'rights', tokens: 'token-hops', 'tool-policy': 'mcp-threats',
+  });
+  for (const [oldId, target] of Object.entries(securityAliases)) {
+    assert.ok(ids.includes(oldId));
+    assert.ok(securityChapters.some(({ id }) => id === target));
+    assert.ok(!html.includes(`href="#${oldId}"`), `Removed lesson ${oldId} is not advertised`);
+  }
+  assert.match(script, /securityAliases\[requestedId\] \?\? requestedId/);
+  assert.match(script, /history\.replaceState/);
+  assert.match(script, /Session 3 · Slide/);
+  assert.doesNotMatch(script, /Optional practice|Session 2 reference/);
+});
+
+test('the original timetable, session-one lab and browser-only-public boundary remain intact', () => {
+  const agenda = [...html.matchAll(/data-key="([^"]+)"[^>]*data-start="([^"]+)" data-end="([^"]+)"/g)].map(([, key, start, end]) => [key, start, end]);
   assert.deepEqual(agenda, [
     ['welcome', '09:00', '09:30'], ['introductions', '09:30', '09:45'], ['session-1', '09:45', '10:15'],
-    ['break-morning', '10:15', '10:30'], ['session-2', '10:30', '11:00'], ['session-3', '11:00', '11:30'],
-    ['session-4', '11:30', '12:15'], ['lunch', '12:15', '14:00'], ['parking-review', '14:00', '14:30'],
+    ['session-2', '10:15', '10:45'], ['break-morning', '10:45', '11:00'], ['session-3', '11:00', '11:15'],
+    ['session-4', '11:15', '12:00'], ['engineering-rex', '12:00', '12:30'],
+    ['lunch', '12:30', '14:00'], ['parking-review', '14:00', '14:30'],
     ['hands-on', '14:30', '16:00'], ['use-cases', '16:00', '16:30'],
   ]);
-  assert.match(html, /class="agenda-row" href="#security-lab"><time>11:00/);
-  for (const id of ['why', 'anatomy', 'mcp', 'api', 'lab']) assert.ok(ids.includes(id));
-});
-
-test('explanations use the ticket experiment, without new animations or fictional JWT machinery', () => {
-  assert.deepEqual([...html.matchAll(/data-flow="([^"]+)"/g)].map(([, id]) => id), ['call', 'auth']);
-  assert.doesNotMatch(html + script, /data-flow="(?:rights|hops)"|teachingToken|decodeTeachingToken|token-decode|token-encoded/);
-  assert.doesNotMatch(html, /<input[^>]*(?:id|name)="(?:token|bearer|credential)"/i);
-  for (const text of [
-    'Fictional claim excerpt', 'Reading claims is not verifying a token',
-    'Roles can also appear in user tokens', 'does not implement per-ticket user ACLs',
-    'OBO is explained here but is not implemented', 'local sandbox uses a synthetic loopback',
-    'Microsoft Sherpa workshop', 'Test → observe → explain',
-  ]) assert.ok(html.includes(text), `Missing teaching boundary: ${text}`);
-  for (const id of ['security-observation', 'security-question', 'security-answer']) assert.ok(html.includes(`id="${id}"`));
-  assert.match(script, /\$\('#security-observation'\)\.open = false/);
-});
-
-test('the same request progresses from public to 401, allowed and 403, with explicit observations', () => {
-  const cases = securityPractice(settings);
-  assert.equal(cases.length, 4);
-  assert.equal(cases.filter(({ browser }) => browser).length, 1);
-  assert.deepEqual(cases.map(({ short }) => short), ['Public', 'No token', 'Allowed', 'Not permitted']);
-  assert.match(cases[0].code, /public\.example/);
-  assert.doesNotMatch(cases[0].code, /Authorization|MCP_TOKEN/);
-  assert.deepEqual(parseCommandRequest(cases[0].code).params, { name: 'get_ticket', arguments: { ticketId: 'CT-1001' } });
-  assert.match(cases[1].code, /--anonymous get_ticket/);
-  assert.match(cases[1].output, /401/);
-  assert.match(cases[2].output, /CT-1001/);
-  assert.match(cases[3].output, /403/);
-  for (const item of cases) assert.ok(item.question && item.answer && item.why);
-  for (const item of cases.slice(1)) {
-    assert.match(item.code, /protected\.example/);
-    assert.match(item.code, /get_ticket '\{"ticketId":"CT-1001"\}'/);
-    assert.match(item.output, /Expected outcome/);
-    assert.doesNotMatch(item.code, /demo-.*-token/);
-  }
-  assert.equal(cases[2].code, cases[3].code);
-  for (const item of cases.slice(2)) {
-    assert.match(item.code, /read -r -s/);
-    assert.match(item.code, /unset MCP_TOKEN$/);
-  }
-  assert.match(cases[3].why, /fake, expired or wrong-audience token demonstrates 401/);
-  assert.equal(securityPractice({ endpoint: settings.endpoint })[1].code, undefined);
-  assert.throws(() => securityPractice({ ...settings, protectedEndpoint: settings.endpoint }), /separate/);
-  assert.throws(() => securityPractice({ ...settings, protectedEndpoint: 'http://untrusted.example/mcp' }));
-  assert.match(script, /callMcp\(config.endpoint, parseCommandRequest\(command\)\)/);
+  for (const id of ['why', 'connector', 'anatomy', 'mcp', 'history', 'api', 'lab', 'lab-command', 'lab-output']) assert.ok(html.includes(`id="${id}"`));
+  assert.match(script, /callMcp\(endpoint, parseCommandRequest/);
   assert.doesNotMatch(script, /callMcp\([^)]*protectedEndpoint|\.innerHTML|localStorage|sessionStorage/);
-  assert.match(script, /securityIndex >= 0 \? 'session-3'/);
-});
-
-test('the approved acquisition path uses an exported token without prompting for it again', () => {
-  const { withToken } = securityCode(settings.protectedEndpoint);
-  assert.match(withToken, /--url 'https:\/\/protected\.example\/mcp' get_ticket '\{"ticketId":"CT-1001"\}'/);
-  assert.match(withToken, /unset MCP_TOKEN$/);
-  assert.doesNotMatch(withToken, /read |--anonymous|echo|printf/);
-  assert.match(script, /const codeTargets = \['anonymous-code', 'authenticated-code', 'acquired-code'\]/);
-  assert.match(script, /\$\('#acquired-code'\)\.textContent = commands\.withToken/);
-  assert.match(html, /MCP_TOKEN=\$\(az account get-access-token/);
-  assert.match(html, /After acquisition succeeds/);
+  assert.match(html, /id="day-engineering-rex"/);
+  assert.match(html, /<strong>Fethi Dilmi<\/strong>/);
 });
