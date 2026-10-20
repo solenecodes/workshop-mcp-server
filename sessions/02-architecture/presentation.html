@@ -8,8 +8,8 @@
   <title>MCP in enterprise and Azure architectures</title>
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="../01-mcp-fondamentaux/presentation.css?v=day-strip-2">
-  <link rel="stylesheet" href="architecture.css?v=session-2-4">
-  <script type="module" src="architecture.js?v=session-2-4"></script>
+  <link rel="stylesheet" href="architecture.css?v=session-2-5">
+  <script type="module" src="architecture.js?v=session-2-5"></script>
 </head>
 <body>
   <svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -257,7 +257,7 @@
             <div class="copy-panel dark"><div><span>Bash · after az login</span><button class="text-button" type="button" data-copy="demo-signed-in"><svg class="icon"><use href="#i-copy"/></svg>Copy</button></div><pre><code id="demo-signed-in"></code></pre></div></li>
           <li><h3>In the Azure portal</h3><p>API Management → <strong>MCP Servers</strong> → <code>contoso-tickets-mcp</code> → <strong>Tools</strong>: two tools, each mapped to one REST operation. Then <strong>Policies</strong>: token check, Mcp.Read, call budget. No subscription key.</p></li>
         </ol>
-        <p class="legend"><svg class="icon" aria-hidden="true"><use href="#i-shield"/></svg><span>Open this page with <code>?gateway=&lt;apim-name&gt;.azure-api.net&amp;clientId=&lt;api-client-id&gt;</code> to fill in the deployed values (<code>deploy-all.ps1</code> prints this link). This page never runs these commands and never asks for a token.</span></p>
+        <p class="legend"><svg class="icon" aria-hidden="true"><use href="#i-shield"/></svg><span>The commands target the workshop gateway. For another deployment, open this page with <code>?gateway=&lt;apim-name&gt;.azure-api.net&amp;clientId=&lt;api-client-id&gt;</code> (<code>deploy-all.ps1</code> prints this link). This page never runs these commands and never asks for a token.</span></p>
         <p class="learn-links"><svg class="icon"><use href="#i-course"/></svg><span>Microsoft Learn: <a href="https://learn.microsoft.com/azure/api-management/manage-mcp-servers-rest-api">Manage MCP servers programmatically</a> · <a href="https://learn.microsoft.com/azure/api-management/secure-mcp-servers">Secure access to MCP servers</a></span></p>
         <details><summary>Fallback if the gateway is not deployed</summary><p>Show the 401, 403 and authorized flow of the Session 3 preview on the Session 1 page, then the animation of Lesson 3. Say clearly that the gateway was not called.</p></details>
         <details class="presenter-notes"><summary>Presenter notes: what the room will see, and why</summary><ul>

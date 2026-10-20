@@ -182,9 +182,11 @@ same day, or keep it only until session 6.
 
 Then the session 2 presenter rehearses the [demo](presentation.html#demo) from the venue
 network, signed in with a user of the workshop tenant (`az login --tenant <workshop-tenant-id>`).
-Open the page as `presentation.html?gateway=<apim-name>.azure-api.net&clientId=<api-client-id>#demo`
-so the copy panels contain the real commands (`deploy-all.ps1` prints this link); without
-them the panels keep placeholders. Only an `*.azure-api.net` host and a UUID are accepted.
+The copy panels use the workshop gateway by default (`defaultGateway` and `defaultClientId` in
+[architecture-steps.mjs](architecture-steps.mjs)). For another deployment, open the page as
+`presentation.html?gateway=<apim-name>.azure-api.net&clientId=<api-client-id>#demo`
+(`deploy-all.ps1` prints this link). Only an `*.azure-api.net` host and a UUID are accepted.
+After redeploying the gateway under a new name, update the two defaults.
 
 1. `--anonymous tools` through the gateway: `HTTP 401`.
 2. The metadata URL: the gateway URL as resource, the tenant, the `Mcp.Read` scope.
