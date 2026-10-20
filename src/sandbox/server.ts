@@ -6,6 +6,7 @@ import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { AuthenticationError, type Identity, type VerifyToken } from './auth.js';
 import { SourceError, ticketIdSchema, type Sources } from './sources.js';
+import { parkingLotRouter, type createParkingLot } from './parking-lot.js';
 
 const ticketsSource = { name: 'Contoso Tickets REST API', kind: 'internal-api', storage: 'SQLite', synthetic: true };
 const result = (data: Record<string, unknown>): CallToolResult => ({
@@ -27,6 +28,7 @@ export interface SandboxOptions {
   host?: string;
   publicUrl?: string;
   consoleOrigin?: string;
+  parkingLot?: ReturnType<typeof createParkingLot>;
   requestLimit?: number;
   now?: () => number;
   log?: (entry: Record<string, unknown>) => void;
@@ -55,12 +57,15 @@ export function createSandboxApp(options: SandboxOptions) {
     host, ...(publicUrl ? { allowedHosts: [publicUrl.hostname, '127.0.0.1', 'localhost', '[::1]'] } : {}),
   });
   app.disable('x-powered-by');
+  if (verifyToken && options.parkingLot) throw new Error('The shared parking lot belongs on the public endpoint only.');
   app.use((req, res, next) => {
     res.setHeader('Cache-Control', 'no-store');
     if (req.headers.origin) {
       res.vary('Origin');
-      if (req.headers.origin !== options.consoleOrigin || req.path !== '/mcp' ||
-          !['POST', 'OPTIONS'].includes(req.method) || req.headers.authorization) {
+      const parking = Boolean(options.parkingLot) && /^\/parking-lot(?:\/[^/]+)?\/?$/.test(req.path);
+      const methods = parking ? ['GET', 'POST', 'PATCH', 'DELETE'] : ['POST'];
+      if (req.headers.origin !== options.consoleOrigin || (req.path !== '/mcp' && !parking) ||
+          ![...methods, 'OPTIONS'].includes(req.method) || req.headers.authorization) {
         res.status(403).json({ error: 'BROWSER_ORIGIN_DENIED', message: 'Use the approved public workshop console or the terminal client.' });
         return;
       }
@@ -68,12 +73,12 @@ export function createSandboxApp(options: SandboxOptions) {
       res.setHeader('Access-Control-Expose-Headers', 'Retry-After, Mcp-Session-Id');
       if (req.method === 'OPTIONS') {
         const headers = (req.get('access-control-request-headers') ?? '').toLowerCase().split(',').map((header) => header.trim()).filter(Boolean);
-        if (req.get('access-control-request-method') !== 'POST' ||
+        if (!methods.includes(req.get('access-control-request-method') ?? '') ||
             headers.some((header) => !['content-type', 'mcp-protocol-version', 'mcp-session-id'].includes(header))) {
           res.status(403).json({ error: 'CONSOLE_PREFLIGHT_DENIED' });
           return;
         }
-        res.setHeader('Access-Control-Allow-Methods', 'POST');
+        res.setHeader('Access-Control-Allow-Methods', methods.join(', '));
         res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Mcp-Protocol-Version, Mcp-Session-Id');
         res.setHeader('Access-Control-Max-Age', '600');
         res.status(204).end();
@@ -82,6 +87,7 @@ export function createSandboxApp(options: SandboxOptions) {
     }
     next();
   });
+  if (options.parkingLot) app.use('/parking-lot', parkingLotRouter(options.parkingLot));
   app.get('/health', (_req, res) => res.json({
     status: 'ok', mode: verifyToken ? 'protected-entra' : 'public-read-only',
     syntheticCustomerData: true, sources: ['contoso-tickets-api'],
@@ -168,10 +174,12 @@ export function createSandboxApp(options: SandboxOptions) {
     res.status(405).json({ error: 'METHOD_NOT_ALLOWED', message: 'Use stateless Streamable HTTP POST.' });
   });
   const onError: ErrorRequestHandler = (error: unknown, _req, res, _next) => {
-    const status = error instanceof SyntaxError ? 400 :
+    const status = error instanceof SyntaxError && 'status' in error && error.status === 400 ? 400 :
       typeof error === 'object' && error !== null && 'status' in error && error.status === 413 ? 413 : 500;
     console.error('Sandbox HTTP request rejected.', { status });
-    res.status(status).json({ error: 'REQUEST_REJECTED' });
+    res.status(status).json({ error: 'REQUEST_REJECTED', message: status === 500
+      ? 'The server could not read or save the data. Check server storage and retry.'
+      : 'The request body is invalid or too large.' });
   };
   app.use(onError);
   return app;

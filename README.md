@@ -54,6 +54,50 @@ directly from the page. Its collapsed presenter panel generates a shareable
 link from the actual URLs, never credentials. The presentation never receives
 protected-endpoint tokens.
 
+### Shared parking lot
+
+The **📝 Parking lot** button in the Session 1 / Session 3 top bar opens a
+shared question board. Enter a question (up to 500 characters) to add a sticky
+note. Everyone can delete notes (with confirmation), archive or restore them,
+and select one of five colors using the small dot at the bottom of each note.
+Click the dot to open the color palette; Escape or a click outside closes it.
+The archived view is separate from active
+questions. The board refreshes every three seconds while open.
+It is anonymous and collaborative, not a private or moderated inbox:
+do not enter personal information or secrets.
+
+For a local presentation served at `http://127.0.0.1:4173`, start:
+
+```sh
+PUBLIC_CONSOLE_ORIGIN=http://127.0.0.1:4173 npm run start:sandbox
+```
+
+Open `http://127.0.0.1:4173/sessions/01-mcp-fondamentaux/presentation.html?endpoint=http%3A%2F%2F127.0.0.1%3A3201%2Fmcp`.
+The board uses `/parking-lot` on that same selected MCP server, independently
+of the read-only MCP tools. A stopped or unconfigured server shows an explicit
+sync error; questions are never silently saved only in the browser.
+
+State is saved atomically in `.workshop-data/parking-lot.json`, or the file
+configured by `PARKING_LOT_PATH`, and survives process restarts. Concurrent
+updates are serialized with a filesystem lock. Back up this file; corrupt data
+is not replaced. After an interrupted write, inspect any `.lock` directory
+before removing it, only with the server stopped. The board holds at most 500
+notes (including archived notes) with a shared limit of 120 writes/minute.
+
+For hosting, use **one public server replica with a persistent disk** and set
+`PUBLIC_CONSOLE_ORIGIN` to the exact presentation origin. Mount that disk at
+`PARKING_LOT_PATH`. Ephemeral container storage is not durable.
+The shared Azure workshop uses an Azure Files Standard_LRS SMB share mounted
+at `/mnt/parking-lot`, with `PARKING_LOT_PATH=/mnt/parking-lot/questions.json`.
+The [scoped deployment](infra/parking-lot.bicep) configures durable storage and
+updates only the existing public app, with one replica. Use this entry point
+for parking-lot redeployments: the original full-environment template does not
+configure this mount. Storage credentials remain in Azure platform configuration,
+never in the presentation. Persistence does not prevent participants from
+deleting notes; back up important questions.
+The protected MCP endpoint does not expose the parking lot. The public server
+and GitHub Pages presentation must both be published for a shared participant link.
+
 | Step | Request | What to observe |
 | --- | --- | --- |
 | 1 | `tools/list` | Two read-only tools with their names |
@@ -74,7 +118,8 @@ makes real HTTP requests. The database is initialized once at
 `.workshop-data/business.sqlite` and survives restarts. Existing data is not
 replaced; corrupt or unsupported databases fail explicitly. After upgrading from
 an older version, delete the `.workshop-data` folder so the new schema is
-created. The server exposes no writes. Network calls time out after five
+created. The ticket API and MCP tools expose no writes (the shared parking lot
+is a separate HTTP feature). Network calls time out after five
 seconds, and a failed source returns `isError: true` instead of made-up data.
 
 ### The ticket REST API and its OpenAPI contract

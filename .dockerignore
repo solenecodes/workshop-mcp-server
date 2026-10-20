@@ -9,5 +9,6 @@
 !src/backend/*.ts
 !src/data/
 !src/data/demoData.ts
+!src/data/contosoTickets.ts
 !infra/
 !infra/Dockerfile

@@ -4,6 +4,7 @@ import { createEntraVerifier } from './auth.js';
 import { createSandboxApp } from './server.js';
 import { createSources, startInternalApi } from './sources.js';
 import { appServiceAccessToken } from '../backend/identity.js';
+import { createParkingLot } from './parking-lot.js';
 
 async function main() {
   const mode = z.enum(['public', 'protected']).parse(process.env.SANDBOX_MODE ?? 'public');
@@ -25,7 +26,10 @@ async function main() {
     const apiUrl = remoteApi ?? internal?.url;
     if (!apiUrl) throw new Error('No business API endpoint was configured or started.');
     sources = await createSources(apiUrl, fetch, accessToken);
-    const app = createSandboxApp({ sources, verifyToken, host, publicUrl: process.env.PUBLIC_MCP_URL, consoleOrigin: process.env.PUBLIC_CONSOLE_ORIGIN });
+    const app = createSandboxApp({
+      sources, verifyToken, host, publicUrl: process.env.PUBLIC_MCP_URL, consoleOrigin: process.env.PUBLIC_CONSOLE_ORIGIN,
+      ...(mode === 'public' ? { parkingLot: createParkingLot(process.env.PARKING_LOT_PATH ?? '.workshop-data/parking-lot.json') } : {}),
+    });
     listener = await new Promise<Server>((resolve, reject) => {
       const server = app.listen(port, host, () => resolve(server));
       server.once('error', reject);
@@ -35,7 +39,7 @@ async function main() {
     await internal?.close();
     throw error;
   }
-  console.log(`${mode === 'public' ? 'Read-only synthetic sandbox' : 'Entra-protected sandbox'}: ${process.env.PUBLIC_MCP_URL ?? `http://${host}:${port}/mcp`}`);
+  console.log(`${mode === 'public' ? 'Public synthetic sandbox (read-only MCP tools)' : 'Entra-protected sandbox'}: ${process.env.PUBLIC_MCP_URL ?? `http://${host}:${port}/mcp`}`);
   console.log(`Source: Contoso Tickets HTTP API (${remoteApi ? 'remote, managed identity' : 'local, persistent SQLite'}). All data is synthetic.`);
   let stopping = false;
   for (const signal of ['SIGINT', 'SIGTERM'] as const) {

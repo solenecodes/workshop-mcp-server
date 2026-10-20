@@ -19,6 +19,12 @@ param tags object
 @minValue(0)
 @maxValue(2)
 param minReplicas int = 0
+@minValue(1)
+@maxValue(2)
+param maxReplicas int = 2
+@description('Existing Container Apps environment storage link to mount for the public parking lot.')
+param parkingLotStorageLinkName string = ''
+param parkingLotMountPath string = '/mnt/parking-lot'
 
 var placeholderImage = 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
 var isPlaceholder = containerImage == placeholderImage
@@ -36,6 +42,17 @@ var modeEnv = mode == 'backend' ? [
 ]
 var consoleEnv = mode == 'public' ? [
   { name: 'PUBLIC_CONSOLE_ORIGIN', value: consoleOrigin }
+] : []
+var parkingLotEnv = mode == 'public' && !empty(parkingLotStorageLinkName) ? [
+  { name: 'PARKING_LOT_PATH', value: '${parkingLotMountPath}/questions.json' }
+] : []
+var parkingLotVolumes = mode == 'public' && !empty(parkingLotStorageLinkName) ? [
+  {
+    name: 'parking-lot'
+    storageType: 'AzureFile'
+    storageName: parkingLotStorageLinkName
+    mountOptions: 'uid=1000,gid=1000,file_mode=0600,dir_mode=0700,vers=3.0,serverino'
+  }
 ] : []
 
 resource app 'Microsoft.App/containerApps@2026-07-01' = {
@@ -66,8 +83,9 @@ resource app 'Microsoft.App/containerApps@2026-07-01' = {
     template: {
       scale: {
         minReplicas: minReplicas
-        maxReplicas: 2
+        maxReplicas: maxReplicas
       }
+      volumes: parkingLotVolumes
       containers: [
         {
           name: appName
@@ -109,6 +127,12 @@ resource app 'Microsoft.App/containerApps@2026-07-01' = {
               periodSeconds: 10
             }
           ]
+          volumeMounts: mode == 'public' && !empty(parkingLotStorageLinkName) ? [
+            {
+              volumeName: 'parking-lot'
+              mountPath: parkingLotMountPath
+            }
+          ] : []
           resources: {
             cpu: json('0.5')
             memory: '1Gi'
@@ -120,7 +144,7 @@ resource app 'Microsoft.App/containerApps@2026-07-01' = {
             { name: 'ENTRA_TENANT_ID', value: entraTenantId }
             { name: 'ENTRA_CLIENT_ID', value: entraClientId }
             { name: 'BACKEND_CLIENT_ID', value: entraClientId }
-          ], modeEnv, consoleEnv)
+          ], modeEnv, consoleEnv, parkingLotEnv)
         }
       ]
     }

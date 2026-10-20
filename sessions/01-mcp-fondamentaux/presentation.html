@@ -7,8 +7,8 @@
   <meta name="color-scheme" content="light">
   <title>MCP, from idea to first call</title>
   <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="presentation.css?v=session3-four-slides-1">
-  <script type="module" src="presentation.js?v=session3-four-slides-1"></script>
+  <link rel="stylesheet" href="presentation.css?v=parking-lot-2">
+  <script type="module" src="presentation.js?v=parking-lot-2"></script>
 </head>
 <body>
   <svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -40,7 +40,30 @@
   <header class="topbar">
     <a class="brand" href="#why"><svg class="icon"><use href="#i-plug"/></svg><span>MCP <span class="muted">workshop</span></span></a>
     <div class="day-strip" id="day-strip" aria-label="Where the day should be now (Paris time)"></div>
+    <button class="button parking-open" id="parking-open" type="button" aria-haspopup="dialog"><span aria-hidden="true">📝</span> Parking lot <span id="parking-count">0</span></button>
   </header>
+
+  <dialog id="parking-lot" class="parking-dialog" aria-labelledby="parking-title" aria-describedby="parking-help">
+    <div class="parking-heading">
+      <h2 id="parking-title"><span aria-hidden="true">📝</span> Parking lot</h2>
+      <button class="button" id="parking-close" type="button" aria-label="Close parking lot">×</button>
+    </div>
+    <p id="parking-help">A question for later? Leave a sticky note for the group.</p>
+    <form id="parking-form">
+      <label for="parking-question">Your question</label>
+      <div class="parking-compose">
+        <input id="parking-question" name="question" type="text" maxlength="500" required placeholder="What would you like to ask?" autocomplete="off" autofocus>
+        <button class="button primary" type="submit">Add question</button>
+      </div>
+    </form>
+    <div class="parking-toolbar">
+      <label><input type="checkbox" id="parking-archived"> Show archived questions</label>
+      <button class="text-button" id="parking-refresh" type="button">Refresh</button>
+    </div>
+    <p id="parking-status" role="status" aria-live="polite">Open the board to load shared questions.</p>
+    <div id="parking-notes" class="parking-notes" aria-label="Shared questions"></div>
+    <noscript>JavaScript is required to use the shared parking lot.</noscript>
+  </dialog>
 
   <div class="lesson-layout">
     <nav class="chapters" aria-label="Day agenda and lesson chapters">

@@ -1,7 +1,10 @@
-import { defaultEndpoint, defaultProtectedEndpoint, labCommand, labSteps, parseCommandRequest, shareUrl, validateEndpoint } from './presentation-lab.mjs?v=session3-four-slides-1';
-import { callMcp, jsonTokens } from './mcp-console.mjs?v=session3-four-slides-1';
-import { securityAliases, securityChapters } from './presentation-security.mjs?v=session3-four-slides-1';
+import { defaultEndpoint, defaultProtectedEndpoint, labCommand, labSteps, parseCommandRequest, shareUrl, validateEndpoint } from './presentation-lab.mjs?v=parking-lot-2';
+import { callMcp, jsonTokens } from './mcp-console.mjs?v=parking-lot-2';
+import { securityAliases, securityChapters } from './presentation-security.mjs?v=parking-lot-2';
 import { initializeAgenda } from './presentation-agenda.mjs?v=agenda-collapse-1';
+import { initializeParkingLot } from './parking-lot.mjs?v=parking-lot-2';
+
+initializeParkingLot();
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
