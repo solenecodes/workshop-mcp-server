@@ -45,21 +45,14 @@ export const labSteps = [
   },
   {
     short: 'One ticket', title: 'Read one ticket',
-    why: 'A second tool takes an input: the ticket identifier. The server passes it to the ticket API and returns that one ticket.',
+    why: 'A second tool takes an input: the ticket identifier. Edit the command on the left, for example change CT-1001 to CT-1002, and run it again.',
     tool: 'get_ticket', args: { ticketId: 'CT-1001' },
     changes: ['get_ticket', '{"ticketId":"CT-1001"}'], focus: ['id', 'title', 'severity', 'status', 'service'],
     notice: 'the ticket: its title, severity, status and affected service.',
   },
   {
-    short: 'Another ticket', title: 'Change one value',
-    why: 'Same tool, one different input. Only the ticketId changes, so the server returns another ticket.',
-    tool: 'get_ticket', args: { ticketId: 'CT-1002' },
-    changes: ['CT-1002'], focus: ['id', 'title', 'status', 'service'],
-    notice: 'a different ticket, returned by the same tool.',
-  },
-  {
     short: 'Unknown ticket', title: 'Ask for a ticket that does not exist',
-    why: 'When the identifier is well formed but unknown, the server returns an explicit tool error. It never invents or substitutes a ticket.',
+    why: 'When the identifier is well formed but unknown, the server returns an explicit tool error. It never invents or substitutes a ticket. Edit the identifier to try your own.',
     tool: 'get_ticket', args: { ticketId: 'CT-9999' },
     changes: ['CT-9999'], focus: ['error', 'message'], expectsError: true,
     notice: 'the error code and message. This error is the expected result of this step.',
@@ -79,6 +72,21 @@ export function labCommand(index, settings) {
     ...(step.tool ? { params: { name: step.tool, arguments: step.args } } : {}) };
   const code = `curl -s ${quote(endpoint)} \\\n  -H 'Content-Type: application/json' \\\n  -H 'Accept: application/json, text/event-stream' \\\n  -d ${quote(JSON.stringify(request))}`;
   return { ...step, request, code, segments: segments(code, step.changes) };
+}
+
+// Reads the JSON-RPC body after -d from a (possibly edited) curl command. The endpoint is never
+// taken from the text: the page always uses the configured endpoint.
+export function parseCommandRequest(text) {
+  const match = /-d\s+(?:'([^']*)'|"((?:[^"\\]|\\.)*)")/s.exec(text);
+  if (!match) throw new Error('Keep the JSON request after -d in single quotes, or reset the command.');
+  const raw = match[1] ?? match[2].replace(/\\(["\\])/g, '$1');
+  try {
+    const request = JSON.parse(raw);
+    if (request === null || typeof request !== 'object' || Array.isArray(request)) throw new Error('not an object');
+    return request;
+  } catch {
+    throw new Error('The JSON after -d is not valid. Check the quotes and braces, or reset the command.');
+  }
 }
 
 export function securityCode(endpoint) {

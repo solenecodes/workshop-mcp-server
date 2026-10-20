@@ -1,5 +1,5 @@
-import { defaultEndpoint, defaultProtectedEndpoint, labCommand, labSteps, securityCode, setupCode, shareUrl, validateEndpoint } from './presentation-lab.mjs?v=tickets-lab-2';
-import { callMcp, jsonTokens } from './mcp-console.mjs?v=tickets-lab-2';
+import { defaultEndpoint, defaultProtectedEndpoint, labCommand, labSteps, parseCommandRequest, securityCode, setupCode, shareUrl, validateEndpoint } from './presentation-lab.mjs?v=tickets-lab-3';
+import { callMcp, jsonTokens } from './mcp-console.mjs?v=tickets-lab-3';
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -413,6 +413,7 @@ let settings;
 let consoleBusy = false;
 let currentStep = 0;
 let stepResults = [];
+let stepEdits = [];
 const endpointInput = $('#endpoint');
 const protectedInput = $('#protected-endpoint');
 const codeTargets = ['anonymous-code', 'authenticated-code'];
@@ -444,7 +445,10 @@ function renderStep() {
   $('#lab-prev').disabled = currentStep === 0;
   $('#lab-next').disabled = currentStep === labSteps.length - 1;
   const command = $('#lab-command');
-  if (settings) {
+  const edited = stepEdits[currentStep];
+  if (settings && edited !== undefined) {
+    command.textContent = edited;
+  } else if (settings) {
     const { segments } = labCommand(currentStep, settings);
     command.replaceChildren(...segments.map(({ text, changed }) => {
       const part = document.createElement(changed ? 'mark' : 'span');
@@ -455,6 +459,8 @@ function renderStep() {
   } else {
     command.textContent = 'Apply a valid endpoint to generate this command.';
   }
+  command.contentEditable = settings ? 'plaintext-only' : 'false';
+  $('#lab-reset').hidden = edited === undefined;
   $('#lab-copy').disabled = !settings;
   $('#lab-run').disabled = !settings || consoleBusy;
   const stored = stepResults[currentStep];
@@ -500,18 +506,20 @@ function applyEndpoint() {
     if (protectedEndpoint === validated.endpoint) throw new Error('Use separate public and protected endpoints.');
     settings = { ...validated, protectedEndpoint };
     stepResults = [];
+    stepEdits = [];
     endpointInput.value = settings.endpoint;
     protectedInput.value = protectedEndpoint ?? '';
     $('#endpoint-error').hidden = true;
     $('#endpoint-status').textContent = settings.local
       ? `Local sandbox: ${settings.endpoint}. Start npm run start:sandbox in a second terminal. This is not a public workshop endpoint.`
-      : `Public workshop endpoint: ${settings.endpoint}. The five steps below call this server.`;
+      : `Public workshop endpoint: ${settings.endpoint}. The four steps below call this server.`;
     $$('[data-copy],#share').forEach((button) => { button.disabled = false; });
     renderLab();
     return true;
   } catch (error) {
     settings = undefined;
     stepResults = [];
+    stepEdits = [];
     renderStep();
     codeTargets.forEach((id) => { document.getElementById(id).textContent = 'Apply a valid endpoint to generate this command.'; });
     $('#participant-link')?.remove();
@@ -526,6 +534,7 @@ function applyEndpoint() {
 function markEndpointDirty() {
   settings = undefined;
   stepResults = [];
+  stepEdits = [];
   renderStep();
   codeTargets.forEach((id) => { document.getElementById(id).textContent = 'Apply the endpoint changes to regenerate this command.'; });
   $('#participant-link')?.remove();
@@ -542,8 +551,16 @@ endpointInput.value = params.get('endpoint') ?? defaultEndpoint;
 protectedInput.value = params.get('protectedEndpoint') ?? defaultProtectedEndpoint;
 applyEndpoint();
 
+// The command is editable: the default is the generated command until the user types.
+const currentCommandText = () => stepEdits[currentStep] ?? labCommand(currentStep, settings).code;
+$('#lab-command').addEventListener('input', () => {
+  if (!settings) return;
+  stepEdits[currentStep] = $('#lab-command').innerText.replace(/\r/g, '').replace(/\n$/, '');
+  $('#lab-reset').hidden = false;
+});
+$('#lab-reset').addEventListener('click', () => { delete stepEdits[currentStep]; renderStep(); });
 $('#lab-copy').addEventListener('click', () => {
-  if (settings) void copy(labCommand(currentStep, settings).code, 'Copied. Paste it into a Bash terminal (Git Bash or WSL on Windows).');
+  if (settings) void copy(currentCommandText(), 'Copied. Paste it into a Bash terminal (Git Bash or WSL on Windows).');
 });
 $('#lab-run').addEventListener('click', async () => {
   if (!settings || consoleBusy) return;
@@ -557,7 +574,7 @@ $('#lab-run').addEventListener('click', async () => {
   $('#lab-output').textContent = 'Waiting for the server...';
   let failed = false;
   try {
-    const reply = await callMcp(endpoint, labCommand(index, settings).request);
+    const reply = await callMcp(endpoint, parseCommandRequest(stepEdits[index] ?? labCommand(index, settings).code));
     if (settings?.endpoint !== endpoint) throw new Error('The endpoint changed. Apply it and run the call again.');
     stepResults[index] = reply;
   } catch (error) {

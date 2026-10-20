@@ -374,3 +374,10 @@ footer details { max-width:65%; border:0; padding:0; background:none; margin:0; 
   .lab-steps pre { white-space:pre-wrap; overflow-wrap:anywhere; }
   footer { display:block; }
 }
+
+.lab-steps code[contenteditable] { display:block; min-height:6em; outline:none; cursor:text; }
+.lab-steps pre:focus-within { box-shadow:inset 0 0 0 2px var(--blue); }
+.edit-hint { gap:8px; }
+.edit-hint .icon { width:16px; height:16px; color:var(--blue); flex-shrink:0; }
+.edit-hint .text-button { margin-left:auto; }
+.legend code { font-size:.72rem; }

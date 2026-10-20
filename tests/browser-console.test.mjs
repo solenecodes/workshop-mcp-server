@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import { createSandboxApp } from '../src/sandbox/server.ts';
 import { createSources, startInternalApi } from '../src/sandbox/sources.ts';
 import { callMcp } from '../sessions/01-mcp-fondamentaux/mcp-console.mjs';
-import { labCommand } from '../sessions/01-mcp-fondamentaux/presentation-lab.mjs';
+import { labCommand, parseCommandRequest } from '../sessions/01-mcp-fondamentaux/presentation-lab.mjs';
 
 const stepRequest = (index) => labCommand(index, { endpoint: 'https://public.example/mcp' }).request;
 const tool = (name, args) => ({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name, arguments: args } });
@@ -40,18 +40,19 @@ async function fixture() {
   };
 }
 
-test('the five guided requests run against the real stateless server and only read-only requests can be sent', async () => {
+test('the four guided requests run against the real stateless server and only read-only requests can be sent', async () => {
   const f = await fixture();
   try {
     const replies = [];
-    for (let index = 0; index < 5; index++) replies.push(await callMcp(f.url, stepRequest(index), f.browserFetch));
+    for (let index = 0; index < 4; index++) replies.push(await callMcp(f.url, stepRequest(index), f.browserFetch));
     assert.deepEqual(replies[0].result.tools.map((tool) => tool.name).sort(), ['get_ticket', 'list_tickets']);
     assert.deepEqual(replies[1].result.structuredContent.tickets.map((ticket) => ticket.id), ['CT-1001', 'CT-1002', 'CT-1003']);
     assert.equal(replies[2].result.structuredContent.ticket.id, 'CT-1001');
-    assert.equal(replies[3].result.structuredContent.ticket.id, 'CT-1002');
-    assert.equal(replies[4].result.isError, true);
-    assert.equal(replies[4].result.structuredContent.error, 'TICKET_NOT_FOUND');
-    for (const reply of replies.slice(0, 4)) assert.notEqual(reply.result.isError, true);
+    assert.equal(replies[3].result.isError, true);
+    assert.equal(replies[3].result.structuredContent.error, 'TICKET_NOT_FOUND');
+    for (const reply of replies.slice(0, 3)) assert.notEqual(reply.result.isError, true);
+    const edited = parseCommandRequest(labCommand(2, { endpoint: f.url }).code.replace('CT-1001', 'CT-1002'));
+    assert.equal((await callMcp(f.url, edited, f.browserFetch)).result.structuredContent.ticket.id, 'CT-1002');
     await assert.rejects(callMcp(f.url, tool('close_ticket', {})), /read-only/);
     await assert.rejects(callMcp(f.url, { jsonrpc: '2.0', id: 1, method: 'resources/list' }), /read-only/);
     const malformed = await callMcp(f.url, tool('get_ticket', { ticketId: 'not-an-id' }), f.browserFetch);

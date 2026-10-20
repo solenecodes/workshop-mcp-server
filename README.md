@@ -2,7 +2,7 @@
 
 **Start with the [visual presentation & participant lab](https://solenecodes.github.io/workshop-mcp-server/).**
 Short chapters: why MCP exists, its architecture, an animated call, MCP vs
-API, a guided five-step live lab (copy a curl command or run it from the page),
+API, a guided four-step live lab (copy an editable curl command or run it from the page),
 and access controls.
 
 **All tickets are invented.** The read-only MCP server wraps a small *Contoso
@@ -52,9 +52,12 @@ protected-endpoint tokens.
 | --- | --- | --- |
 | 1 | `tools/list` | Two read-only tools with their names |
 | 2 | `list_tickets` | Three tickets and the source that answered |
-| 3 | `get_ticket` (CT-1001) | VPN gateway timeouts, severity high |
-| 4 | same tool, CT-1002 | Only `ticketId` changes: shared drive quota |
-| 5 | `get_ticket` (CT-9999) | `isError: true`, `TICKET_NOT_FOUND` |
+| 3 | `get_ticket` (CT-1001) | VPN gateway timeouts, severity high. Edit the identifier (try CT-1002) and run again |
+| 4 | `get_ticket` (CT-9999) | `isError: true`, `TICKET_NOT_FOUND` |
+
+The command on the left is editable. The page runs the JSON request after `-d`
+against the configured endpoint; the URL in the text is never used, and only the
+documented read-only tools can be sent from the page.
 
 ```text
 Terminal / MCP SDK -> MCP server -> Contoso Tickets REST API -> SQLite
