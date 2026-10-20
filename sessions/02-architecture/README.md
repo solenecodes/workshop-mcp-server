@@ -45,6 +45,14 @@ show the same 401, 403 and authorized calls, labeled as illustrations.
 
 ## Who deploys what
 
+![Deployed architecture: clients, API Management patterns A and B, Container Apps, Entra ID and the registry](diagrams/deployed-architecture.png)
+
+[diagrams/deployed-architecture.drawio](diagrams/deployed-architecture.drawio) is the source; the SVG and PNG are
+exported from it (draw.io Desktop: `draw.io --export --format svg --embed-svg-images --border 10` and
+`--format png --scale 2 --border 10`). Icons come from [az-icons.com](https://az-icons.com/) (Azure Architecture
+Icons, July 2026), except Microsoft Entra ID ([MsiconsCollections](https://aka.ms/MsiconsCollections)).
+Update the diagram when the Bicep changes a component, an identity or a call path.
+
 | Component | Deployed by | How | Needed for |
 | --- | --- | --- | --- |
 | Container Apps environment, registry, public MCP, protected MCP, internal ticket API | Workshop owner (Solene) | [infra/main.bicep](../../infra/main.bicep), then the image build and redeploy | Sessions 1, 3, 6; pattern A |
