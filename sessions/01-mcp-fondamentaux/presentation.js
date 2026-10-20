@@ -1,5 +1,5 @@
-import { defaultEndpoint, defaultProtectedEndpoint, labCommand, labSteps, parseCommandRequest, securityCode, setupCode, shareUrl, validateEndpoint } from './presentation-lab.mjs?v=agenda-nav-4';
-import { callMcp, jsonTokens } from './mcp-console.mjs?v=agenda-nav-4';
+import { defaultEndpoint, defaultProtectedEndpoint, labCommand, labSteps, parseCommandRequest, securityCode, setupCode, shareUrl, validateEndpoint } from './presentation-lab.mjs?v=agenda-panels-1';
+import { callMcp, jsonTokens } from './mcp-console.mjs?v=agenda-panels-1';
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -259,36 +259,37 @@ function createFlow(root) {
 $$('[data-flow]').forEach((root) => controllers.push(createFlow(root)));
 $$('.flow-fallback,.lab-fallback').forEach((element) => { element.open = false; });
 
-const chapters = $$('.chapter');
-const navigation = $$('.chapters a');
+const chapters = $$('.chapter:not(.agenda-panel)');
+const agendaPanels = $$('.agenda-panel');
+const navigation = $$('.chapters a:not(.agenda-row)');
+let activePanel;
 let chapterIndex = 0;
 function showChapter(focus = false) {
   const target = chapters.findIndex((chapter) => `#${chapter.id}` === location.hash);
   chapterIndex = target === -1 ? 0 : target;
   controllers.forEach((controller) => controller.pause());
-  chapters.forEach((chapter, index) => { chapter.hidden = index !== chapterIndex; });
+  activePanel = agendaPanels.find((panel) => `#${panel.id}` === location.hash);
+  chapters.forEach((chapter, index) => { chapter.hidden = Boolean(activePanel) || index !== chapterIndex; });
+  agendaPanels.forEach((panel) => { panel.hidden = panel !== activePanel; });
+  $('.chapter-pagination').hidden = Boolean(activePanel);
   navigation.forEach((link) => {
     if (link.getAttribute('href') === `#${chapters[chapterIndex].id}`) link.setAttribute('aria-current', 'step');
     else link.removeAttribute('aria-current');
   });
   // The agenda follows the content on screen: session 1 chapters, then the session 3 preview.
-  $$('.agenda li[data-session]').forEach((item) => {
-    const active = item.dataset.session === (chapterIndex === 5 ? '3' : '1');
+  const agendaKey = activePanel ? activePanel.id.replace('day-', '') : chapterIndex === 5 ? 'session-3' : 'session-1';
+  $$('.agenda li[data-key]').forEach((item) => {
+    const active = item.dataset.key === agendaKey;
     item.classList.toggle('current', active);
     if (active) item.setAttribute('aria-current', 'true');
     else item.removeAttribute('aria-current');
   });
-  const currentLink = $('.chapters a[aria-current="step"]');
+  const currentLink = $('.chapters a[aria-current="step"]') ?? $('.agenda li.current .agenda-row');
   const menu = $('.chapters');
   if (currentLink && menu.scrollHeight > menu.clientHeight) {
     const top = currentLink.getBoundingClientRect().top - menu.getBoundingClientRect().top + menu.scrollTop;
     menu.scrollTo({ top: Math.max(0, top - menu.clientHeight / 3) });
   }
-  const mode = chapterIndex < 4 ? 'course' : chapterIndex === 4 ? 'practice' : 'security';
-  $$('[data-mode-link]').forEach((link) => {
-    if (link.dataset.modeLink === mode) link.setAttribute('aria-current', 'page');
-    else link.removeAttribute('aria-current');
-  });
   $('#chapter-prev').disabled = chapterIndex === 0;
   $('#chapter-next').disabled = chapterIndex === chapters.length - 1;
   $('#chapter-prev').textContent = chapterIndex === 4 ? '← Back to course' : chapterIndex === 5 ? '← Back to exercises' : '← Previous lesson';
@@ -297,7 +298,7 @@ function showChapter(focus = false) {
     : chapterIndex === 4 ? 'Your turn · Live lab' : 'Session 3 · Security';
   requestAnimationFrame(() => controllers.forEach((controller) => controller.redraw()));
   if (focus) {
-    $('h1,h2', chapters[chapterIndex]).focus({ preventScroll: true });
+    $('h1,h2', activePanel ?? chapters[chapterIndex]).focus({ preventScroll: true });
     window.scrollTo({ top: 0, behavior: 'instant' });
   }
 }
@@ -310,7 +311,8 @@ $('#chapter-next').addEventListener('click', () => changeChapter(1));
 window.addEventListener('hashchange', () => showChapter(true));
 document.addEventListener('keydown', (event) => {
   if (event.altKey || event.ctrlKey || event.metaKey || !(event.target instanceof Element)) return;
-  if (event.target.closest('input,select,textarea,button,[contenteditable="true"],summary')) return;
+  if (event.target.closest('input,select,textarea,button,[contenteditable],summary')) return;
+  if (activePanel) return;
   if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') {
     event.preventDefault();
     changeChapter(event.key === 'ArrowRight' ? 1 : -1);
@@ -657,8 +659,6 @@ function finishPrint() {
 window.addEventListener('beforeprint', preparePrint);
 window.addEventListener('afterprint', finishPrint);
 matchMedia('print').addEventListener('change', (event) => event.matches ? preparePrint() : finishPrint());
-$('#print').addEventListener('click', () => { preparePrint(); window.print(); });
-$('#print').hidden = false;
 $('.chapter-pagination').hidden = false;
 document.documentElement.classList.add('enhanced');
 showChapter();

@@ -7,8 +7,8 @@
   <meta name="color-scheme" content="light">
   <title>MCP, from idea to first call</title>
   <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="presentation.css?v=agenda-nav-4">
-  <script type="module" src="presentation.js?v=agenda-nav-4"></script>
+  <link rel="stylesheet" href="presentation.css?v=agenda-panels-1">
+  <script type="module" src="presentation.js?v=agenda-panels-1"></script>
 </head>
 <body>
   <svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -39,7 +39,7 @@
   <a class="skip" href="#main">Skip to lesson</a>
   <header class="topbar">
     <a class="brand" href="#why"><svg class="icon"><use href="#i-plug"/></svg><span>MCP <span class="muted">workshop</span></span></a>
-    <div class="top-actions"><nav class="mode-navigation" aria-label="Course or hands-on"><a href="#why" data-mode-link="course"><svg class="icon"><use href="#i-course"/></svg>Course</a><a href="#lab" data-mode-link="practice"><svg class="icon"><use href="#i-practice"/></svg>Your turn</a></nav><button id="print" class="text-button" hidden>Print</button></div>
+
   </header>
 
   <div class="lesson-layout">
@@ -47,14 +47,14 @@
       <div class="agenda-group">
         <p class="nav-group-label"><svg class="icon"><use href="#i-calendar"/></svg>Day agenda</p>
         <ol class="agenda">
-      <li>
-        <div class="agenda-row"><time>09:00</time><span><b class="agenda-emoji" aria-hidden="true">🥐</b> Welcome breakfast<small>30 min</small></span></div>
+      <li data-key="welcome">
+        <a class="agenda-row" href="#day-welcome"><time>09:00</time><span><b class="agenda-emoji" aria-hidden="true">🥐</b> Welcome breakfast<small>30 min</small></span></a>
       </li>
-      <li>
-        <div class="agenda-row"><time>09:30</time><span><b class="agenda-emoji" aria-hidden="true">👋</b> Introductions &amp; parking lot<small>15 min</small></span></div>
+      <li data-key="introductions">
+        <a class="agenda-row" href="#day-introductions"><time>09:30</time><span><b class="agenda-emoji" aria-hidden="true">👋</b> Introductions &amp; parking lot<small>15 min</small></span></a>
       </li>
-      <li class="current" data-session="1" aria-current="true">
-        <div class="agenda-row"><time>09:45</time><span><b class="agenda-emoji" aria-hidden="true">🔌</b> Session 1 – MCP fundamentals<small>30 min</small></span></div>
+      <li class="current" data-key="session-1" data-nested aria-current="true">
+        <a class="agenda-row" href="#why"><time>09:45</time><span><b class="agenda-emoji" aria-hidden="true">🔌</b> Session 1 – MCP fundamentals<small>30 min</small></span></a>
         <div class="agenda-sub">
         <div class="chapter-group">
           <p class="nav-group-label"><svg class="icon"><use href="#i-course"/></svg>Course</p>
@@ -69,34 +69,34 @@
         </div>
         </div>
       </li>
-      <li class="pause">
-        <div class="agenda-row"><time>10:15</time><span><b class="agenda-emoji" aria-hidden="true">☕</b> Break<small>15 min</small></span></div>
+      <li class="pause" data-key="break-morning">
+        <a class="agenda-row" href="#day-break-morning"><time>10:15</time><span><b class="agenda-emoji" aria-hidden="true">☕</b> Break<small>15 min</small></span></a>
       </li>
-      <li>
-        <div class="agenda-row"><time>10:30</time><span><b class="agenda-emoji" aria-hidden="true">☁️</b> Session 2 – MCP in enterprise and Azure architectures<small>30 min</small></span></div>
+      <li data-key="session-2">
+        <a class="agenda-row" href="#day-session-2"><time>10:30</time><span><b class="agenda-emoji" aria-hidden="true">☁️</b> Session 2 – MCP in enterprise and Azure architectures<small>30 min</small></span></a>
       </li>
-      <li data-session="3">
-        <div class="agenda-row"><time>11:00</time><span><b class="agenda-emoji" aria-hidden="true">🔐</b> Session 3 – Security and governance for MCP<small>30 min</small></span></div>
+      <li data-key="session-3" data-nested>
+        <a class="agenda-row" href="#auth"><time>11:00</time><span><b class="agenda-emoji" aria-hidden="true">🔐</b> Session 3 – Security and governance for MCP<small>30 min</small></span></a>
         <div class="agenda-sub">
         <div class="chapter-group">
           <a href="#auth"><span class="chapter-icon"><svg class="icon"><use href="#i-shield"/></svg></span><span><small>Security</small> Protect the tools</span></a>
         </div>
         </div>
       </li>
-      <li>
-        <div class="agenda-row"><time>11:30</time><span><b class="agenda-emoji" aria-hidden="true">🤖</b> Session 4 – Agent 365: governance and security overview<small>45 min</small></span></div>
+      <li data-key="session-4">
+        <a class="agenda-row" href="#day-session-4"><time>11:30</time><span><b class="agenda-emoji" aria-hidden="true">🤖</b> Session 4 – Agent 365: governance and security overview<small>45 min</small></span></a>
       </li>
-      <li class="pause">
-        <div class="agenda-row"><time>12:15</time><span><b class="agenda-emoji" aria-hidden="true">🍽️</b> Lunch break<small>1 h 45</small></span></div>
+      <li class="pause" data-key="lunch">
+        <a class="agenda-row" href="#day-lunch"><time>12:15</time><span><b class="agenda-emoji" aria-hidden="true">🍽️</b> Lunch break<small>1 h 45</small></span></a>
       </li>
-      <li>
-        <div class="agenda-row"><time>14:00</time><span><b class="agenda-emoji" aria-hidden="true">🅿️</b> Parking lot review – MCP ecosystem &amp; priorities<small>30 min</small></span></div>
+      <li data-key="parking-review">
+        <a class="agenda-row" href="#day-parking-review"><time>14:00</time><span><b class="agenda-emoji" aria-hidden="true">🅿️</b> Parking lot review – MCP ecosystem &amp; priorities<small>30 min</small></span></a>
       </li>
-      <li>
-        <div class="agenda-row"><time>14:30</time><span><b class="agenda-emoji" aria-hidden="true">🛠️</b> Hands-on workshop: from an open MCP server to an enterprise-ready architecture<small>1 h 30</small></span></div>
+      <li data-key="hands-on">
+        <a class="agenda-row" href="#day-hands-on"><time>14:30</time><span><b class="agenda-emoji" aria-hidden="true">🛠️</b> Hands-on workshop: from an open MCP server to an enterprise-ready architecture<small>1 h 30</small></span></a>
       </li>
-      <li>
-        <div class="agenda-row"><time>16:00</time><span><b class="agenda-emoji" aria-hidden="true">🚀</b> Use cases, next steps &amp; open discussion<small>30 min</small></span></div>
+      <li data-key="use-cases">
+        <a class="agenda-row" href="#day-use-cases"><time>16:00</time><span><b class="agenda-emoji" aria-hidden="true">🚀</b> Use cases, next steps &amp; open discussion<small>30 min</small></span></a>
       </li>
         </ol>
       </div>
@@ -294,6 +294,87 @@ npm ci</code></pre></div>
           </div>
         </div>
         <details><summary>What is implemented, and what must be configured?</summary><p>The protected endpoint runs the same two read-only tools. It validates Microsoft Entra v2 JWT signatures, issuer, audience, expiry and the <code>Mcp.Read</code> scope or application role, and accepts no demo tokens. The MCP server calls the ticket API with its own managed identity and a separate backend app role. Hosting, an Entra application registration and participant access must be configured before using it.</p><p>This workshop does not implement interactive OAuth discovery or on-behalf-of token exchange; the caller token is never forwarded to the backend. Write tools, approvals and per-record permissions are not part of this read-only server.</p></details>
+      </section>
+
+      <section id="day-welcome" class="chapter agenda-panel" hidden aria-labelledby="day-welcome-title">
+        <p class="eyebrow"><svg class="icon"><use href="#i-calendar"/></svg>Day agenda · 09:00–09:30 · 30 min</p>
+        <h2 id="day-welcome-title" tabindex="-1"><span aria-hidden="true">🥐</span> Welcome breakfast</h2>
+        <p class="intro">Welcome coffee and informal introductions.</p>
+        <p class="agenda-next">Up next at 09:30: 👋 Introductions &amp; parking lot</p>
+        <p class="agenda-note">This page contains the Session 1 course and lab, and a Session 3 security preview.</p>
+        <div class="agenda-actions"><a class="button primary" href="#why">Open Session 1</a><a class="button" href="#auth">Open Session 3 preview</a></div>
+      </section>
+
+      <section id="day-introductions" class="chapter agenda-panel" hidden aria-labelledby="day-introductions-title">
+        <p class="eyebrow"><svg class="icon"><use href="#i-calendar"/></svg>Day agenda · 09:30–09:45 · 15 min</p>
+        <h2 id="day-introductions-title" tabindex="-1"><span aria-hidden="true">👋</span> Introductions &amp; parking lot</h2>
+        <p class="intro">Participant introductions, expectations for the day, and identification of key topics and questions.</p>
+        <p class="agenda-next">Up next at 09:45: 🔌 Session 1 – MCP fundamentals</p>
+        <p class="agenda-note">This page contains the Session 1 course and lab, and a Session 3 security preview.</p>
+        <div class="agenda-actions"><a class="button primary" href="#why">Open Session 1</a><a class="button" href="#auth">Open Session 3 preview</a></div>
+      </section>
+
+      <section id="day-break-morning" class="chapter agenda-panel" hidden aria-labelledby="day-break-morning-title">
+        <p class="eyebrow"><svg class="icon"><use href="#i-calendar"/></svg>Day agenda · 10:15–10:30 · 15 min</p>
+        <h2 id="day-break-morning-title" tabindex="-1"><span aria-hidden="true">☕</span> Break</h2>
+        <p class="intro">Break · 15 min.</p>
+        <p class="agenda-next">Up next at 10:30: ☁️ Session 2 – MCP in enterprise and Azure architectures</p>
+        <p class="agenda-note">This page contains the Session 1 course and lab, and a Session 3 security preview.</p>
+        <div class="agenda-actions"><a class="button primary" href="#why">Open Session 1</a><a class="button" href="#auth">Open Session 3 preview</a></div>
+      </section>
+
+      <section id="day-session-2" class="chapter agenda-panel" hidden aria-labelledby="day-session-2-title">
+        <p class="eyebrow"><svg class="icon"><use href="#i-calendar"/></svg>Day agenda · 10:30–11:00 · 30 min</p>
+        <h2 id="day-session-2-title" tabindex="-1"><span aria-hidden="true">☁️</span> Session 2 – MCP in enterprise and Azure architectures</h2>
+        <p class="intro">Overview of the main options for integrating and exposing MCP servers within an enterprise architecture, including Azure API Management (APIM).</p>
+        <p class="agenda-next">Up next at 11:00: 🔐 Session 3 – Security and governance for MCP</p>
+        <p class="agenda-note">This page contains the Session 1 course and lab, and a Session 3 security preview.</p>
+        <div class="agenda-actions"><a class="button primary" href="#why">Open Session 1</a><a class="button" href="#auth">Open Session 3 preview</a></div>
+      </section>
+
+      <section id="day-session-4" class="chapter agenda-panel" hidden aria-labelledby="day-session-4-title">
+        <p class="eyebrow"><svg class="icon"><use href="#i-calendar"/></svg>Day agenda · 11:30–12:15 · 45 min</p>
+        <h2 id="day-session-4-title" tabindex="-1"><span aria-hidden="true">🤖</span> Session 4 – Agent 365: governance and security overview</h2>
+        <p class="intro">Introduction to Agent 365 and its capabilities for governing and securing agents across the organization.</p>
+        <p class="agenda-next">Up next at 12:15: 🍽️ Lunch break</p>
+        <p class="agenda-note">This page contains the Session 1 course and lab, and a Session 3 security preview.</p>
+        <div class="agenda-actions"><a class="button primary" href="#why">Open Session 1</a><a class="button" href="#auth">Open Session 3 preview</a></div>
+      </section>
+
+      <section id="day-lunch" class="chapter agenda-panel" hidden aria-labelledby="day-lunch-title">
+        <p class="eyebrow"><svg class="icon"><use href="#i-calendar"/></svg>Day agenda · 12:15–14:00 · 1 h 45</p>
+        <h2 id="day-lunch-title" tabindex="-1"><span aria-hidden="true">🍽️</span> Lunch break</h2>
+        <p class="intro">Lunch break · 1 h 45.</p>
+        <p class="agenda-next">Up next at 14:00: 🅿️ Parking lot review – MCP ecosystem &amp; priorities</p>
+        <p class="agenda-note">This page contains the Session 1 course and lab, and a Session 3 security preview.</p>
+        <div class="agenda-actions"><a class="button primary" href="#why">Open Session 1</a><a class="button" href="#auth">Open Session 3 preview</a></div>
+      </section>
+
+      <section id="day-parking-review" class="chapter agenda-panel" hidden aria-labelledby="day-parking-review-title">
+        <p class="eyebrow"><svg class="icon"><use href="#i-calendar"/></svg>Day agenda · 14:00–14:30 · 30 min</p>
+        <h2 id="day-parking-review-title" tabindex="-1"><span aria-hidden="true">🅿️</span> Parking lot review – MCP ecosystem &amp; priorities</h2>
+        <p class="intro">Review of the morning parking lot in the context of your organization’s environment, existing initiatives, challenges, and priority use cases.</p>
+        <p class="agenda-next">Up next at 14:30: 🛠️ Hands-on workshop: from an open MCP server to an enterprise-ready architecture</p>
+        <p class="agenda-note">This page contains the Session 1 course and lab, and a Session 3 security preview.</p>
+        <div class="agenda-actions"><a class="button primary" href="#why">Open Session 1</a><a class="button" href="#auth">Open Session 3 preview</a></div>
+      </section>
+
+      <section id="day-hands-on" class="chapter agenda-panel" hidden aria-labelledby="day-hands-on-title">
+        <p class="eyebrow"><svg class="icon"><use href="#i-calendar"/></svg>Day agenda · 14:30–16:00 · 1 h 30</p>
+        <h2 id="day-hands-on-title" tabindex="-1"><span aria-hidden="true">🛠️</span> Hands-on workshop: from an open MCP server to an enterprise-ready architecture</h2>
+        <p class="intro">Practical workshop to progressively evolve an MCP server into a secure, governed, and monitored enterprise architecture. A break is integrated into the session.</p>
+        <p class="agenda-next">Up next at 16:00: 🚀 Use cases, next steps &amp; open discussion</p>
+        <p class="agenda-note">This page contains the Session 1 course and lab, and a Session 3 security preview.</p>
+        <div class="agenda-actions"><a class="button primary" href="#why">Open Session 1</a><a class="button" href="#auth">Open Session 3 preview</a></div>
+      </section>
+
+      <section id="day-use-cases" class="chapter agenda-panel" hidden aria-labelledby="day-use-cases-title">
+        <p class="eyebrow"><svg class="icon"><use href="#i-calendar"/></svg>Day agenda · 16:00–16:30 · 30 min</p>
+        <h2 id="day-use-cases-title" tabindex="-1"><span aria-hidden="true">🚀</span> Use cases, next steps &amp; open discussion</h2>
+        <p class="intro">Application of the concepts to your organization’s use cases, identification of next steps, and open discussion and Q&amp;A.</p>
+        
+        <p class="agenda-note">This page contains the Session 1 course and lab, and a Session 3 security preview.</p>
+        <div class="agenda-actions"><a class="button primary" href="#why">Open Session 1</a><a class="button" href="#auth">Open Session 3 preview</a></div>
       </section>
 
       <div class="chapter-pagination" hidden><button class="button" id="chapter-prev">← Previous</button><span id="chapter-count"></span><button class="button primary" id="chapter-next">Next chapter →</button></div>
