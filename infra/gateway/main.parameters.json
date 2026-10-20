@@ -1,0 +1,14 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "apimName": { "value": "apim-mcp-dev-0000" },
+    "skuName": { "value": "BasicV2" },
+    "publisherEmail": { "value": "mcp-workshop@example.com" },
+    "entraClientId": { "value": "00000000-0000-0000-0000-000000000000" },
+    "protectedMcpOrigin": { "value": "https://ca-mcp-auth-dev.example.francecentral.azurecontainerapps.io" },
+    "rateLimitCalls": { "value": 30 },
+    "rateLimitPeriod": { "value": 60 },
+    "tags": { "value": { "environment": "mcp-dev", "workshop": "session-2" } }
+  }
+}

@@ -118,8 +118,9 @@ separate service token from the platform-local identity endpoint
 `Mcp.Backend.Read` application role. A participant's `Mcp.Read` scope cannot
 authorize backend access, and the caller token is never forwarded.
 
-Foundry and APIM are not part of this deployment; Azure API Management can expose
-a similar API as an MCP server (a preview feature) in the colleague's session.
+Foundry and APIM are not part of this deployment. [Session 2](sessions/02-architecture/README.md)
+adds an optional, separate [gateway template](infra/gateway/main.bicep): Azure API Management
+exposes the same two tools as an MCP server (a preview feature) and fronts the protected endpoint.
 
 ### Separate protected endpoint for session 3
 
@@ -457,7 +458,7 @@ to demonstrate a backend weakness or does not invoke the expected tool.
 | 09:00–09:20 | 20 min | Welcome and objectives |
 | **09:20–10:20** | **60 min** | [1 · MCP fundamentals: two demos + 15-minute practice](sessions/01-mcp-fondamentaux/README.md) |
 | 10:20–10:35 | 15 min | Break |
-| **10:35–11:10** | **35 min** | [2 · Architecture / APIM — colleague's section](sessions/02-architecture/README.md) |
+| **10:35–11:10** | **35 min** | [2 · MCP in enterprise and Azure architectures, with APIM](sessions/02-architecture/README.md) |
 | **11:10–11:45** | **35 min** | [3 · Security and authentication](sessions/03-security/README.md) |
 | 11:45–12:30 | 45 min | Agent governance (optional) |
 

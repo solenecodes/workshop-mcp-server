@@ -1,0 +1,89 @@
+/* Session 2 additions. Loaded after ../01-mcp-fondamentaux/presentation.css and built on its variables. */
+
+.decision-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; margin:8px 0 0; }
+.decision-grid article { position:relative; border:1px solid var(--border); border-radius:var(--radius); background:white; padding:24px 18px 20px; box-shadow:var(--shadow); }
+.decision-grid article>.icon { width:34px; height:34px; color:var(--blue); margin-bottom:14px; }
+.decision-grid h3 { font-size:1.15rem; margin:0 0 6px; }
+.decision-grid p { font-size:.86rem; margin:0 0 14px; min-height:2.6em; }
+.decision-step { position:absolute; top:14px; right:14px; display:grid; place-items:center; width:26px; height:26px; border-radius:50%; background:var(--blue-soft); color:var(--blue-dark); font:600 .78rem var(--font); }
+
+.morning-stack, .same-controls { border:1px solid var(--border); border-radius:var(--radius); background:white; padding:18px 22px; margin:0 0 22px; box-shadow:var(--shadow); }
+.morning-title { display:flex; align-items:center; gap:8px; margin:0 0 14px; color:var(--blue-dark); font-size:.82rem; font-weight:650; }
+.morning-title .icon { width:20px; height:20px; }
+.morning-row { display:grid; grid-template-columns:1fr 1fr 28px 1.2fr; gap:12px; align-items:center; }
+.morning-row article { border:1px solid var(--border); border-radius:6px; padding:12px 14px; background:var(--bg); }
+.morning-row article.internal { border-style:dashed; }
+.morning-row strong { display:block; font-size:.92rem; }
+.morning-row span, .morning-row small { display:block; font-size:.74rem; color:var(--muted); }
+.morning-row b { text-align:center; color:var(--blue); }
+
+.host-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; }
+.host-grid article { border:1px solid var(--border); border-radius:var(--radius); background:white; padding:18px; }
+.host-grid h3 { font-size:.98rem; margin:0 0 6px; }
+.host-grid p { font-size:.82rem; margin:0 0 12px; }
+
+/* Front-door walk-through: same look as the Session 1 call flow, with fixed places per node. */
+.door-diagram { grid-template-columns:repeat(4,minmax(0,1fr)); grid-template-areas:
+  "client entra public api"
+  "client gateway protected api"
+  ". gateway restmcp registry"; row-gap:28px; padding:32px 24px; }
+.door-diagram article { position:relative; z-index:1; background:white; padding:16px 12px 14px; }
+.door-diagram article>.icon { width:28px; height:28px; margin-bottom:10px; }
+.door-diagram h3 { font-size:.9rem; margin:0 0 6px; }
+.door-diagram article[data-node="client"] { grid-area:client; align-self:center; }
+.door-diagram article[data-node="entra"] { grid-area:entra; }
+.door-diagram article[data-node="gateway"] { grid-area:gateway; align-self:center; }
+.door-diagram article[data-node="public"] { grid-area:public; }
+.door-diagram article[data-node="protected"] { grid-area:protected; }
+.door-diagram article[data-node="restmcp"] { grid-area:restmcp; }
+.door-diagram article[data-node="api"] { grid-area:api; align-self:center; }
+.door-diagram article[data-node="registry"] { grid-area:registry; }
+.door-diagram article.dim>* { opacity:.38; }
+.door-legend { display:flex; align-items:center; gap:8px; font-size:.74rem; color:var(--muted); }
+.door-legend i { display:inline-block; width:18px; height:3px; border-radius:2px; background:var(--blue); }
+.door-legend i.no { background:var(--red); margin-left:8px; }
+.flow-explanation .plain { font-size:1.08rem; font-weight:600; margin:0 0 8px; max-width:840px; }
+.flow-explanation .detail { color:var(--muted); font-size:.86rem; }
+html:not(.enhanced) .door .flow-lines { display:none; }
+
+.same-controls { margin-top:22px; }
+.same-controls ul { margin:0; padding-left:20px; display:grid; gap:8px; font-size:.88rem; }
+.checks { margin:12px 0 4px; padding-left:22px; display:grid; gap:8px; }
+details.question>summary { color:var(--blue-dark); }
+
+.demo-steps { list-style:none; counter-reset:demo; margin:0; padding:0; display:grid; gap:22px; }
+.demo-steps>li { counter-increment:demo; position:relative; padding-left:44px; }
+.demo-steps>li::before { content:counter(demo); position:absolute; left:0; top:0; display:grid; place-items:center; width:30px; height:30px; border-radius:50%; background:var(--blue); color:white; font:600 .85rem var(--font); }
+.demo-steps h3 { font-size:1.05rem; margin:2px 0 6px; }
+.demo-steps p { font-size:.88rem; margin:0; }
+.demo-steps .copy-panel.dark pre { min-height:0; }
+
+@media(max-width:1150px) {
+  .decision-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+@media(max-width:850px) {
+  .door .flow-lines { display:none; }
+  .host-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .morning-row { grid-template-columns:1fr; }
+  .morning-row b { transform:rotate(90deg); }
+  .door-diagram { grid-template-columns:repeat(2,minmax(0,1fr)); grid-template-areas:
+    "client entra"
+    "gateway gateway"
+    "public protected"
+    "restmcp api"
+    "registry registry"; }
+}
+@media(max-width:600px) {
+  .decision-grid, .door-diagram, .host-grid { grid-template-columns:1fr; }
+  .door-diagram { grid-template-areas: "client" "entra" "gateway" "public" "protected" "restmcp" "api" "registry"; }
+  .demo-steps>li { padding-left:0; }
+  .demo-steps>li::before { position:static; margin-bottom:8px; }
+}
+@media(prefers-reduced-motion:reduce) {
+  .door-diagram article { transition:none; }
+}
+@media print {
+  .door .flow-controls, .door .flow-dots, .door .flow-lines { display:none !important; }
+  .door-diagram article.dim>* { opacity:1; }
+  .flow-fallback { display:block !important; }
+}

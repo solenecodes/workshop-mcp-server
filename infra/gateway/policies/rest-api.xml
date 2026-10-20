@@ -1,0 +1,104 @@
+<!--
+  Session 2 - Pattern B: the backing Contoso Tickets REST API, behind the gateway only.
+  Same contract as src/backend/api.ts: GET /tickets returns the array, GET /tickets/{ticketId} returns the ticket
+  that was asked for, a malformed ID is 400 INVALID_ID, an unknown ID is 404 TICKET_NOT_FOUND (RFC 9457 problems).
+  The gateway answers from the same synthetic tickets as src/data/contosoTickets.ts: no backend, no real data.
+  tests/gateway.test.ts fails if these tickets drift from that file.
+  Token rules match the protected sandbox (src/sandbox/auth.ts): Microsoft Entra v2 token for this API only,
+  then the delegated scope or the application role Mcp.Read (401 without a valid token, 403 without Mcp.Read).
+  No subscription key. Placeholders between double underscores are replaced by infra/gateway/main.bicep with non-secret values.
+  Token validation adapted from Azure-Samples/AI-Gateway, lab mcp-prm-oauth, commit 1679e3137d2fe7592d2a668d77ff71550d35b69e,
+  MIT License, Copyright (c) Microsoft Corporation.
+-->
+<policies>
+  <inbound>
+    <base />
+    <validate-azure-ad-token tenant-id="__TENANT_ID__" header-name="Authorization" failed-validation-httpcode="401" failed-validation-error-message="Use a tenant-issued access token for this API with Mcp.Read permission." output-token-variable-name="api-jwt">
+      <audiences>
+        <audience>__CLIENT_ID__</audience>
+      </audiences>
+    </validate-azure-ad-token>
+    <choose>
+      <when condition="@{
+          var claims = ((Jwt)context.Variables["api-jwt"]).Claims;
+          string[] scopes = claims.ContainsKey("scp") ? claims["scp"][0].Split(' ') : new string[0];
+          string[] roles = claims.ContainsKey("roles") ? claims["roles"] : new string[0];
+          return Array.IndexOf(scopes, "Mcp.Read") < 0 && Array.IndexOf(roles, "Mcp.Read") < 0;
+      }">
+        <return-response>
+          <set-status code="403" reason="Forbidden" />
+          <set-header name="Content-Type" exists-action="override">
+            <value>application/problem+json</value>
+          </set-header>
+          <set-body>@("{\"type\":\"urn:workshop:problem:missing_mcp_read_permission\",\"title\":\"MISSING_MCP_READ_PERMISSION\",\"status\":403,\"detail\":\"Mcp.Read is required.\",\"requestId\":\"" + context.RequestId + "\"}")</set-body>
+        </return-response>
+      </when>
+    </choose>
+    <set-variable name="ticket-id" value="@(context.Request.MatchedParameters.GetValueOrDefault("ticketId", ""))" />
+    <choose>
+      <when condition="@(context.Operation.Id == "list-tickets")">
+        <return-response>
+          <set-status code="200" reason="OK" />
+          <set-header name="Content-Type" exists-action="override">
+            <value>application/json</value>
+          </set-header>
+          <set-body>[{"id":"CT-1001","title":"VPN gateway reports intermittent timeouts","severity":"high","status":"open","service":"network"},{"id":"CT-1002","title":"Shared drive close to its quota","severity":"medium","status":"in-progress","service":"storage"},{"id":"CT-1003","title":"Expense app slow at month end","severity":"low","status":"resolved","service":"expense-app"}]</set-body>
+        </return-response>
+      </when>
+      <when condition="@(!System.Text.RegularExpressions.Regex.IsMatch((string)context.Variables["ticket-id"], "^CT-[0-9]{4}$"))">
+        <return-response>
+          <set-status code="400" reason="Bad Request" />
+          <set-header name="Content-Type" exists-action="override">
+            <value>application/problem+json</value>
+          </set-header>
+          <set-body>@("{\"type\":\"urn:workshop:problem:invalid_id\",\"title\":\"INVALID_ID\",\"status\":400,\"detail\":\"Ticket identifiers look like CT-1001.\",\"requestId\":\"" + context.RequestId + "\"}")</set-body>
+        </return-response>
+      </when>
+      <when condition="@((string)context.Variables["ticket-id"] == "CT-1001")">
+        <return-response>
+          <set-status code="200" reason="OK" />
+          <set-header name="Content-Type" exists-action="override">
+            <value>application/json</value>
+          </set-header>
+          <set-body>{"id":"CT-1001","title":"VPN gateway reports intermittent timeouts","severity":"high","status":"open","service":"network"}</set-body>
+        </return-response>
+      </when>
+      <when condition="@((string)context.Variables["ticket-id"] == "CT-1002")">
+        <return-response>
+          <set-status code="200" reason="OK" />
+          <set-header name="Content-Type" exists-action="override">
+            <value>application/json</value>
+          </set-header>
+          <set-body>{"id":"CT-1002","title":"Shared drive close to its quota","severity":"medium","status":"in-progress","service":"storage"}</set-body>
+        </return-response>
+      </when>
+      <when condition="@((string)context.Variables["ticket-id"] == "CT-1003")">
+        <return-response>
+          <set-status code="200" reason="OK" />
+          <set-header name="Content-Type" exists-action="override">
+            <value>application/json</value>
+          </set-header>
+          <set-body>{"id":"CT-1003","title":"Expense app slow at month end","severity":"low","status":"resolved","service":"expense-app"}</set-body>
+        </return-response>
+      </when>
+      <otherwise>
+        <return-response>
+          <set-status code="404" reason="Not Found" />
+          <set-header name="Content-Type" exists-action="override">
+            <value>application/problem+json</value>
+          </set-header>
+          <set-body>@("{\"type\":\"urn:workshop:problem:ticket_not_found\",\"title\":\"TICKET_NOT_FOUND\",\"status\":404,\"detail\":\"No ticket has this identifier.\",\"requestId\":\"" + context.RequestId + "\"}")</set-body>
+        </return-response>
+      </otherwise>
+    </choose>
+  </inbound>
+  <backend>
+    <base />
+  </backend>
+  <outbound>
+    <base />
+  </outbound>
+  <on-error>
+    <base />
+  </on-error>
+</policies>

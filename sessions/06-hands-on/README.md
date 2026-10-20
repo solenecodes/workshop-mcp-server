@@ -16,8 +16,9 @@ morning read/write practice is separate and is not counted again here.
 | 10 min | Logs and registry prepared in advance | Correlate allowed/denied calls with APIM/App Insights events and API Center registration |
 
 The gateway's implementation and presentation remain with
-[session 2](../02-architecture/README.md). Coordinate its verified contract
-before publishing participant instructions.
+[session 2](../02-architecture/README.md), including its
+[contract for this session](../02-architecture/README.md#gateway-contract-for-session-6)
+and its open gaps. Coordinate the verified contract before publishing participant instructions.
 
 ## Readiness gate — cloud exercise is not implemented yet
 
