@@ -43,7 +43,7 @@ Session 2 changes the address, never the business contract:
   Container App (passthrough). The server keeps its code and checks the same token
   again. Choose it when tools need their own logic, several calls or a managed identity.
 - **Pattern B, REST API as MCP (Preview).** API Management builds the MCP server from the
-  API operations: nobody writes MCP code. Tools only, one operation each. The gateway
+  API operations: nobody writes MCP code. Tools only, one operation per tool. The gateway
   answers from the same synthetic tickets as `src/data/contosoTickets.ts`, so the demo
   needs no backend; a test fails if they drift.
 

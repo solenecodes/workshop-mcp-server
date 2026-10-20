@@ -26,20 +26,20 @@ export const doorSteps = [
   },
   {
     title: 'Next session: a badge on the server',
-    plain: 'The protected server asks for a badge: a Microsoft Entra token with Mcp.Read.',
-    detail: 'Same code, protected mode. No token: 401. A valid token without Mcp.Read: 403. You will try it in Session 3.',
+    plain: 'The protected server asks for a badge: a Microsoft Entra token that grants Mcp.Read.',
+    detail: 'Same code, protected mode. No token: 401. A valid token without Mcp.Read: 403. You will try this in Session 3.',
     nodes: ['client', 'entra', 'protected', 'api'], path: ['client', 'protected', 'api'],
   },
   {
     title: 'Add one front door',
     plain: 'Every client uses one address. The door checks the badge before anything reaches a server.',
-    detail: 'Azure API Management validates the issuer, audience and expiry of the token, then Mcp.Read, with the validate-azure-ad-token policy. No subscription key.',
+    detail: 'Azure API Management validates the issuer, audience and expiry of the token with the validate-azure-ad-token policy, then checks Mcp.Read. No subscription key.',
     nodes: ['client', 'entra', 'gateway'], path: ['client', 'gateway'],
   },
   {
     title: 'Pattern A: put an existing server behind it',
     plain: 'The door forwards the call to the server the team already runs.',
-    detail: 'The MCP server is registered as a passthrough. The protected Container App still checks the same token: defence in depth, not token passthrough to another API.',
+    detail: 'The MCP server is registered as a passthrough. The protected Container App still checks the same token: defense in depth, not token passthrough to another API.',
     nodes: ['client', 'gateway', 'protected', 'api'], path: ['client', 'gateway', 'protected', 'api'],
   },
   {
@@ -62,8 +62,8 @@ export const doorSteps = [
   },
   {
     title: 'Let other teams find it',
-    plain: 'Write the door address in the inventory, so teams reuse it instead of building a copy.',
-    detail: 'Register the gateway URL in Azure API Center, never the Container Apps address. The Foundry private tool catalog reads that inventory. Both are Preview for MCP.',
+    plain: 'Record the door’s address in the inventory, so other teams reuse it instead of building a copy.',
+    detail: 'Register the gateway URL in Azure API Center, never the Container Apps address. The Foundry private tool catalog reads that inventory. Both are in Preview for MCP.',
     nodes: ['gateway', 'registry'], path: ['gateway', 'registry'],
   },
 ];

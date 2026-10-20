@@ -103,7 +103,7 @@
       <section id="decisions" class="chapter" aria-labelledby="decisions-title">
         <p class="eyebrow"><svg class="icon"><use href="#i-course"/></svg>Course · Lesson 1 of 5</p>
         <h1 id="decisions-title" tabindex="-1">Four decisions for every MCP server</h1>
-        <p class="intro">This morning you called one Contoso Tickets server. Before a second team uses it, four questions need an owner.</p>
+                <p class="intro">This morning, you called one Contoso Tickets server. Before a second team uses it, each of four questions needs an owner.</p>
         <div class="decision-grid">
           <article><span class="decision-step">1</span><svg class="icon"><use href="#i-server"/></svg><h3>Host</h3><p>Where does the server run?</p><span class="tag">Here: Azure Container Apps</span></article>
           <article class="accent"><span class="decision-step">2</span><svg class="icon"><use href="#i-door"/></svg><h3>Expose</h3><p>How do clients reach it, and who checks them?</p><span class="tag">Here: Azure API Management</span></article>
@@ -111,13 +111,13 @@
           <article><span class="decision-step">4</span><svg class="icon"><use href="#i-user"/></svg><h3>Consume</h3><p>Which clients call it, with which identity?</p><span class="tag">Here: VS Code, agents, Mcp.Read</span></article>
         </div>
         <p class="one-liner"><svg class="icon"><use href="#i-check"/></svg> The team owns the code and where it runs. The platform owns the front door, the identity and the inventory.</p>
-        <details><summary>Why these four?</summary><p>An MCP server is a new way into business data. Each question maps to one Azure service in this workshop, and each one stays valid whatever language or host the team chooses.</p><p>The same server keeps its two read-only tools all day: <code>list_tickets</code> and <code>get_ticket</code>, on synthetic tickets only.</p></details>
+        <details><summary>Why these four?</summary><p>An MCP server is a new way into business data. Each question maps to one Azure service in this workshop, and each one still applies whatever language or host the team chooses.</p><p>The same server keeps its two read-only tools all day: <code>list_tickets</code> and <code>get_ticket</code>, on synthetic tickets only.</p></details>
       </section>
 
       <section id="hosting" class="chapter" aria-labelledby="hosting-title">
         <p class="eyebrow"><svg class="icon"><use href="#i-course"/></svg>Course · Lesson 2 of 5</p>
         <h2 id="hosting-title" tabindex="-1">Where can an MCP server run?</h2>
-        <p class="intro">Keep the platform the team already runs. What must stay the same everywhere is the governance around it.</p>
+        <p class="intro">Keep the platform the team already runs. What must be the same everywhere is the governance around it.</p>
         <div class="morning-stack" aria-label="This morning's deployment on Azure Container Apps">
           <p class="morning-title"><svg class="icon"><use href="#i-layers"/></svg> This morning, on Azure Container Apps</p>
           <div class="morning-row">
@@ -130,11 +130,11 @@
         <div class="host-grid">
           <article class="accent"><h3>Azure Container Apps</h3><p>Any language in a container, scale to zero, built-in Microsoft Entra authentication.</p><span class="tag">This workshop</span></article>
           <article><h3>Azure Functions</h3><p>Stateless tools billed per call, with the MCP extension.</p><span class="tag">Event-driven tools</span></article>
-          <article><h3>App Service</h3><p>Add MCP to a web app you already run, or turn an OpenAPI API into tools with no MCP code.</p><span class="tag">Built-in MCP: Preview</span></article>
-          <article><h3>Azure Kubernetes Service</h3><p>When the team already operates Kubernetes. Highest operating effort.</p><span class="tag">Existing clusters</span></article>
+          <article><h3>App Service</h3><p>Add MCP to a web app you already run, or turn an API described in OpenAPI into tools without writing MCP code.</p><span class="tag">Built-in MCP: Preview</span></article>
+          <article><h3>Azure Kubernetes Service</h3><p>For teams that already operate Kubernetes. Highest operating effort.</p><span class="tag">Existing clusters</span></article>
           <article><h3>Container Apps dynamic sessions</h3><p>Sandboxed code execution with platform tools, isolated per session.</p><span class="tag">No custom tools</span></article>
         </div>
-        <details class="question"><summary>Question for the room: your team runs its APIs on App Service. Move them to add MCP?</summary><p>No. Keep the platform. Ask for the same four things everywhere: a Microsoft Entra token for the server's own audience, one gateway in front, metadata-only logs and an inventory entry.</p></details>
+        <details class="question"><summary>Question for the room: your team runs its APIs on App Service. Should it move them to add MCP?</summary><p>No. Keep the platform. Ask for the same four things everywhere: a Microsoft Entra token for the server's own audience, one gateway in front, logs with metadata only, and an inventory entry.</p></details>
       </section>
 
       <section id="front-door" class="chapter" aria-labelledby="front-door-title">
@@ -161,13 +161,13 @@
         </div>
         <details class="flow-fallback" open><summary>Read the sequence</summary><ol>
           <li><strong>This morning: one open door.</strong> Anyone with the address could call the server. Fine for synthetic tickets, not for real data.</li>
-          <li><strong>Next session: a badge on the server.</strong> The protected server asks for a Microsoft Entra token with Mcp.Read.</li>
+          <li><strong>Next session: a badge on the server.</strong> The protected server asks for a Microsoft Entra token that grants Mcp.Read.</li>
           <li><strong>Add one front door.</strong> Every client uses one address. The door checks the badge before anything reaches a server.</li>
           <li><strong>Pattern A.</strong> The door forwards the call to the server the team already runs.</li>
           <li><strong>Pattern B.</strong> Each operation of the REST API contract becomes a tool, with no MCP code (Preview).</li>
           <li><strong>No badge, no entry.</strong> Without a token the door answers 401 and says where to sign in.</li>
           <li><strong>Too many calls.</strong> Each person has a call budget. A burst gets 429 and a retry time.</li>
-          <li><strong>Let other teams find it.</strong> The door address goes in the inventory, never the server address.</li>
+          <li><strong>Let other teams find it.</strong> The door’s address goes in the inventory; the server’s address never does.</li>
         </ol></details>
         <p class="one-liner"><svg class="icon"><use href="#i-check"/></svg> One address. One badge per API. The servers stay behind the door.</p>
       </section>
@@ -177,8 +177,8 @@
         <h2 id="patterns-title" tabindex="-1">Two ways to expose MCP<br><span>with API Management</span></h2>
         <p class="intro">Both give clients the same tickets with the same badge. They differ in who writes the MCP code.</p>
         <div class="comparison">
-          <article><div class="card-label"><svg class="icon"><use href="#i-server"/></svg> Pattern A · existing MCP server</div><h3>Put the server you run behind the door</h3><p>The protected Container App keeps its code and checks the token again. Tools, and resources or prompts if the server offers them.</p><span class="tag">Choose it when tools need their own logic</span></article>
-          <article class="accent"><div class="card-label"><svg class="icon"><use href="#i-tool"/></svg> Pattern B · REST API as MCP</div><h3>Turn API operations into tools</h3><p>Nobody writes MCP code: <code>list_tickets</code> → <code>GET /tickets</code>, <code>get_ticket</code> → <code>GET /tickets/{ticketId}</code>. Tools only, one operation each.</p><span class="tag">Preview · choose it for a stable REST API</span></article>
+          <article><div class="card-label"><svg class="icon"><use href="#i-server"/></svg> Pattern A · existing MCP server</div><h3>Put the server you run behind the door</h3><p>The protected Container App keeps its code and checks the token again. It exposes tools, plus resources or prompts if the server offers them.</p><span class="tag">Choose it when tools need their own logic</span></article>
+          <article class="accent"><div class="card-label"><svg class="icon"><use href="#i-tool"/></svg> Pattern B · REST API as MCP</div><h3>Turn API operations into tools</h3><p>Nobody writes MCP code: <code>list_tickets</code> → <code>GET /tickets</code>, <code>get_ticket</code> → <code>GET /tickets/{ticketId}</code>. Tools only, one operation per tool.</p><span class="tag">Preview · choose it for a stable REST API</span></article>
         </div>
         <div class="same-controls">
           <p class="morning-title"><svg class="icon"><use href="#i-shield"/></svg> The same controls in both patterns</p>
@@ -189,15 +189,15 @@
             <li><strong>No subscription key.</strong> Access depends on the token, never on a shared key.</li>
           </ul>
         </div>
-        <details><summary>Good to know before you build</summary><p>MCP servers work on the Developer, Basic, Standard and Premium tiers, and on Basic v2, Standard v2 and Premium v2. They are not available in API Management workspaces.</p><p>Infrastructure as code uses API version <code>2025-09-01-preview</code> (Preview). Policies on an MCP server must never read the response body: it would break streaming.</p><p>In pattern A, the server stays reachable at its own address unless its network only accepts the gateway. Close that door before you promise “gateway only”.</p></details>
+        <details><summary>Good to know before you build</summary><p>MCP servers work on the Developer, Basic, Standard and Premium tiers, and on Basic v2, Standard v2 and Premium v2. They are not available in API Management workspaces.</p><p>Infrastructure as code uses API version <code>2025-09-01-preview</code> (Preview). Policies on an MCP server must never read the response body: it would break streaming.</p><p>In pattern A, the server stays reachable at its own address unless its network accepts only the gateway. Close that door before you promise “gateway only”.</p></details>
       </section>
 
       <section id="discover" class="chapter" aria-labelledby="discover-title">
         <p class="eyebrow"><svg class="icon"><use href="#i-course"/></svg>Course · Lesson 5 of 5</p>
         <h2 id="discover-title" tabindex="-1">Find it, then use it</h2>
-        <p class="intro">A server nobody can find gets rebuilt. A server everybody can call needs the same rules for people and agents.</p>
+        <p class="intro">A server that nobody can find gets rebuilt. A server that everybody can call needs the same rules for people and agents.</p>
         <div class="comparison">
-          <article><div class="card-label"><svg class="icon"><use href="#i-search"/></svg> Discover</div><h3>One inventory entry per server</h3><p>Azure API Center stores the gateway URL, the owner and the environment. The Foundry private tool catalog reads it, so developers pick approved servers.</p><span class="tag">Both Preview for MCP</span></article>
+          <article><div class="card-label"><svg class="icon"><use href="#i-search"/></svg> Discover</div><h3>One inventory entry per server</h3><p>Azure API Center stores the gateway URL, the owner and the environment. The Foundry private tool catalog reads it, so developers pick approved servers.</p><span class="tag">Both in Preview for MCP</span></article>
           <article class="accent"><div class="card-label"><svg class="icon"><use href="#i-user"/></svg> Consume</div><h3>Same door, different clients</h3><p>GitHub Copilot in VS Code, Foundry Agent Service and Copilot Studio call the same gateway URL. Only the identity changes: the user’s, or the agent’s own.</p><span class="tag">Badge per caller</span></article>
         </div>
         <details class="question"><summary>Five checks before a business unit connects agents</summary><ol class="checks"><li><strong>Consent.</strong> Who may grant consent to applications and agents?</li><li><strong>Who may add MCP servers.</strong> Prefer the private catalog over free-form URLs.</li><li><strong>Agent identities.</strong> Inventory them like applications, with an owner and an expiry.</li><li><strong>Data leaving the tenant.</strong> Approve each third-party MCP server like a SaaS application.</li><li><strong>Logs and cost.</strong> Tool name, caller, status and latency only. Tag owners and expiry dates.</li></ol></details>
@@ -207,11 +207,11 @@
       <section id="demo" class="chapter" aria-labelledby="demo-title">
         <p class="eyebrow practice-label"><svg class="icon"><use href="#i-practice"/></svg>Demo · Presenter · 6 minutes</p>
         <h2 id="demo-title" tabindex="-1">Call the same tickets<br><span>through the gateway</span></h2>
-        <p class="intro">Same terminal client as the Session 1 lab. Only the address changes, then a badge is added.</p>
+        <p class="intro">The same terminal client as in the Session 1 lab. First only the address changes, then a badge is added.</p>
         <ol class="demo-steps">
           <li><h3>Without a badge</h3><p>The gateway refuses the call before any server runs: <strong>HTTP 401</strong>.</p>
             <div class="copy-panel dark"><div><span>Bash</span><button class="text-button" type="button" data-copy="demo-anonymous"><svg class="icon"><use href="#i-copy"/></svg>Copy</button></div><pre><code id="demo-anonymous"></code></pre></div></li>
-          <li><h3>Where to sign in</h3><p>The 401 names this metadata: the tenant and the <code>Mcp.Read</code> scope.</p>
+          <li><h3>Where to sign in</h3><p>The 401 response points to this metadata: the tenant and the <code>Mcp.Read</code> scope.</p>
             <div class="copy-panel dark"><div><span>Bash</span><button class="text-button" type="button" data-copy="demo-metadata"><svg class="icon"><use href="#i-copy"/></svg>Copy</button></div><pre><code id="demo-metadata"></code></pre></div></li>
           <li><h3>With a badge</h3><p>The token goes straight into a variable and is never shown. <code>CT-1002</code> returns <code>CT-1002</code>: the gateway answers the ticket that was asked for.</p>
             <div class="copy-panel dark"><div><span>Bash · after az login</span><button class="text-button" type="button" data-copy="demo-signed-in"><svg class="icon"><use href="#i-copy"/></svg>Copy</button></div><pre><code id="demo-signed-in"></code></pre></div></li>
