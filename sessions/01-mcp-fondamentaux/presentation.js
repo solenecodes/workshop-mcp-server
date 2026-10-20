@@ -1,5 +1,5 @@
-import { defaultEndpoint, defaultProtectedEndpoint, labCommand, labSteps, parseCommandRequest, securityCode, setupCode, shareUrl, validateEndpoint } from './presentation-lab.mjs?v=tickets-lab-4';
-import { callMcp, jsonTokens } from './mcp-console.mjs?v=tickets-lab-4';
+import { defaultEndpoint, defaultProtectedEndpoint, labCommand, labSteps, parseCommandRequest, securityCode, setupCode, shareUrl, validateEndpoint } from './presentation-lab.mjs?v=agenda-nav-3';
+import { callMcp, jsonTokens } from './mcp-console.mjs?v=agenda-nav-3';
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -271,6 +271,19 @@ function showChapter(focus = false) {
     if (link.getAttribute('href') === `#${chapters[chapterIndex].id}`) link.setAttribute('aria-current', 'step');
     else link.removeAttribute('aria-current');
   });
+  // The agenda follows the content on screen: session 1 chapters, then the session 3 preview.
+  $$('.agenda li[data-session]').forEach((item) => {
+    const active = item.dataset.session === (chapterIndex === 5 ? '3' : '1');
+    item.classList.toggle('current', active);
+    if (active) item.setAttribute('aria-current', 'true');
+    else item.removeAttribute('aria-current');
+  });
+  const currentLink = $('.chapters a[aria-current="step"]');
+  const menu = $('.chapters');
+  if (currentLink && menu.scrollHeight > menu.clientHeight) {
+    const top = currentLink.getBoundingClientRect().top - menu.getBoundingClientRect().top + menu.scrollTop;
+    menu.scrollTo({ top: Math.max(0, top - menu.clientHeight / 3) });
+  }
   const mode = chapterIndex < 4 ? 'course' : chapterIndex === 4 ? 'practice' : 'security';
   $$('[data-mode-link]').forEach((link) => {
     if (link.dataset.modeLink === mode) link.setAttribute('aria-current', 'page');
@@ -281,7 +294,7 @@ function showChapter(focus = false) {
   $('#chapter-prev').textContent = chapterIndex === 4 ? '← Back to course' : chapterIndex === 5 ? '← Back to exercises' : '← Previous lesson';
   $('#chapter-next').textContent = chapterIndex < 3 ? 'Next lesson →' : chapterIndex === 3 ? 'Start hands-on →' : chapterIndex === 4 ? 'Next: security →' : 'End of workshop';
   $('#chapter-count').textContent = chapterIndex < 4 ? `Course · Lesson ${chapterIndex + 1} of 4`
-    : chapterIndex === 4 ? 'Your turn · Live lab' : 'Next session · Security';
+    : chapterIndex === 4 ? 'Your turn · Live lab' : 'Session 3 · Security';
   requestAnimationFrame(() => controllers.forEach((controller) => controller.redraw()));
   if (focus) {
     $('h1,h2', chapters[chapterIndex]).focus({ preventScroll: true });
