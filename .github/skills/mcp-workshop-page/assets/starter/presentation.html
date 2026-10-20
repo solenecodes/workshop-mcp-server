@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Learn why MCP exists, understand its architecture through animated diagrams, then connect a client in a guided workshop.">
+  <meta name="color-scheme" content="light">
+  <title>MCP, from idea to first call</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="presentation.css?v=day-strip-2">
+  <script type="module" src="presentation.js?v=day-strip-2"></script>
+</head>
+<body>
+  <svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <symbol id="i-plug" viewBox="0 0 24 24"><path d="M9 3v5m6-5v5M6 8h12v3a6 6 0 0 1-6 6v4m-6-13v0"/></symbol>
+    <symbol id="i-app" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 21h8m-4-3v3M3 8h18m-12 4-2 2 2 2m6-4 2 2-2 2"/></symbol>
+    <symbol id="i-server" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="7" rx="2"/><rect x="4" y="14" width="16" height="7" rx="2"/><path d="M8 6.5h.01M8 17.5h.01M12 6.5h5m-5 11h5M12 10v4"/></symbol>
+    <symbol id="i-database" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 4 16 4 16 0V5M4 12c0 4 16 4 16 0"/></symbol>
+    <symbol id="i-tool" viewBox="0 0 24 24"><path d="M14 5a5 5 0 0 0-6 6l-5 5a2.8 2.8 0 0 0 4 4l5-5a5 5 0 0 0 6-6l-3 3-3-3 3-3Z"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9l-6-6Zm0 0v6h6M8 13h8m-8 4h6"/></symbol>
+    <symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 11a8 8 0 0 1-8 8H7l-4 3V7a4 4 0 0 1 4-4h6a8 8 0 0 1 8 8ZM7 8h9M7 12h6"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="7" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="m12 2 9 4v6c0 5-9 10-9 10S3 17 3 12V6l9-4Zm-4 10 3 3 5-6"/></symbol>
+    <symbol id="i-key" viewBox="0 0 24 24"><circle cx="8" cy="8" r="5"/><path d="m12 12 9 9m-5-5 3-3m-6 0 3-3"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><ellipse cx="12" cy="12" rx="4" ry="10"/><path d="M2 12h20"/></symbol>
+    <symbol id="i-code" viewBox="0 0 24 24"><path d="m8 6-6 6 6 6m8-12 6 6-6 6m-3-15-2 18"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="m8 4 12 8-12 8V4Z"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><path d="M8 4v16M16 4v16"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="13" height="13" rx="2"/><path d="M16 8V3H3v13h5"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M3 12h18m-7-7 7 7-7 7"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m4 12 5 5L20 6"/></symbol>
+    <symbol id="i-network" viewBox="0 0 24 24"><rect x="8" y="2" width="8" height="6" rx="1"/><path d="M12 8v5M4 17v-4h16v4"/><rect x="1" y="17" width="6" height="5" rx="1"/><rect x="17" y="17" width="6" height="5" rx="1"/></symbol>
+    <symbol id="i-model" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="3"/><path d="M9 1v4m6-4v4M9 19v4m6-4v4M1 9h4m-4 6h4m14-6h4m-4 6h4M9 10h6m-6 4h4"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4m8-4v4M3 10h18"/></symbol>
+    <symbol id="i-course" viewBox="0 0 24 24"><path d="M12 5C9 3 5 3 2 4v15c3-1 7-1 10 1 3-2 7-2 10-1V4c-3-1-7-1-10 1Zm0 0v15M6 8h2m-2 4h2m8-4h2m-2 4h2"/></symbol>
+    <symbol id="i-practice" viewBox="0 0 24 24"><path d="m5 3 14 9-7 2-3 7L5 3Zm8 12 5 6M3 2 2 1m8 0v2M1 8h2"/></symbol>
+  </svg>
+
+  <a class="skip" href="#main">Skip to lesson</a>
+  <header class="topbar">
+    <a class="brand" href="#why"><svg class="icon"><use href="#i-plug"/></svg><span>MCP <span class="muted">workshop</span></span></a>
+    <div class="day-strip" id="day-strip" aria-label="Where the day should be now (Paris time)"></div>
+  </header>
+
+  <div class="lesson-layout">
+    <nav class="chapters" aria-label="Day agenda and lesson chapters">
+      <div class="agenda-group">
+        <p class="nav-group-label"><svg class="icon"><use href="#i-calendar"/></svg>Day agenda</p>
+        <ol class="agenda">
+      <li data-key="welcome" data-short="Welcome breakfast" data-start="09:00" data-end="09:30">
+        <a class="agenda-row" href="#day-welcome"><time>09:00</time><span><b class="agenda-emoji" aria-hidden="true">🥐</b> Welcome breakfast<small>30 min</small></span></a>
+      </li>
+      <li data-key="introductions" data-short="Introductions" data-start="09:30" data-end="09:45">
+        <a class="agenda-row" href="#day-introductions"><time>09:30</time><span><b class="agenda-emoji" aria-hidden="true">👋</b> Introductions &amp; parking lot<small>15 min</small></span></a>
+      </li>
+      <li class="current" data-key="session-1" data-short="Session 1 · MCP fundamentals" data-start="09:45" data-end="10:15" data-nested aria-current="true">
+        <a class="agenda-row" href="#why"><time>09:45</time><span><b class="agenda-emoji" aria-hidden="true">🔌</b> Session 1 – MCP fundamentals<small>30 min</small></span></a>
+        <div class="agenda-sub">
+        <div class="chapter-group">
+          <p class="nav-group-label"><svg class="icon"><use href="#i-course"/></svg>Course</p>
+          <a href="#why"><span class="chapter-icon"><svg class="icon"><use href="#i-plug"/></svg></span><span><small>Lesson 1</small> Why use MCP?</span></a>
+          <a href="#anatomy"><span class="chapter-icon"><svg class="icon"><use href="#i-server"/></svg></span><span><small>Lesson 2</small> App, model and server</span></a>
+          <a href="#mcp"><span class="chapter-icon"><svg class="icon"><use href="#i-play"/></svg></span><span><small>Lesson 3</small> Follow a tool call</span></a>
+          <a href="#api"><span class="chapter-icon"><svg class="icon"><use href="#i-code"/></svg></span><span><small>Lesson 4</small> MCP and APIs</span></a>
+        </div>
+        <div class="chapter-group practice-group">
+          <p class="nav-group-label"><svg class="icon"><use href="#i-practice"/></svg>Your turn</p>
+          <a href="#lab"><span class="chapter-icon"><svg class="icon"><use href="#i-code"/></svg></span><span><small>Live lab · 15 min</small> Call the server</span></a>
+        </div>
+        </div>
+      </li>
+      <li class="pause" data-key="break-morning" data-short="Break" data-start="10:15" data-end="10:30">
+        <a class="agenda-row" href="#day-break-morning"><time>10:15</time><span><b class="agenda-emoji" aria-hidden="true">☕</b> Break<small>15 min</small></span></a>
+      </li>
+      <li data-key="session-2" data-short="Session 2 · MCP in enterprise &amp; Azure" data-start="10:30" data-end="11:00">
+        <a class="agenda-row" href="#day-session-2"><time>10:30</time><span><b class="agenda-emoji" aria-hidden="true">☁️</b> Session 2 – MCP in enterprise and Azure architectures<small>30 min</small></span></a>
+      </li>
+      <li data-key="session-3" data-short="Session 3 · Security &amp; governance" data-start="11:00" data-end="11:30" data-nested>
+        <a class="agenda-row" href="#auth"><time>11:00</time><span><b class="agenda-emoji" aria-hidden="true">🔐</b> Session 3 – Security and governance for MCP<small>30 min</small></span></a>
+        <div class="agenda-sub">
+        <div class="chapter-group">
+          <a href="#auth"><span class="chapter-icon"><svg class="icon"><use href="#i-shield"/></svg></span><span><small>Security</small> Protect the tools</span></a>
+        </div>
+        </div>
+      </li>
+      <li data-key="session-4" data-short="Session 4 · Agent 365" data-start="11:30" data-end="12:15">
+        <a class="agenda-row" href="#day-session-4"><time>11:30</time><span><b class="agenda-emoji" aria-hidden="true">🤖</b> Session 4 – Agent 365: governance and security overview<small>45 min</small></span></a>
+      </li>
+      <li class="pause" data-key="lunch" data-short="Lunch" data-start="12:15" data-end="14:00">
+        <a class="agenda-row" href="#day-lunch"><time>12:15</time><span><b class="agenda-emoji" aria-hidden="true">🍽️</b> Lunch break<small>1 h 45</small></span></a>
+      </li>
+      <li data-key="parking-review" data-short="Parking lot review" data-start="14:00" data-end="14:30">
+        <a class="agenda-row" href="#day-parking-review"><time>14:00</time><span><b class="agenda-emoji" aria-hidden="true">🅿️</b> Parking lot review – MCP ecosystem &amp; priorities<small>30 min</small></span></a>
+      </li>
+      <li data-key="hands-on" data-short="Hands-on workshop" data-start="14:30" data-end="16:00">
+        <a class="agenda-row" href="#day-hands-on"><time>14:30</time><span><b class="agenda-emoji" aria-hidden="true">🛠️</b> Hands-on workshop: from an open MCP server to an enterprise-ready architecture<small>1 h 30</small></span></a>
+      </li>
+      <li data-key="use-cases" data-short="Use cases &amp; next steps" data-start="16:00" data-end="16:30">
+        <a class="agenda-row" href="#day-use-cases"><time>16:00</time><span><b class="agenda-emoji" aria-hidden="true">🚀</b> Use cases, next steps &amp; open discussion<small>30 min</small></span></a>
+      </li>
+        </ol>
+      </div>
+    </nav>
+
+    <main id="main">
+      <section id="why" class="chapter" aria-labelledby="why-title">
+        <p class="eyebrow"><svg class="icon"><use href="#i-course"/></svg>Course · Lesson 1 of 4</p>
+        <h1 id="why-title" tabindex="-1">Why use MCP?</h1>
+        <p class="intro">MCP (Model Context Protocol) gives AI applications a common way to discover tools and access data. Without it, each app needs its own integration with each system.</p>
+        <div class="integration-board">
+          <div class="integration-playback">
+            <button class="button small" id="integration-play" type="button" aria-pressed="false" aria-describedby="integration-caption"><svg class="icon" aria-hidden="true"><use href="#i-play"/></svg><span>Play</span></button>
+            <p class="diagram-caption" id="integration-caption">Same systems. A shared interface for AI applications.</p>
+          </div>
+          <div class="integration-panels">
+            <article class="integration-panel" data-integration="custom">
+              <h2>Before MCP</h2>
+              <p>Custom connectors in the AI app</p>
+              <div class="integration-map">
+                <svg class="integration-lines" viewBox="0 0 300 340" preserveAspectRatio="none" aria-hidden="true"><path d="M150 84 43.5 264"/><path d="M150 84 150 264"/><path d="M150 84 256.5 264"/></svg>
+                <div class="integration-node integration-host" data-integration-node="app"><svg class="icon"><use href="#i-app"/></svg><strong>AI application</strong></div>
+                <div class="integration-node integration-system" data-integration-node="documents"><svg class="icon"><use href="#i-file"/></svg><strong>Documents</strong></div>
+                <div class="integration-node integration-system" data-integration-node="code"><svg class="icon"><use href="#i-code"/></svg><strong>Code</strong></div>
+                <div class="integration-node integration-system" data-integration-node="data"><svg class="icon"><use href="#i-database"/></svg><strong>Data</strong></div>
+                <div class="integration-dots" aria-hidden="true"><span hidden></span><span hidden></span><span hidden></span></div>
+              </div>
+            </article>
+            <article class="integration-panel" data-integration="mcp">
+              <h2>With MCP</h2>
+              <p>A standard interface, reusable by other AI apps</p>
+              <div class="integration-map">
+                <svg class="integration-lines" viewBox="0 0 300 340" preserveAspectRatio="none" aria-hidden="true"><path d="M150 84 150 143"/><path d="M150 217 43.5 264"/><path d="M150 217 150 264"/><path d="M150 217 256.5 264"/></svg>
+                <div class="integration-node integration-host" data-integration-node="app"><svg class="icon"><use href="#i-app"/></svg><strong>AI application</strong><small>MCP client inside</small></div>
+                <div class="integration-node integration-server" data-integration-node="server"><svg class="icon"><use href="#i-server"/></svg><strong>MCP server</strong></div>
+                <div class="integration-node integration-system" data-integration-node="documents"><svg class="icon"><use href="#i-file"/></svg><strong>Documents</strong></div>
+                <div class="integration-node integration-system" data-integration-node="code"><svg class="icon"><use href="#i-code"/></svg><strong>Code</strong></div>
+                <div class="integration-node integration-system" data-integration-node="data"><svg class="icon"><use href="#i-database"/></svg><strong>Data</strong></div>
+                <span class="integration-link-label">MCP</span>
+                <div class="integration-dots" aria-hidden="true"><span hidden></span><span hidden></span><span hidden></span></div>
+              </div>
+            </article>
+          </div>
+        </div>
+        <div class="origin"><span class="date-pill">2024</span><p>Created at Anthropic and open-sourced in November.<br><span class="muted">The aim: stop rebuilding the AI-side integration for every new application.</span></p></div>
+        <details><summary>What changes — and what does not?</summary><p>The server is code you run, not the model and not a central MCP service. This diagram shows one server wrapping several systems; an application can also connect to several servers. Developers still implement the backend connectors, access checks and business rules.</p><p>MCP means <strong>Model Context Protocol</strong>: an open standard for exchanging context and calling capabilities. It does not give the model automatic access to everything.</p><p><a href="https://www.anthropic.com/news/model-context-protocol">Original announcement</a></p></details>
+      </section>
+
+      <section id="anatomy" class="chapter" aria-labelledby="anatomy-title">
+        <p class="eyebrow"><svg class="icon"><use href="#i-course"/></svg>Course · Lesson 2 of 4</p>
+        <h2 id="anatomy-title" tabindex="-1">Which part does what?</h2>
+        <p class="intro">The model suggests a tool. The application calls it through an MCP client. The server checks the request and runs the operation.</p>
+        <div class="anatomy-row">
+          <article class="big-node"><svg class="icon"><use href="#i-app"/></svg><h3>AI application</h3><p>The host, such as VS Code. Coordinates the model and tool calls.</p><div class="nested-client"><svg class="icon"><use href="#i-plug"/></svg> MCP client <small>connects to the server</small></div></article>
+          <div class="link-label"><svg class="icon"><use href="#i-arrow"/></svg><span>MCP</span></div>
+          <article class="big-node accent"><svg class="icon"><use href="#i-server"/></svg><h3>MCP server</h3><p>Describes its capabilities.<br>Checks and executes requests.</p><span class="mini-code">Example: search documents</span></article>
+          <div class="link-label"><svg class="icon"><use href="#i-arrow"/></svg><span>your code</span></div>
+          <article class="big-node"><svg class="icon"><use href="#i-database"/></svg><h3>Your systems</h3><p>APIs, databases, files.<br>The actual source of the result.</p></article>
+        </div>
+        <div class="primitives">
+          <article><svg class="icon"><use href="#i-tool"/></svg><div><h3>Tools</h3><p>Functions the app can call.</p><span class="capability-example">Search for a document</span></div></article>
+          <article><svg class="icon"><use href="#i-file"/></svg><div><h3>Resources</h3><p>Content the app can read.</p><span class="capability-example">A document's contents</span></div></article>
+          <article><svg class="icon"><use href="#i-chat"/></svg><div><h3>Prompts</h3><p>Templates the user can choose.</p><span class="capability-example">A guided document review</span></div></article>
+        </div>
+        <div class="transport-strip"><span><svg class="icon"><use href="#i-code"/></svg> Run a server on your machine</span><span><svg class="icon"><use href="#i-globe"/></svg> Connect to a remote server</span></div>
+        <details><summary>How do I connect?</summary><p>Add a trusted server to your application's MCP settings: a command for a local process, or an endpoint URL for a remote server. Review the permissions and credentials, then inspect the capabilities it exposes. We will do this in the lab.</p><p>Technical terms: <strong>stdio</strong> connects local processes; <strong>Streamable HTTP</strong> connects an HTTP endpoint. MCP messages use <strong>JSON-RPC 2.0</strong>. Each server connection has its own MCP client inside the host.</p><p>Servers may expose tools, resources, prompts, or a subset. Client support varies; the workshop backend implements tools.</p></details>
+      </section>
+
+      <section id="mcp" class="chapter" aria-labelledby="mcp-title">
+        <p class="eyebrow"><svg class="icon"><use href="#i-course"/></svg>Course · Lesson 3 of 4</p>
+        <h2 id="mcp-title" tabindex="-1">“Find the<br><span>deployment guide.”</span></h2>
+        <p class="intro">Follow the question, tool call and result. Use Play to watch the sequence, or choose a numbered step.</p>
+        <div class="flow" data-flow="call">
+          <div class="flow-top"><span class="tag">Illustration · no live calls</span><label>Example <select data-scenario><option value="read">Find a document</option><option value="write">Propose a document update</option></select></label></div>
+          <div class="flow-diagram">
+            <svg class="flow-lines" aria-hidden="true"><g data-paths></g><path data-active-path/><circle data-packet r="5" visibility="hidden"/></svg>
+            <article data-node="user"><svg class="icon"><use href="#i-user"/></svg><h3>You</h3><span>Ask a question</span></article>
+            <article data-node="app"><svg class="icon"><use href="#i-app"/></svg><h3>Agent / AI app</h3><span>Orchestrates the exchanges</span><div class="nested-client">MCP client</div></article>
+            <article data-node="model"><svg class="icon"><use href="#i-model"/></svg><h3>LLM / Model</h3><span>Suggests tools, drafts answers</span></article>
+            <article data-node="server"><svg class="icon"><use href="#i-server"/></svg><h3>MCP server</h3><span>Exposes document tools</span></article>
+            <article data-node="data"><svg class="icon"><use href="#i-file"/></svg><h3>Documents</h3><span>Files or an existing API</span></article>
+          </div>
+          <div class="flow-controls"><button class="button primary" data-play aria-pressed="false"><svg class="icon"><use href="#i-play"/></svg><span>Play</span></button><button class="button icon-button" data-prev aria-label="Previous animation step">←</button><button class="button icon-button" data-next aria-label="Next animation step">→</button><button class="text-button" data-reset>Restart</button><span class="flow-count"></span></div>
+          <div class="flow-explanation" aria-live="polite"><h3 data-step-title>1. You ask a question.</h3><p data-step-text>The application needs information from outside the model.</p></div>
+          <div class="flow-dots" role="group" aria-label="Animation steps"></div>
+          <p class="motion-note" hidden>Reduced motion: use the arrows or numbered steps.</p>
+          <details class="wire"><summary>For developers: example message</summary><pre><code data-wire></code></pre></details>
+        </div>
+        <details class="flow-fallback" open><summary>Read the sequence</summary><ol><li>You ask the application to find the deployment guide.</li><li>The connected client discovers the server's document-search capability.</li><li>The app sends the question and tool descriptions to the LLM using its model API, not MCP.</li><li>The LLM proposes a tool and its arguments. Nothing has executed yet.</li><li>The app checks the proposal and any required confirmation; its MCP client calls the server.</li><li>The server checks access and searches the actual documents.</li><li>The server returns the matching document to the app.</li><li>The app sends the tool result back to the LLM.</li><li>The LLM drafts an answer using that result.</li><li>The app displays the answer to you.</li></ol></details>
+        <p class="one-liner"><svg class="icon"><use href="#i-check"/></svg> The LLM proposes. The agent orchestrates. The MCP server executes.</p>
+      </section>
+
+      <section id="api" class="chapter" aria-labelledby="api-title">
+        <p class="eyebrow"><svg class="icon"><use href="#i-course"/></svg>Course · Lesson 4 of 4</p>
+        <h2 id="api-title" tabindex="-1">How is MCP different from an API?</h2>
+        <p class="intro">Your API still does the work. An MCP server makes selected operations discoverable and callable by compatible AI applications.</p>
+        <div class="comparison">
+          <article><div class="card-label"><svg class="icon"><use href="#i-code"/></svg> Business API</div><h3>Exposes a service's operations</h3><p>Your code must know the endpoint, required inputs and authentication. Example: a document-search endpoint.</p><span class="tag">Implemented for this service</span></article>
+          <article class="accent"><div class="card-label"><svg class="icon"><use href="#i-plug"/></svg> MCP server</div><h3>Exposes tools to an AI application</h3><p>The client discovers a “Search documents” tool and its inputs. The server translates the call into the existing search operation.</p><span class="tag">One protocol across compatible clients</span></article>
+        </div>
+        <div class="api-path"><span><svg class="icon"><use href="#i-app"/></svg> AI app</span><b>→</b><span><svg class="icon"><use href="#i-server"/></svg> MCP server</span><b>→</b><span><svg class="icon"><use href="#i-code"/></svg> Existing API</span><b>→</b><span><svg class="icon"><use href="#i-database"/></svg> Data</span></div>
+        <p class="caption">One possible architecture. A server can call an API or work with files and data directly.</p>
+        <div class="distinctions"><p><strong>API</strong> Business operations.</p><p><strong>MCP</strong> Standardized discovery + interaction.</p><p><strong>RAG</strong> Retrieval to ground an answer.</p></div>
+        <details><summary>Can an API also describe itself?</summary><p>Yes: OpenAPI can describe a REST API. MCP is not the invention of typed APIs. It defines a shared interaction protocol for compatible AI applications, including capability discovery and invocation. Developers still implement connectors and authorization; MCP does not train the model or make every tool safe.</p></details>
+      </section>
+
+      <section id="lab" class="chapter" aria-labelledby="lab-title">
+        <p class="eyebrow practice-label"><svg class="icon"><use href="#i-practice"/></svg>Your turn · Live lab · 15 minutes</p>
+        <h2 id="lab-title" tabindex="-1">Call an MCP server yourself</h2>
+        <p class="intro">Send three real requests to a live MCP server. Copy each command into a terminal, or run it from this page. No installation and no AI model needed.</p>
+        <article class="lab-scenario" aria-labelledby="scenario-title">
+          <h3 id="scenario-title"><svg class="icon"><use href="#i-chat"/></svg>The scenario</h3>
+          <p>An IT support engineer at Contoso asks an AI assistant: <q>Which tickets need attention, and what is CT-1001 about?</q></p>
+          <p>The assistant cannot see the ticketing system. It asks an MCP server that sits in front of the ticket API. <strong>In this lab, you play the assistant</strong>: you send the same requests it would send, one step at a time.</p>
+        </article>
+        <div class="source-overview" aria-label="The MCP server connects to the ticket API">
+          <div class="source-hub"><svg class="icon"><use href="#i-server"/></svg><strong>MCP server</strong><span>One endpoint, two tools</span></div>
+          <div class="source-cards single">
+            <article><span class="source-kind"><svg class="icon"><use href="#i-database"/></svg>Private REST API + SQLite</span><strong>Contoso Tickets API</strong><p>A read-only REST API in front of a small database of fictional support tickets. It is reachable only from the MCP server. Each tool maps to one REST operation.</p>
+              <ul class="tool-map"><li><code>list_tickets</code><span>→</span><code>GET /tickets</code></li><li><code>get_ticket</code><span>→</span><code>GET /tickets/{ticketId}</code></li></ul></article>
+          </div>
+        </div>
+        <p id="endpoint-status" class="notice" role="status">The lab connects to the public workshop server. Enable JavaScript to use it.</p>
+        <p id="endpoint-error" class="error" role="alert" hidden></p>
+        <article class="lab-steps" aria-labelledby="lab-steps-title">
+          <h3 id="lab-steps-title"><svg class="icon"><use href="#i-code"/></svg>Three requests, one at a time</h3>
+          <div id="lab-tabs" class="step-tabs" role="group" aria-label="Lab steps"></div>
+          <div class="lab-step-head"><span class="step-count" id="lab-count"></span><h4 id="lab-step-title"></h4><p id="lab-why"></p></div>
+          <div class="lab-split">
+            <section class="lab-col" aria-labelledby="lab-command-title">
+              <h5 id="lab-command-title"><span class="col-number">1</span>Send this request</h5>
+              <div class="copy-panel dark"><div><span>Bash · nothing to install except curl</span><button class="text-button" id="lab-copy" type="button" disabled><svg class="icon"><use href="#i-copy"/></svg>Copy command</button></div><pre><code id="lab-command" contenteditable="plaintext-only" spellcheck="false" role="textbox" aria-multiline="true" aria-label="Command, you can edit it"></code></pre></div>
+              <p class="legend"><mark class="hl">Highlighted</mark> <span id="lab-changed-legend">is what changes from the previous step.</span></p>
+              <p class="legend edit-hint"><svg class="icon" aria-hidden="true"><use href="#i-practice"/></svg><span>You can edit this command. The page runs the JSON after <code>-d</code> on the configured server.</span><button class="text-button" id="lab-reset" type="button" hidden>Reset command</button></p>
+              <button class="button primary" id="lab-run" type="button" disabled><svg class="icon"><use href="#i-play"/></svg>Or run it from this page</button>
+            </section>
+            <section class="lab-col" aria-labelledby="lab-response-title">
+              <h5 id="lab-response-title"><span class="col-number">2</span>Read the server's answer <small id="lab-timing"></small></h5>
+              <pre class="console-output" tabindex="0" aria-label="MCP response"><code id="lab-output">Run this step to see the real response.</code></pre>
+              <p class="legend"><mark class="hl">Highlighted</mark> <span>is <span id="lab-notice"></span></span></p>
+            </section>
+          </div>
+          <p id="lab-status" role="status">Apply the public endpoint to enable the lab.</p>
+          <div class="lab-nav"><button class="button" id="lab-prev" type="button">← Previous step</button><button class="button primary" id="lab-next" type="button">Next step →</button></div>
+          <p class="caption">Public, read-only demo with no credentials. A real MCP client first sends an <code>initialize</code> message; this workshop server is stateless, so you can skip it. Shared capacity is bounded.</p>
+        </article>
+        <details class="endpoint-card"><summary>Presenter: choose endpoints and share the exercise</summary>
+          <form id="endpoint-form">
+            <label for="endpoint">Public read-only sandbox URL</label>
+            <div class="endpoint-row"><input id="endpoint" type="url" value="http://127.0.0.1:3201/mcp" required spellcheck="false" aria-describedby="endpoint-status"><button class="button primary" type="submit">Apply endpoints</button></div>
+            <label for="protected-endpoint">Protected endpoint for session 3 (optional)</label>
+            <div class="endpoint-row"><input id="protected-endpoint" type="url" placeholder="https://your-protected-server/mcp" spellcheck="false"></div>
+            <button class="text-button" type="button" id="share"><svg class="icon"><use href="#i-copy"/></svg> Copy participant link</button>
+          </form>
+          <p>Use only the dedicated read-only sandbox here, never the intentionally insecure write-capable server. Remote endpoints require HTTPS. This page does not verify server availability. Shared links contain endpoint URLs only, never tokens.</p>
+        </details>
+        <noscript><p class="notice">The lab needs JavaScript to run steps and generate commands for the presenter's endpoint. See the <a href="https://github.com/YOUR-ORG/YOUR-REPO#terminal-lab">terminal instructions</a>.</p></noscript>
+      </section>
+
+      <section id="auth" class="chapter" aria-labelledby="auth-title">
+        <p class="eyebrow"><svg class="icon"><use href="#i-shield"/></svg>Session 3 · Security</p>
+        <h2 id="auth-title" tabindex="-1">Who can call which tools?</h2>
+        <p class="intro">Authentication identifies the caller. Authorization checks what that caller is allowed to do. Both happen before any tool runs.</p>
+        <div class="flow" data-flow="auth">
+          <div class="flow-top"><span class="tag">Illustration · protected endpoint</span><label>Request <select data-scenario><option value="allowed">Valid token → tickets</option><option value="denied">Valid token, no permission → 403</option><option value="anonymous">No token → 401</option></select></label></div>
+          <div class="flow-diagram">
+            <svg class="flow-lines" aria-hidden="true"><g data-paths></g><path data-active-path/><circle data-packet r="5" visibility="hidden"/></svg>
+            <article data-node="user"><svg class="icon"><use href="#i-user"/></svg><h3>Caller</h3><span>Trusted identity?</span></article>
+            <article data-node="app"><svg class="icon"><use href="#i-key"/></svg><h3>Authentication</h3><span>Who are you?</span></article>
+            <article data-node="server"><svg class="icon"><use href="#i-shield"/></svg><h3>Authorization</h3><span>Allowed to call this server?</span></article>
+            <article data-node="data"><svg class="icon"><use href="#i-file"/></svg><h3>Result</h3><span>Tickets or a denial</span></article>
+          </div>
+          <div class="flow-controls"><button class="button primary" data-play aria-pressed="false"><svg class="icon"><use href="#i-play"/></svg><span>Play</span></button><button class="button icon-button" data-prev aria-label="Previous animation step">←</button><button class="button icon-button" data-next aria-label="Next animation step">→</button><button class="text-button" data-reset>Restart</button><span class="flow-count"></span></div>
+          <div class="flow-explanation" aria-live="polite"><h3 data-step-title>1. Identify the caller</h3><p data-step-text>A protected endpoint requires an appropriate credential before executing a tool.</p></div>
+          <div class="flow-dots" role="group" aria-label="Security animation steps"></div>
+          <p class="motion-note" hidden>Reduced motion: use the arrows or numbered steps.</p>
+          <details class="wire"><summary>See the decision</summary><pre><code data-wire></code></pre></details>
+        </div>
+        <details class="flow-fallback" open><summary>Read the control sequence</summary><ol><li>No valid credential: HTTP 401, no tool runs.</li><li>A valid Entra token proves who is calling: signature, issuer, audience and expiry are checked.</li><li>The server checks that the token carries the Mcp.Read permission. If not: HTTP 403.</li><li>The server reaches the private ticket API with its own managed identity. The caller token is never forwarded.</li><li>Only read-only tools with validated inputs are available.</li></ol></details>
+        <div class="distinctions"><p><strong>Authentication</strong> Who is calling?</p><p><strong>Authorization</strong> What may they do?</p><p><strong>Least privilege</strong> Which identity reaches the backend?</p></div>
+        <div class="protected-lab">
+          <h3>Try the same call on the protected endpoint</h3>
+          <p id="protected-status" class="notice">No protected endpoint configured. The presenter must configure Entra ID and supply this endpoint before session 3.</p>
+          <div id="protected-commands" hidden>
+            <details class="terminal-setup"><summary>One-time setup for the terminal client</summary>
+              <p>Requires Node.js 20+, npm and Git. Use Bash on macOS/Linux, WSL or Git Bash. If the workshop repository is already installed, skip this setup.</p>
+              <div class="copy-panel"><div><span>One-time setup</span><button class="text-button" data-copy="setup-code">Copy</button></div><pre><code id="setup-code">git clone https://github.com/YOUR-ORG/YOUR-REPO.git
+cd YOUR-REPO
+npm ci</code></pre></div>
+            </details>
+            <p><strong>Without a token:</strong> the server returns HTTP 401 before the ticket API is reached.</p>
+            <div class="copy-panel"><div><span>Bash · no identity</span><button class="text-button" data-copy="anonymous-code">Copy</button></div><pre><code id="anonymous-code"></code></pre></div>
+            <p><strong>With your Entra access token:</strong> paste it only into your terminal. A valid token returns the tickets; an invalid token returns 401 and a missing <code>Mcp.Read</code> permission returns 403.</p>
+            <div class="copy-panel"><div><span>Bash · authenticated</span><button class="text-button" data-copy="authenticated-code">Copy</button></div><pre><code id="authenticated-code"></code></pre></div>
+          </div>
+        </div>
+        <details><summary>What is implemented, and what must be configured?</summary><p>The protected endpoint runs the same two read-only tools. It validates Microsoft Entra v2 JWT signatures, issuer, audience, expiry and the <code>Mcp.Read</code> scope or application role, and accepts no demo tokens. The MCP server calls the ticket API with its own managed identity and a separate backend app role. Hosting, an Entra application registration and participant access must be configured before using it.</p><p>This workshop does not implement interactive OAuth discovery or on-behalf-of token exchange; the caller token is never forwarded to the backend. Write tools, approvals and per-record permissions are not part of this read-only server.</p></details>
+      </section>
+
+      <section id="day-welcome" class="chapter agenda-panel" hidden aria-labelledby="day-welcome-title">
+        <p class="eyebrow"><svg class="icon"><use href="#i-calendar"/></svg>Day agenda · 09:00–09:30 · 30 min</p>
+        <h2 id="day-welcome-title" tabindex="-1"><span aria-hidden="true">🥐</span> Welcome breakfast</h2>
+        <p class="intro">Welcome coffee and informal introductions.</p>
+        <p class="agenda-next">Up next at 09:30: 👋 Introductions &amp; parking lot</p>
+        <p class="agenda-note">This page contains the Session 1 course and lab, and a Session 3 security preview.</p>
+        <div class="agenda-actions"><a class="button primary" href="#why">Open Session 1</a><a class="button" href="#auth">Open Session 3 preview</a></div>
+      </section>
+
+      <section id="day-introductions" class="chapter agenda-panel" hidden aria-labelledby="day-introductions-title">
+        <p class="eyebrow"><svg class="icon"><use href="#i-calendar"/></svg>Day agenda · 09:30–09:45 · 15 min</p>
+        <h2 id="day-introductions-title" tabindex="-1"><span aria-hidden="true">👋</span> Introductions &amp; parking lot</h2>
+        <p class="intro">Participant introductions, expectations for the day, and identification of key topics and questions.</p>
+        <p class="agenda-next">Up next at 09:45: 🔌 Session 1 – MCP fundamentals</p>
+        <p class="agenda-note">This page contains the Session 1 course and lab, and a Session 3 security preview.</p>
+        <div class="agenda-actions"><a class="button primary" href="#why">Open Session 1</a><a class="button" href="#auth">Open Session 3 preview</a></div>
+      </section>
+
+      <section id="day-break-morning" class="chapter agenda-panel" hidden aria-labelledby="day-break-morning-title">
+        <p class="eyebrow"><svg class="icon"><use href="#i-calendar"/></svg>Day agenda · 10:15–10:30 · 15 min</p>
+        <h2 id="day-break-morning-title" tabindex="-1"><span aria-hidden="true">☕</span> Break</h2>
+        <p class="intro">Break · 15 min.</p>
+        <p class="agenda-next">Up next at 10:30: ☁️ Session 2 – MCP in enterprise and Azure architectures</p>
+        <p class="agenda-note">This page contains the Session 1 course and lab, and a Session 3 security preview.</p>
+        <div class="agenda-actions"><a class="button primary" href="#why">Open Session 1</a><a class="button" href="#auth">Open Session 3 preview</a></div>
+      </section>
+
+      <section id="day-session-2" class="chapter agenda-panel" hidden aria-labelledby="day-session-2-title">
+        <p class="eyebrow"><svg class="icon"><use href="#i-calendar"/></svg>Day agenda · 10:30–11:00 · 30 min</p>
+        <h2 id="day-session-2-title" tabindex="-1"><span aria-hidden="true">☁️</span> Session 2 – MCP in enterprise and Azure architectures</h2>
+        <p class="intro">Overview of the main options for integrating and exposing MCP servers within an enterprise architecture, including Azure API Management (APIM).</p>
+        <p class="agenda-next">Up next at 11:00: 🔐 Session 3 – Security and governance for MCP</p>
+        <p class="agenda-note">This page contains the Session 1 course and lab, and a Session 3 security preview.</p>
+        <div class="agenda-actions"><a class="button primary" href="#why">Open Session 1</a><a class="button" href="#auth">Open Session 3 preview</a></div>
+      </section>
+
+      <section id="day-session-4" class="chapter agenda-panel" hidden aria-labelledby="day-session-4-title">
+        <p class="eyebrow"><svg class="icon"><use href="#i-calendar"/></svg>Day agenda · 11:30–12:15 · 45 min</p>
+        <h2 id="day-session-4-title" tabindex="-1"><span aria-hidden="true">🤖</span> Session 4 – Agent 365: governance and security overview</h2>
+        <p class="intro">Introduction to Agent 365 and its capabilities for governing and securing agents across the organization.</p>
+        <p class="agenda-next">Up next at 12:15: 🍽️ Lunch break</p>
+        <p class="agenda-note">This page contains the Session 1 course and lab, and a Session 3 security preview.</p>
+        <div class="agenda-actions"><a class="button primary" href="#why">Open Session 1</a><a class="button" href="#auth">Open Session 3 preview</a></div>
+      </section>
+
+      <section id="day-lunch" class="chapter agenda-panel" hidden aria-labelledby="day-lunch-title">
+        <p class="eyebrow"><svg class="icon"><use href="#i-calendar"/></svg>Day agenda · 12:15–14:00 · 1 h 45</p>
+        <h2 id="day-lunch-title" tabindex="-1"><span aria-hidden="true">🍽️</span> Lunch break</h2>
+        <p class="intro">Lunch break · 1 h 45.</p>
+        <p class="agenda-next">Up next at 14:00: 🅿️ Parking lot review – MCP ecosystem &amp; priorities</p>
+        <p class="agenda-note">This page contains the Session 1 course and lab, and a Session 3 security preview.</p>
+        <div class="agenda-actions"><a class="button primary" href="#why">Open Session 1</a><a class="button" href="#auth">Open Session 3 preview</a></div>
+      </section>
+
+      <section id="day-parking-review" class="chapter agenda-panel" hidden aria-labelledby="day-parking-review-title">
+        <p class="eyebrow"><svg class="icon"><use href="#i-calendar"/></svg>Day agenda · 14:00–14:30 · 30 min</p>
+        <h2 id="day-parking-review-title" tabindex="-1"><span aria-hidden="true">🅿️</span> Parking lot review – MCP ecosystem &amp; priorities</h2>
+        <p class="intro">Review of the morning parking lot in the context of your organization’s environment, existing initiatives, challenges, and priority use cases.</p>
+        <p class="agenda-next">Up next at 14:30: 🛠️ Hands-on workshop: from an open MCP server to an enterprise-ready architecture</p>
+        <p class="agenda-note">This page contains the Session 1 course and lab, and a Session 3 security preview.</p>
+        <div class="agenda-actions"><a class="button primary" href="#why">Open Session 1</a><a class="button" href="#auth">Open Session 3 preview</a></div>
+      </section>
+
+      <section id="day-hands-on" class="chapter agenda-panel" hidden aria-labelledby="day-hands-on-title">
+        <p class="eyebrow"><svg class="icon"><use href="#i-calendar"/></svg>Day agenda · 14:30–16:00 · 1 h 30</p>
+        <h2 id="day-hands-on-title" tabindex="-1"><span aria-hidden="true">🛠️</span> Hands-on workshop: from an open MCP server to an enterprise-ready architecture</h2>
+        <p class="intro">Practical workshop to progressively evolve an MCP server into a secure, governed, and monitored enterprise architecture. A break is integrated into the session.</p>
+        <p class="agenda-next">Up next at 16:00: 🚀 Use cases, next steps &amp; open discussion</p>
+        <p class="agenda-note">This page contains the Session 1 course and lab, and a Session 3 security preview.</p>
+        <div class="agenda-actions"><a class="button primary" href="#why">Open Session 1</a><a class="button" href="#auth">Open Session 3 preview</a></div>
+      </section>
+
+      <section id="day-use-cases" class="chapter agenda-panel" hidden aria-labelledby="day-use-cases-title">
+        <p class="eyebrow"><svg class="icon"><use href="#i-calendar"/></svg>Day agenda · 16:00–16:30 · 30 min</p>
+        <h2 id="day-use-cases-title" tabindex="-1"><span aria-hidden="true">🚀</span> Use cases, next steps &amp; open discussion</h2>
+        <p class="intro">Application of the concepts to your organization’s use cases, identification of next steps, and open discussion and Q&amp;A.</p>
+        
+        <p class="agenda-note">This page contains the Session 1 course and lab, and a Session 3 security preview.</p>
+        <div class="agenda-actions"><a class="button primary" href="#why">Open Session 1</a><a class="button" href="#auth">Open Session 3 preview</a></div>
+      </section>
+
+      <div class="chapter-pagination" hidden><button class="button" id="chapter-prev">← Previous</button><span id="chapter-count"></span><button class="button primary" id="chapter-next">Next chapter →</button></div>
+      <footer><span>MCP workshop · Illustrations, then a synthetic-data lab</span><details><summary>Sources &amp; other sessions</summary><p><a href="https://huggingface.co/learn/mcp-course/unit1/introduction">Hugging Face MCP course · foundations</a> · <a href="https://huggingface.co/learn/mcp-course/unit1/architectural-components">Course · host, client, server</a> · <a href="https://www.anthropic.com/news/model-context-protocol">MCP origin</a> · <a href="https://modelcontextprotocol.io/docs/learn/architecture">Official architecture</a> · <a href="https://code.visualstudio.com/docs/copilot/customization/mcp-servers">VS Code MCP</a> · <a href="https://github.com/YOUR-ORG/YOUR-REPO">Workshop repository</a></p><p>Session 2 / APIM: reserved for the colleague's material. This page does not prescribe or simulate that presentation.</p></details></footer>
+    </main>
+  </div>
+  <div class="toast" role="status" id="copy-status"></div>
+</body>
+</html>

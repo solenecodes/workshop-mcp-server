@@ -1,44 +1,46 @@
 # Skills du projet
 
-## Azure Showcase Web
+Ce dépôt contient **un seul skill**, partagé avec le dépôt.
 
-Le skill [azure-showcase-web](azure-showcase-web/SKILL.md) permet de créer une
-présentation web interactive au thème clair Azure/Foundry. Il contient ses
-[règles visuelles](azure-showcase-web/references/design-system.md) et son
-[modèle HTML autonome](azure-showcase-web/assets/starter.html).
+## MCP Workshop Page
+
+Le skill [mcp-workshop-page](mcp-workshop-page/SKILL.md) crée ou adapte une page
+web de workshop interactive, en anglais : cours animé, lab en direct (commande
+`curl` modifiable à gauche, vraie réponse JSON surlignée sur fond noir à droite),
+agenda de la journée cliquable et bandeau « Now » en heure de Paris.
+
+Il contient :
+
+- [la procédure et les règles](mcp-workshop-page/SKILL.md) ;
+- [le design](mcp-workshop-page/references/design.md) et
+  [l'architecture](mcp-workshop-page/references/architecture.md) ;
+- [la checklist d'adaptation](mcp-workshop-page/references/adapting.md) ;
+- [un modèle prêt à copier](mcp-workshop-page/assets/starter/), basé sur la page
+  de ce dépôt (`sessions/01-mcp-fondamentaux/`), avec son test.
 
 ### Appel explicite dans le chat Copilot
 
 Ouvrir la racine du dépôt dans VS Code, puis saisir :
 
 ```text
-/azure-showcase-web Crée la présentation web de la session 1 « Serveur MCP :
-les fondamentaux » dans sessions/01-mcp-fondamentaux/presentation.html.
-Appuie-toi sur le README de la session et ses guides de démo et de mini-hack.
-Garde le serveur fil rouge des sessions 1, 2 et 6. Utilise le thème clair,
-des schémas et un parcours interactif. Aucun nom de client ou de personne.
-Ne présente pas les exemples comme des appels réels.
+/mcp-workshop-page Crée une page de workshop sur <sujet>. Agenda : <horaires et
+étapes>. Serveur MCP public : <URL>. Lab en <n> étapes : <étapes>.
 ```
 
-Le skill peut aussi être sélectionné automatiquement lorsqu'une demande
-correspond à sa description. Pour le demander sans commande slash :
+Le skill est aussi chargé automatiquement quand une demande correspond à sa
+description (workshop, lab en direct, serveur MCP appelé depuis le navigateur,
+page à partager aux participants).
 
-```text
-Utilise le skill azure-showcase-web de .github/skills/ pour générer la
-présentation web interactive de la session 1.
-```
+### Le réutiliser dans un autre dépôt
+
+Copier le dossier `mcp-workshop-page/` dans `.github/skills/` de l'autre dépôt, ou
+dans `~/.copilot/skills/` pour l'avoir dans tous les dépôts.
 
 ### Vérifier sa détection
 
-- Le fichier doit se trouver dans `.github/skills/azure-showcase-web/SKILL.md`.
+- Le fichier doit se trouver dans `.github/skills/mcp-workshop-page/SKILL.md`.
 - Le champ `name` doit correspondre au nom du dossier.
-- Le frontmatter YAML doit contenir `name` et une `description` explicite.
-- Les ressources du skill doivent rester à leurs chemins relatifs.
-- Dans le chat, saisir `/` et rechercher `azure-showcase-web`.
-- Si le skill n'apparaît pas, consulter les diagnostics de personnalisation
-  de Copilot et recharger la fenêtre VS Code après le déplacement.
-
-La présence des fichiers et leur format peuvent être vérifiés dans le dépôt ;
-la disponibilité de la commande dépend aussi de la version de VS Code/Copilot
-et des politiques de l'environnement. Une conversation déjà ouverte peut
-conserver une ancienne liste de skills.
+- Dans le chat, saisir `/` et rechercher `mcp-workshop-page`.
+- Si le skill n'apparaît pas, consulter les diagnostics de personnalisation de
+  Copilot et recharger la fenêtre VS Code. Une conversation déjà ouverte peut
+  conserver une ancienne liste de skills.
