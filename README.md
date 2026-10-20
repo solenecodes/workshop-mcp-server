@@ -178,6 +178,9 @@ modules; its [upload exclusions](.dockerignore) exclude credentials, local state
 the legacy Claims editions. Build from the repository root with `--file infra/Dockerfile`.
 Deployment has two phases: initialize hosting and managed identities, then build the real
 image and redeploy it after registry and API permissions are assigned.
+[infra/deploy-all.ps1](infra/deploy-all.ps1) runs every step in one command, in your own
+non-production subscription, with smoke checks and a `-Destroy` clean-up (see
+[Session 2](sessions/02-architecture/README.md#one-command-deploy-everything-in-your-own-subscription)).
 
 ## Advanced local Claims security demo
 

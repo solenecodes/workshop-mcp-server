@@ -1,0 +1,284 @@
+#requires -Version 7.4
+<#
+.SYNOPSIS
+  Deploys the whole workshop into your own non-production subscription with one command:
+  Entra API registration, Container Apps (public MCP, protected MCP, ticket API), the real image,
+  and optionally the session 2 API Management gateway. Then runs smoke checks.
+.DESCRIPTION
+  Reuses the repository building blocks: infra/prepare-identity.mjs, infra/main.bicep (two phases),
+  infra/Dockerfile and infra/gateway/main.bicep. Idempotent: run it again to resume or update.
+  No client secret is created. Private state lives in .copilot-azure/deploy-all/ (git-ignored).
+.EXAMPLE
+  ./infra/deploy-all.ps1 -SubscriptionId <uuid> -PublisherEmail you@example.com
+.EXAMPLE
+  ./infra/deploy-all.ps1 -SubscriptionId <uuid> -Destroy
+#>
+[CmdletBinding()]
+param(
+    [Parameter(Mandatory)][ValidatePattern('^[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$')][string]$SubscriptionId,
+    [ValidatePattern('^[a-z][a-z0-9]+$')][string]$Location = 'francecentral',
+    [ValidatePattern('^[^@\s]+@[^@\s]+\.[^@\s]+$')][string]$PublisherEmail,
+    [switch]$SkipGateway,
+    [switch]$AlwaysReady,
+    [switch]$Destroy,
+    [switch]$Yes
+)
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
+$PSNativeCommandUseErrorActionPreference = $false
+
+$root = Split-Path $PSScriptRoot -Parent
+$stateDir = Join-Path $root '.copilot-azure' 'deploy-all'
+$statePath = Join-Path $stateDir 'state.json'
+$placeholderImage = 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
+
+function Step([string]$text) { Write-Host "`n==> $text" -ForegroundColor Cyan }
+function Pass([string]$text) { Write-Host "PASS $text" -ForegroundColor Green }
+function Fail([string]$text) { Write-Host "FAIL $text" -ForegroundColor Red; $script:failures++ }
+
+function Invoke-Az {
+    $output = & az @args --only-show-errors -o json 2>&1
+    if ($LASTEXITCODE -ne 0) { throw "az $($args[0..1] -join ' ') failed: $($output | Out-String)" }
+    $text = ($output | Where-Object { $_ -is [string] }) -join "`n"
+    if ($text.Trim()) { return $text | ConvertFrom-Json -Depth 50 }
+}
+
+function Invoke-Graph([string]$Method, [string]$Path, $Body) {
+    $azArgs = @('rest', '--method', $Method, '--url', "https://graph.microsoft.com/v1.0/$Path")
+    if ($Body) {
+        $file = Join-Path $stateDir "graph-$([guid]::NewGuid().ToString('N')).json"
+        $Body | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $file -Encoding utf8NoBOM
+        try { return Invoke-Az @azArgs --headers 'Content-Type=application/json' --body "@$file" }
+        finally { Remove-Item -LiteralPath $file -Force }
+    }
+    Invoke-Az @azArgs
+}
+
+function Save-State($state) {
+    $state | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $statePath -Encoding utf8NoBOM
+}
+
+function Confirm-Step([string]$question) {
+    if ($Yes) { return }
+    $answer = Read-Host "$question Type 'yes' to continue"
+    if ($answer -cne 'yes') { throw 'Stopped by the operator. Nothing else was changed.' }
+}
+
+function Write-Parameters([string]$name, [hashtable]$values) {
+    $parameters = [ordered]@{ '$schema' = 'https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#'; contentVersion = '1.0.0.0'; parameters = [ordered]@{} }
+    foreach ($key in $values.Keys) { $parameters.parameters[$key] = @{ value = $values[$key] } }
+    $file = Join-Path $stateDir "$name.parameters.json"
+    $parameters | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $file -Encoding utf8NoBOM
+    $file
+}
+
+function Deploy-Workload($state, [string]$image) {
+    $file = Write-Parameters 'main' @{
+        environmentName = "mcp-$($state.suffix)"; location = $state.location; sessionId = $state.sessionId
+        deployedBy = 'deploy-all.ps1'; createdAt = $state.createdAt; resourceGroupName = $state.names.resourceGroup
+        managedEnvironmentName = $state.names.environment; registryName = $state.names.registry
+        publicAppName = $state.names.publicApp; protectedAppName = $state.names.protectedApp; backendAppName = $state.names.backendApp
+        entraClientId = $state.appId; containerImage = $image; workshopAlwaysReady = [bool]$AlwaysReady
+    }
+    $deployment = Invoke-Az deployment sub create --name "mcp-workshop-$($state.suffix)" --location $state.location `
+        --template-file (Join-Path $root 'infra' 'main.bicep') --parameters "@$file"
+    $deployment.properties.outputs
+}
+
+function Test-Http([string]$label, [string]$method, [string]$url, [int]$expected) {
+    $status = 0
+    for ($attempt = 1; $attempt -le 6; $attempt++) {
+        try {
+            $response = Invoke-WebRequest -Method $method -Uri $url -SkipHttpErrorCheck -TimeoutSec 60 `
+                -ContentType 'application/json' -Headers @{ Accept = 'application/json, text/event-stream' } `
+                -Body $(if ($method -eq 'POST') { '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' })
+            $status = [int]$response.StatusCode
+        } catch { $status = -1 }
+        if ($status -eq $expected) { break }
+        Start-Sleep -Seconds 10
+    }
+    if ($status -eq $expected) { Pass "$label (HTTP $expected)" } else { Fail "$label expected HTTP $expected, got $status" }
+}
+
+function Test-ToolCall([string]$label, [string]$url, [string]$scope) {
+    if (-not (Test-Path (Join-Path $root 'node_modules'))) { Fail "$label skipped: run 'npm ci' first"; return }
+    $token = (Invoke-Az account get-access-token --scope $scope).accessToken
+    $env:MCP_URL = $url; $env:MCP_TOKEN = $token
+    Push-Location $root
+    try {
+        $output = & node --import tsx (Join-Path 'src' 'workshop-client.ts') get_ticket '{"ticketId":"CT-1002"}' 2>&1 | Out-String
+        if ($LASTEXITCODE -eq 0 -and $output -match 'CT-1002') { Pass "$label returns ticket CT-1002" }
+        else { Fail "$label did not return CT-1002" }
+    } finally {
+        Pop-Location
+        Remove-Item Env:MCP_TOKEN, Env:MCP_URL -ErrorAction SilentlyContinue
+        $token = $null
+    }
+}
+
+# --- Preflight ---------------------------------------------------------------
+Step 'Preflight'
+foreach ($tool in 'az', 'node', 'npm') {
+    if (-not (Get-Command $tool -ErrorAction SilentlyContinue)) { throw "$tool is required. See README > Run locally." }
+}
+$null = Invoke-Az account set --subscription $SubscriptionId
+$account = Invoke-Az account show
+Pass "signed in; subscription selected (tenant $($account.tenantId))"
+if (-not (Test-Path $stateDir)) { $null = New-Item -ItemType Directory -Path $stateDir -Force }
+
+$state = if (Test-Path $statePath) { Get-Content -LiteralPath $statePath -Raw | ConvertFrom-Json -AsHashtable } else { $null }
+if ($state -and ($state.subscriptionId -ne $SubscriptionId -or $state.tenantId -ne $account.tenantId)) {
+    throw "State in $statePath belongs to another subscription or tenant. Use a separate clone or remove it after cleanup."
+}
+
+# --- Destroy -----------------------------------------------------------------
+if ($Destroy) {
+    if (-not $state) { throw 'No deployment state found. Nothing to destroy.' }
+    Step "Destroy resource group $($state.names.resourceGroup) and Entra app $($state.appName)"
+    Confirm-Step 'This deletes every resource created by this script, including the Entra registration.'
+    $group = $null
+    if ((& az group exists --name $state.names.resourceGroup) -eq 'true') { $group = Invoke-Az group show --name $state.names.resourceGroup }
+    if ($group -and $group.tags.'app-onboard-session-id' -eq $state.sessionId) {
+        $null = Invoke-Az group delete --name $state.names.resourceGroup --yes
+        Pass 'resource group deleted'
+    } elseif ($group) { throw 'The resource group is not tagged with this session. Refusing to delete it.' }
+    if ($state.ContainsKey('apimName') -and $state.apimName) {
+        $null = & az apim deletedservice purge --service-name $state.apimName --location $state.location --only-show-errors 2>$null
+        Pass 'API Management soft-deleted instance purged (or already gone)'
+    }
+    if ($state.ContainsKey('objectId') -and $state.objectId) {
+        $app = Invoke-Graph GET "applications/$($state.objectId)?`$select=id,tags"
+        if ($app.tags -contains "mcp-workshop-session:$($state.sessionId)") {
+            $null = Invoke-Graph DELETE "applications/$($state.objectId)"
+            Pass 'Entra application deleted'
+        } else { throw 'The Entra application is not tagged with this session. Refusing to delete it.' }
+    }
+    Remove-Item -LiteralPath $stateDir -Recurse -Force
+    Pass 'local state removed'
+    return
+}
+
+# --- Plan --------------------------------------------------------------------
+if (-not $SkipGateway -and -not $PublisherEmail) { throw '-PublisherEmail is required for API Management (or pass -SkipGateway).' }
+if (-not $state) {
+    $suffix = -join ((1..6) | ForEach-Object { '{0:x}' -f [Security.Cryptography.RandomNumberGenerator]::GetInt32(16) })
+    $state = [ordered]@{
+        subscriptionId = $SubscriptionId; tenantId = $account.tenantId; location = $Location
+        sessionId = [guid]::NewGuid().ToString(); suffix = $suffix
+        createdAt = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
+        appName = "mcp-workshop-api-$suffix"
+        names = [ordered]@{
+            resourceGroup = "rg-mcp-$suffix"; environment = "cae-mcp-$suffix"; registry = "crmcp$suffix"
+            publicApp = "ca-mcp-public-$suffix"; protectedApp = "ca-mcp-auth-$suffix"; backendApp = "ca-mcp-apis-$suffix"
+        }
+        apimName = "apim-mcp-$suffix"
+    }
+}
+Step 'Plan'
+Write-Host @"
+Subscription      : $SubscriptionId ($Location)
+Entra application : $($state.appName) (Mcp.Read scope, Mcp.Backend.Read role, Azure CLI pre-authorized, no secret)
+Resource group    : $($state.names.resourceGroup) (Container Apps environment, registry, 3 apps)
+Gateway           : $(if ($SkipGateway) { 'skipped' } else { "$($state.apimName) (API Management BasicV2, billed while it exists)" })
+Clean up later    : ./infra/deploy-all.ps1 -SubscriptionId $SubscriptionId -Destroy
+"@
+Confirm-Step 'This creates billed Azure resources and an Entra application in your tenant.'
+Save-State $state
+
+# --- 1. Entra API registration ----------------------------------------------
+Step '1/5 Entra API registration (infra/prepare-identity.mjs)'
+& node (Join-Path $root 'infra' 'prepare-identity.mjs') --name $state.appName --subscription $SubscriptionId --session $state.sessionId --apply | Out-Null
+if ($LASTEXITCODE -ne 0) { throw 'Identity preparation failed. Check that you may create app registrations in this tenant.' }
+$identity = Get-Content -LiteralPath (Join-Path $root '.copilot-azure' 'sessions' $state.sessionId 'entra-identity.json') -Raw | ConvertFrom-Json
+$state.appId = $identity.appId; $state.objectId = $identity.objectId; $state.servicePrincipalId = $identity.servicePrincipalId
+$state.scope = "api://$($identity.appId)/Mcp.Read"
+Save-State $state
+Pass "API registered; scope $($state.scope)"
+
+# --- 2. Hosting with the placeholder image -----------------------------------
+Step '2/5 Container Apps hosting and managed identities (infra/main.bicep, phase 1)'
+$current = $null
+if ((& az group exists --name $state.names.resourceGroup) -eq 'true') {
+    # On a rerun, keep the image already deployed instead of reverting to the placeholder.
+    $current = & az resource show --resource-group $state.names.resourceGroup --name $state.names.protectedApp `
+        --resource-type Microsoft.App/containerApps --query 'properties.template.containers[0].image' -o tsv --only-show-errors 2>$null
+    if ($LASTEXITCODE -ne 0) { $current = $null }
+}
+$outputs = Deploy-Workload $state $(if ($current) { $current } else { $placeholderImage })
+Pass "resource group $($outputs.resourceGroupName.value) ready"
+
+$roles = Invoke-Graph GET "applications/$($state.objectId)?`$select=appRoles"
+$backendRole = ($roles.appRoles | Where-Object value -eq 'Mcp.Backend.Read').id
+foreach ($principal in $outputs.publicPrincipalId.value, $outputs.protectedPrincipalId.value) {
+    $existing = Invoke-Graph GET "servicePrincipals/$principal/appRoleAssignments"
+    if (-not ($existing.value | Where-Object { $_.appRoleId -eq $backendRole -and $_.resourceId -eq $state.servicePrincipalId })) {
+        $null = Invoke-Graph POST "servicePrincipals/$principal/appRoleAssignments" @{ principalId = $principal; resourceId = $state.servicePrincipalId; appRoleId = $backendRole }
+    }
+}
+Pass 'Mcp.Backend.Read assigned to the two MCP managed identities'
+
+# --- 3. Build the real image -------------------------------------------------
+Step '3/5 Build the image in the registry (infra/Dockerfile)'
+$tag = (& git -C $root rev-parse --short HEAD 2>$null) ?? 'local'
+$image = "$($outputs.registryLoginServer.value)/mcp-workshop:$tag"
+& az acr build --registry $state.names.registry --image "mcp-workshop:$tag" --file (Join-Path $root 'infra' 'Dockerfile') $root --only-show-errors | Out-Null
+if ($LASTEXITCODE -ne 0) {
+    if (-not (Get-Command docker -ErrorAction SilentlyContinue)) { throw 'ACR build failed and Docker is not installed. Install Docker or enable ACR Tasks.' }
+    Write-Host 'ACR Tasks unavailable; building locally with Docker.'
+    & az acr login --name $state.names.registry --only-show-errors | Out-Null
+    & docker build --file (Join-Path $root 'infra' 'Dockerfile') --tag $image $root
+    if ($LASTEXITCODE -ne 0) { throw 'docker build failed.' }
+    & docker push $image
+    if ($LASTEXITCODE -ne 0) { throw 'docker push failed.' }
+}
+Pass "image $image"
+
+# --- 4. Redeploy with the real image -----------------------------------------
+Step '4/5 Redeploy the apps with the real image (infra/main.bicep, phase 2)'
+try { $outputs = Deploy-Workload $state $image }
+catch {
+    Write-Host 'First attempt failed (role propagation can take a minute). Retrying in 60 seconds.'
+    Start-Sleep -Seconds 60
+    $outputs = Deploy-Workload $state $image
+}
+$state.publicMcpUrl = "https://$($outputs.publicAppFqdn.value)/mcp"
+$state.protectedMcpUrl = "https://$($outputs.protectedAppFqdn.value)/mcp"
+Save-State $state
+Pass 'apps running the workshop image'
+
+# --- 5. Gateway --------------------------------------------------------------
+if (-not $SkipGateway) {
+    Step '5/5 API Management gateway (infra/gateway/main.bicep); first creation can take 15 to 30 minutes'
+    $file = Write-Parameters 'gateway' @{
+        apimName = $state.apimName; publisherEmail = $PublisherEmail; entraTenantId = $state.tenantId
+        entraClientId = $state.appId; protectedMcpOrigin = "https://$($outputs.protectedAppFqdn.value)"
+        tags = @{ workshop = 'session-2'; 'app-onboard-session-id' = $state.sessionId }
+    }
+    $gateway = Invoke-Az deployment group create --resource-group $state.names.resourceGroup --name "mcp-gateway-$($state.suffix)" `
+        --template-file (Join-Path $root 'infra' 'gateway' 'main.bicep') --parameters "@$file"
+    $state.restMcpUrl = $gateway.properties.outputs.restMcpUrl.value
+    $state.existingMcpUrl = $gateway.properties.outputs.existingMcpUrl.value
+    Save-State $state
+    Pass "gateway $($gateway.properties.outputs.gatewayUrl.value)"
+}
+
+# --- Smoke checks ------------------------------------------------------------
+Step 'Smoke checks'
+$failures = 0
+Test-Http 'public MCP health' GET "https://$($outputs.publicAppFqdn.value)/health" 200
+Test-Http 'protected MCP without a token' POST $state.protectedMcpUrl 401
+Test-ToolCall 'protected MCP with an Mcp.Read token' $state.protectedMcpUrl $state.scope
+if (-not $SkipGateway) {
+    Test-Http 'gateway REST-as-MCP without a token' POST $state.restMcpUrl 401
+    Test-ToolCall 'gateway REST-as-MCP with an Mcp.Read token' $state.restMcpUrl $state.scope
+    if ($state.existingMcpUrl) { Test-ToolCall 'gateway pass-through MCP with an Mcp.Read token' $state.existingMcpUrl $state.scope }
+}
+
+Step 'Summary (no secret in this output)'
+[ordered]@{
+    publicMcpUrl = $state.publicMcpUrl; protectedMcpUrl = $state.protectedMcpUrl
+    gatewayRestMcpUrl = $state['restMcpUrl']; gatewayExistingMcpUrl = $state['existingMcpUrl']; scope = $state.scope
+    tokenCommand = "az account get-access-token --scope '$($state.scope)' --query accessToken -o tsv"
+    cleanup = "./infra/deploy-all.ps1 -SubscriptionId $SubscriptionId -Destroy"
+} | ConvertTo-Json
+if ($failures) { throw "$failures smoke check(s) failed. Fix the cause, then run the script again; it resumes." }
