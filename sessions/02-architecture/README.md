@@ -52,6 +52,7 @@ show the same 401, 403 and authorized calls, labeled as illustrations.
 | API Management gateway, both MCP servers, metadata | Workshop owner, in the same resource group | [infra/gateway/main.bicep](../../infra/gateway/main.bicep) with `entraTenantId` = the workshop tenant, `entraClientId` = the API client ID above and `protectedMcpOrigin` = `https://<protectedAppFqdn>` (output of `infra/main.bicep`) | The demo; session 6 |
 | API Center entry | Workshop owner, optional | Azure portal, manual (Preview) | Lesson 6, session 6 |
 | Rehearsal and presentation of the gateway | Session 2 presenter | Reader on the resource group, and a user in the workshop tenant for the demo token | The demo |
+| A full private copy of all the rows above | Anyone (presenter, owner), in their own non-production subscription | One command: [infra/deploy-all.ps1](../../infra/deploy-all.ps1) (see below) | Rehearsal without depending on the owner; a backup demo |
 | Presenter pages | Nobody | GitHub Pages serves `sessions/` | All sessions |
 | Hands-on resources at 14:30 | Each participant, in their own non-production subscription | The [90-minute afternoon path](https://web-mcp-host01-f80ce789cb05568a-portal.azurewebsites.net/?lang=en#/tracks) of the self-paced guide: modules 01 to 03, 04 as a stretch, always 99 | The hands-on workshop |
 
@@ -111,6 +112,32 @@ Both add what the server alone cannot: one public address, a call budget per cal
 (HTTP 429), and a 401 challenge naming the Protected Resource Metadata
 ([RFC 9728](https://www.rfc-editor.org/rfc/rfc9728)) so that VS Code finds where to sign
 in. No subscription key: access depends on the Entra token only.
+
+## One command: deploy everything in your own subscription
+
+To rehearse alone, or to keep a backup demo, deploy a private copy of the whole chain with
+[infra/deploy-all.ps1](../../infra/deploy-all.ps1) (PowerShell 7, on Windows, Linux or macOS).
+You need Azure CLI, Node.js 20+, Owner on a non-production subscription, and the right to
+create app registrations in your tenant.
+
+```powershell
+npm ci
+az login --tenant '<your-tenant-id>'
+./infra/deploy-all.ps1 -SubscriptionId '<subscription-id>' -PublisherEmail 'team@example.com'
+```
+
+The script shows its plan and waits for `yes`. Then it runs the same building blocks as
+above, in order: the Entra API ([prepare-identity.mjs](../../infra/prepare-identity.mjs)),
+the hosting ([infra/main.bicep](../../infra/main.bicep)), the `Mcp.Backend.Read` role for
+the two MCP identities, the image build, the redeploy, and the gateway. It ends with checks:
+`HTTP 401` without a token, then ticket `CT-1002` with an `Mcp.Read` token, directly and
+through the gateway. It creates no secret, prints no token, and keeps its private state in
+the ignored `.copilot-azure/` folder. Run it again to resume after an error.
+Add `-SkipGateway` to stop before API Management (much faster and cheaper).
+
+Clean up the same day: `./infra/deploy-all.ps1 -SubscriptionId '<subscription-id>' -Destroy`
+deletes the resource group, purges the API Management instance and deletes the Entra
+application, and only if they carry this deployment's tag.
 
 ## Prepare the gateway (workshop owner, before the day)
 
