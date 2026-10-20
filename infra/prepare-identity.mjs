@@ -2,10 +2,20 @@ import { execFile } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { appendFile, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
 import { parseArgs, promisify } from 'node:util';
 
 const run = promisify(execFile);
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// On Windows, az is az.cmd, which execFile cannot start without a shell (that would mangle JSON bodies).
+// Run the same Python entry point az.cmd uses instead.
+async function azCommand() {
+  if (process.platform !== 'win32') return { file: 'az', prefix: [] };
+  const { stdout } = await run('where.exe', ['az.cmd']);
+  const script = stdout.split(/\r?\n/)[0].trim();
+  return { file: join(dirname(script), '..', 'python.exe'), prefix: ['-IBm', 'azure.cli'] };
+}
 
 async function main() {
   const { values } = parseArgs({
@@ -24,7 +34,8 @@ async function main() {
     await mkdir(sessionUrl, { recursive: true });
     await appendFile(audit, `${new Date().toISOString()} | ${command} | started\n`);
     try {
-      const { stdout } = await run('az', [
+      const az = await azCommand();
+      const { stdout } = await run(az.file, [...az.prefix,
         'rest', '--method', method, '--url', `https://graph.microsoft.com/v1.0/${path}`,
         ...(body ? ['--headers', 'Content-Type=application/json', '--body', JSON.stringify(body)] : []),
         '--subscription', values.subscription, '--only-show-errors', '-o', 'json',
