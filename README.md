@@ -479,44 +479,26 @@ MCP concepts, then a five-step lab against the synthetic Contoso Tickets server.
 
 ### Share the presentation with participants
 
-Open the [published presentation](https://solenecodes.github.io/workshop-mcp-server/),
-choose **Your turn**, expand **Presenter: choose endpoints and share the
-exercise**, enter the public read-only sandbox HTTPS URL and optionally its
-separate protected URL, apply, then select **Copy participant link**. The link
-opens directly in the lab and restores both URLs; it never includes a token.
-An endpoint containing credentials, query parameters or a fragment is rejected.
-Only the dedicated read-only sandbox is eligible for unauthenticated HTTPS;
-the old intentionally insecure write-capable edition remains loopback-only.
+Give participants the page address. Nothing needs to be installed and no sign-in is
+required: the page is public and already points at the public workshop server.
 
-The page generates only three participant terminal commands, with source icons
-and expected JSON fields. It does not send MCP requests or verify availability.
-Participants execute real calls in their terminals. Use **Apply endpoints**
-after editing settings to regenerate commands; editing disables stale copies.
-
-Terminal commands use the official SDK through the repository helper:
-
-```sh
-export MCP_URL='http://127.0.0.1:3102/mcp'
-read -r -s -p "Workshop bearer token: " MCP_TOKEN
-export MCP_TOKEN
-printf "\n"
-npm run workshop -- tools
-npm run workshop -- get_claim_summary '{"claimId":"CLM-1001"}'
+```text
+https://solenecodes.github.io/workshop-mcp-server/sessions/01-mcp-fondamentaux/presentation.html
 ```
 
-For the local demo, enter `demo-reader-token` at the prompt. Do not put real
-credentials in shell history, links or this page. The helper handles MCP
-connection negotiation, exits nonzero on tool errors, and supports bearer or
-local no-auth access. Use a capable client such as VS Code for OAuth sign-in.
-
-To preview locally, serve the repository with
-`python3 -m http.server 8765 --bind 127.0.0.1` and open
-<http://127.0.0.1:8765/sessions/01-mcp-fondamentaux/presentation.html>.
-Direct `file://` opening cannot load the page's JavaScript modules reliably.
-
-GitHub Pages serves static presentation files only. Publishing it does **not**
-deploy the MCP server, make loopback addresses reachable from other machines,
-or add Entra/APIM controls. No public MCP endpoint is preconfigured.
+- Add `#lab` to open the live lab directly, for example `...presentation.html#lab`.
+- To share different server URLs, open **Your turn**, expand **Presenter: choose
+  endpoints and share the exercise**, apply the URLs, then select **Copy participant
+  link**. The link restores both URLs and never includes a token. Endpoints with
+  credentials, query parameters or a fragment are rejected.
+- Only the dedicated read-only server is eligible for unauthenticated HTTPS; the old
+  intentionally insecure write-capable edition remains loopback-only.
+- The day agenda in the left menu follows the participant's local time. Add
+  `?time=HH:MM` to preview a moment of the day, for example `...presentation.html?time=10:40`.
+- Open the page through its `https://` address, not as a local file: `file://` cannot load its JavaScript modules reliably. GitHub Pages only serves the page; the MCP servers run separately on Azure Container Apps.
+- Before the workshop, open the page from the venue network and run the three lab
+  steps: some corporate networks block `github.io` or `azurecontainerapps.io`. The
+  `curl` commands need the same access, so keep a presenter-screen fallback.
 
 ## Implementation map
 

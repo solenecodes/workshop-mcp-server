@@ -7,8 +7,8 @@
   <meta name="color-scheme" content="light">
   <title>MCP, from idea to first call</title>
   <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="presentation.css?v=agenda-panels-1">
-  <script type="module" src="presentation.js?v=agenda-panels-1"></script>
+  <link rel="stylesheet" href="presentation.css?v=timeline-1">
+  <script type="module" src="presentation.js?v=timeline-1"></script>
 </head>
 <body>
   <svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -45,15 +45,15 @@
   <div class="lesson-layout">
     <nav class="chapters" aria-label="Day agenda and lesson chapters">
       <div class="agenda-group">
-        <p class="nav-group-label"><svg class="icon"><use href="#i-calendar"/></svg>Day agenda</p>
+        <p class="nav-group-label"><svg class="icon"><use href="#i-calendar"/></svg>Day agenda<span class="agenda-clock" id="agenda-clock" role="timer" aria-live="off"></span></p>
         <ol class="agenda">
-      <li data-key="welcome">
+      <li data-key="welcome" data-start="09:00" data-end="09:30">
         <a class="agenda-row" href="#day-welcome"><time>09:00</time><span><b class="agenda-emoji" aria-hidden="true">🥐</b> Welcome breakfast<small>30 min</small></span></a>
       </li>
-      <li data-key="introductions">
+      <li data-key="introductions" data-start="09:30" data-end="09:45">
         <a class="agenda-row" href="#day-introductions"><time>09:30</time><span><b class="agenda-emoji" aria-hidden="true">👋</b> Introductions &amp; parking lot<small>15 min</small></span></a>
       </li>
-      <li class="current" data-key="session-1" data-nested aria-current="true">
+      <li class="current" data-key="session-1" data-start="09:45" data-end="10:15" data-nested aria-current="true">
         <a class="agenda-row" href="#why"><time>09:45</time><span><b class="agenda-emoji" aria-hidden="true">🔌</b> Session 1 – MCP fundamentals<small>30 min</small></span></a>
         <div class="agenda-sub">
         <div class="chapter-group">
@@ -69,13 +69,13 @@
         </div>
         </div>
       </li>
-      <li class="pause" data-key="break-morning">
+      <li class="pause" data-key="break-morning" data-start="10:15" data-end="10:30">
         <a class="agenda-row" href="#day-break-morning"><time>10:15</time><span><b class="agenda-emoji" aria-hidden="true">☕</b> Break<small>15 min</small></span></a>
       </li>
-      <li data-key="session-2">
+      <li data-key="session-2" data-start="10:30" data-end="11:00">
         <a class="agenda-row" href="#day-session-2"><time>10:30</time><span><b class="agenda-emoji" aria-hidden="true">☁️</b> Session 2 – MCP in enterprise and Azure architectures<small>30 min</small></span></a>
       </li>
-      <li data-key="session-3" data-nested>
+      <li data-key="session-3" data-start="11:00" data-end="11:30" data-nested>
         <a class="agenda-row" href="#auth"><time>11:00</time><span><b class="agenda-emoji" aria-hidden="true">🔐</b> Session 3 – Security and governance for MCP<small>30 min</small></span></a>
         <div class="agenda-sub">
         <div class="chapter-group">
@@ -83,19 +83,19 @@
         </div>
         </div>
       </li>
-      <li data-key="session-4">
+      <li data-key="session-4" data-start="11:30" data-end="12:15">
         <a class="agenda-row" href="#day-session-4"><time>11:30</time><span><b class="agenda-emoji" aria-hidden="true">🤖</b> Session 4 – Agent 365: governance and security overview<small>45 min</small></span></a>
       </li>
-      <li class="pause" data-key="lunch">
+      <li class="pause" data-key="lunch" data-start="12:15" data-end="14:00">
         <a class="agenda-row" href="#day-lunch"><time>12:15</time><span><b class="agenda-emoji" aria-hidden="true">🍽️</b> Lunch break<small>1 h 45</small></span></a>
       </li>
-      <li data-key="parking-review">
+      <li data-key="parking-review" data-start="14:00" data-end="14:30">
         <a class="agenda-row" href="#day-parking-review"><time>14:00</time><span><b class="agenda-emoji" aria-hidden="true">🅿️</b> Parking lot review – MCP ecosystem &amp; priorities<small>30 min</small></span></a>
       </li>
-      <li data-key="hands-on">
+      <li data-key="hands-on" data-start="14:30" data-end="16:00">
         <a class="agenda-row" href="#day-hands-on"><time>14:30</time><span><b class="agenda-emoji" aria-hidden="true">🛠️</b> Hands-on workshop: from an open MCP server to an enterprise-ready architecture<small>1 h 30</small></span></a>
       </li>
-      <li data-key="use-cases">
+      <li data-key="use-cases" data-start="16:00" data-end="16:30">
         <a class="agenda-row" href="#day-use-cases"><time>16:00</time><span><b class="agenda-emoji" aria-hidden="true">🚀</b> Use cases, next steps &amp; open discussion<small>30 min</small></span></a>
       </li>
         </ol>

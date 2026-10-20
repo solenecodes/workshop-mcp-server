@@ -374,7 +374,7 @@ footer details { max-width:65%; border:0; padding:0; background:none; margin:0; 
 
 .agenda { list-style:none; margin:0; padding:0; display:grid; gap:2px; }
 .agenda li { border-radius:4px; color:var(--muted); font-size:.75rem; line-height:1.35; }
-.agenda-row { display:grid; grid-template-columns:40px minmax(0,1fr); gap:8px; padding:6px 10px; border-radius:4px; }
+.agenda-row { display:grid; grid-template-columns:10px 38px minmax(0,1fr); gap:6px; padding:6px 10px; border-radius:4px; }
 .agenda time { font-variant-numeric:tabular-nums; }
 .agenda-row small { margin:1px 0 0; }
 .agenda li.pause { opacity:.7; }
@@ -398,3 +398,20 @@ footer details { max-width:65%; border:0; padding:0; background:none; margin:0; 
 .agenda-actions { display:flex; flex-wrap:wrap; gap:12px; margin-top:20px; }
 .agenda-actions .button { text-decoration:none; }
 @media print { .agenda-panel { display:none !important; } }
+
+/* Timeline: a rail with one dot per agenda item, driven by data-time (past, now, next). */
+.agenda li { position:relative; }
+.agenda li::after { content:""; position:absolute; left:14px; top:17px; bottom:-8px; width:2px; background:var(--border); }
+.agenda li:last-child::after { display:none; }
+.agenda li[data-time="past"]::after { background:var(--blue); opacity:.45; }
+.agenda-row::before { content:""; align-self:start; width:10px; height:10px; margin-top:3px; border-radius:50%; border:2px solid #b9b8c9; background:var(--bg); position:relative; z-index:1; box-sizing:border-box; }
+.agenda li[data-time="past"] .agenda-row::before { background:var(--blue); border-color:var(--blue); opacity:.55; }
+.agenda li[data-time="now"] .agenda-row::before { background:var(--blue); border-color:var(--blue); box-shadow:0 0 0 4px #cfcdf3; }
+.agenda li[data-time="past"] .agenda-row { color:#8a8a8a; }
+.agenda li[data-time="now"]>.agenda-row { color:var(--blue-dark); font-weight:600; }
+.agenda-badge { display:inline-block; margin-right:6px; padding:1px 7px; border-radius:999px; background:var(--blue); color:#fff; font-size:.65rem; font-weight:700; letter-spacing:.03em; text-transform:uppercase; }
+.agenda-progress { display:block; height:4px; margin-top:6px; border-radius:2px; background:#d9d8ea; overflow:hidden; }
+.agenda-progress i { display:block; height:100%; background:var(--blue); }
+.agenda-clock { margin-left:auto; color:var(--muted); font-size:.72rem; font-weight:500; font-variant-numeric:tabular-nums; }
+
+.agenda li.current>.agenda-row { color:var(--blue-dark); }
