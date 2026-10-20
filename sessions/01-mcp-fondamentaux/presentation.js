@@ -1,5 +1,5 @@
-import { defaultEndpoint, defaultProtectedEndpoint, labCommand, labSteps, parseCommandRequest, securityCode, setupCode, shareUrl, validateEndpoint } from './presentation-lab.mjs?v=agenda-nav-3';
-import { callMcp, jsonTokens } from './mcp-console.mjs?v=agenda-nav-3';
+import { defaultEndpoint, defaultProtectedEndpoint, labCommand, labSteps, parseCommandRequest, securityCode, setupCode, shareUrl, validateEndpoint } from './presentation-lab.mjs?v=agenda-nav-4';
+import { callMcp, jsonTokens } from './mcp-console.mjs?v=agenda-nav-4';
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];

@@ -397,3 +397,5 @@ footer details { max-width:65%; border:0; padding:0; background:none; margin:0; 
   .agenda, .agenda li, .agenda-sub { display:contents; }
   .agenda li:not([data-session]) { display:none; }
 }
+
+.agenda-emoji { font-weight:400; font-style:normal; margin-right:2px; }
