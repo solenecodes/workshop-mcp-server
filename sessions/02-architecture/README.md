@@ -179,16 +179,18 @@ live call.
 
 | Observation | Expected result | Status |
 | --- | --- | --- |
-| Call without a token | 401 with `WWW-Authenticate: Bearer resource_metadata=...` | Authored |
+| Call without a token | 401 with `WWW-Authenticate: Bearer resource_metadata=...` | Verified live (2026-10-20) |
 | Valid token without `Mcp.Read` | 403 `MISSING_MCP_READ_PERMISSION` | Authored |
-| Burst above `rateLimitCalls` per period | 429 with `Retry-After` | Authored |
-| Pattern B `get_ticket` CT-1002 / CT-9999 / malformed | Ticket CT-1002 / 404 / 400 | Authored |
+| Burst above `rateLimitCalls` per period | 429 with `Retry-After` | Verified live: 429 after about 30 calls (the count is approximate) |
+| Pattern B `get_ticket` CT-1002 / CT-9999 / malformed | Ticket CT-1002 / a problem with `status: 404` / a problem with `status: 400` | Verified live. The 404 and 400 arrive as text inside a normal tool result (`isError: false`), not as HTTP errors: API Management passes the REST answer back to the model |
+| Pattern A (pass-through) `get_ticket` CT-1002 | Ticket CT-1002 | Verified live |
 | Direct call to the protected Container App | **Not blocked yet**: it still answers with a valid token. Close it with [ingress IP restrictions](https://learn.microsoft.com/azure/container-apps/ip-restrictions) | Gap |
 | Gateway logs in Application Insights | Not configured by this template. Log 0 front-end response bytes ([monitor MCP traffic](https://learn.microsoft.com/azure/api-management/monitor-mcp-servers)) | Gap |
 | API Center registration | Manual, Preview; register the gateway URL only | Manual |
 
-"Authored" means built and tested offline (Bicep build and lint, `tests/gateway.test.ts`),
-not yet verified on a deployed gateway. Close the two gaps before session 6 promises
+"Authored" means built and tested offline (Bicep build and lint, `tests/gateway.test.ts`).
+"Verified live" means observed on 2026-10-20 on a gateway deployed by
+[infra/deploy-all.ps1](../../infra/deploy-all.ps1). Close the two gaps before session 6 promises
 "gateway only": restrict the Container App ingress to the gateway, and add an Application
 Insights logger with metadata only (no request or response bodies).
 
@@ -198,8 +200,9 @@ Insights logger with metadata only (no request or response bodies).
   MCP registration in API Center and the Foundry private tool catalog.
 - MCP servers are not available in API Management workspaces. Policies on an MCP server
   must never read the response body: it would break streaming.
-- Pattern B tool errors: how the generated MCP server reports a REST 404 (tool error or
-  text) is not verified live yet.
+- Pattern B tool errors: verified live on 2026-10-20. The generated MCP server returns a REST
+  404 or 400 as text inside a normal tool result (`isError: false`). The problem body stays
+  readable (`status`, `title`, `detail`), so the model can explain it.
 - The page never calls the gateway and never asks for a token. The demo token goes
   straight into an environment variable and is removed with `unset MCP_TOKEN`.
 - Resource shapes follow Microsoft Learn and were verified live on a Standard v2 gateway
