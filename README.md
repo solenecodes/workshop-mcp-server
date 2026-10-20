@@ -3,13 +3,13 @@
 **Start with the [visual presentation & participant lab](https://solenecodes.github.io/workshop-mcp-server/).**
 Short chapters: why MCP exists, its architecture, an animated call, MCP vs
 API, a guided three-step live lab (copy an editable curl command or run it from the page),
-and access controls. **[Session 3](sessions/01-mcp-fondamentaux/presentation.html#security-lab)**
-continues in the same page and theme: test the same ticket request publicly and
-with protected access, then explain identity, permissions, token boundaries and
-agent governance. Its
-[comparison lab](sessions/01-mcp-fondamentaux/presentation.html#security-lab) keeps
-the public request in the browser and real Entra-protected requests in the
-terminal. See the [session 3 guide](sessions/03-security/README.md) for prerequisites.
+and access controls. **[Session 3](sessions/01-mcp-fondamentaux/presentation.html#rights)**
+continues in the same page and theme with four concise slides: acting identity,
+OBO versus service access, MCP risks and controls, and Entra Agent ID.
+The 15-minute sequence keeps explanations in the
+[presenter notes](sessions/03-security/README.md), not in extra panels or a
+duplicate lab. The real browser calls remain in Session 1; protected requests
+stay in a terminal.
 
 **All tickets are invented.** The read-only MCP server wraps a small *Contoso
 Tickets API* with two operations. No real system is connected and no data leaves
@@ -469,30 +469,36 @@ to demonstrate a backend weakness or does not invoke the expected tool.
 
 | Time | Duration | Session |
 | --- | ---: | --- |
-| 09:00–09:20 | 20 min | Welcome and objectives |
-| **09:20–10:20** | **60 min** | [1 · MCP fundamentals: two demos + 15-minute practice](sessions/01-mcp-fondamentaux/README.md) |
-| 10:20–10:35 | 15 min | Break |
-| **10:35–11:10** | **35 min** | [2 · MCP in enterprise and Azure architectures, with APIM](sessions/02-architecture/README.md) |
-| **11:10–11:45** | **35 min** | [3 · Security and authentication](sessions/03-security/README.md) |
-| 11:45–12:30 | 45 min | Agent governance (optional) |
+| 09:00–09:30 | 30 min | Welcome breakfast |
+| 09:30–09:45 | 15 min | Introductions and parking lot |
+| **09:45–10:15** | **30 min** | [1 · MCP fundamentals](sessions/01-mcp-fondamentaux/presentation.html#why) |
+| **10:15–10:45** | **30 min** | [2 · MCP in enterprise and Azure architectures, with APIM](sessions/02-architecture/README.md) |
+| 10:45–11:00 | 15 min | Break |
+| **11:00–11:15** | **15 min** | [3 · Security and governance for MCP](sessions/03-security/README.md) |
+| 11:15–12:00 | 45 min | Agent 365: governance and security overview |
+| **12:00–12:30** | **30 min** | **Engineering REX – MCP Servers in the Real World · Fethi Dilmi** |
 
-**12:30–13:30 — Lunch**
+**12:30–14:00 — Lunch**
 
 ### Afternoon
 
 | Time | Duration | Session |
 | --- | ---: | --- |
-| 13:30–14:00 | 30 min | Discussion and use-case selection |
-| **14:00–15:15** | **75 min** | [6 · Prepared controls hands-on](sessions/06-hands-on/README.md) |
-| 15:15–15:30 | 15 min | Break |
-| 15:30–16:00 | 30 min | Use cases and next steps |
-| 16:00–16:30 | 30 min | Questions and deep dive (optional) |
+| 14:00–14:30 | 30 min | Parking lot review – MCP ecosystem and priorities |
+| **14:30–16:00** | **90 min** | [Hands-on workshop: from an open MCP server to an enterprise-ready architecture](https://web-mcp-host01-f80ce789cb05568a-portal.azurewebsites.net/?lang=en#/tracks) |
+| 16:00–16:30 | 30 min | Use cases, next steps and open discussion |
 
 Only sessions with demos/practice have folders. The
 [web presentation](sessions/01-mcp-fondamentaux/presentation.html) teaches general
-MCP concepts, then a five-step lab against the synthetic Contoso Tickets server.
+MCP through six English chapters adapted from the supplied course excerpts, then goes directly to a three-request
+live lab against the synthetic Contoso Tickets server. Session 1 keeps its
+30-minute slot: 15 minutes of foundations and 15 minutes of real examples.
 
 ### Share the presentation with participants
+
+Use the chevron beside a session in the agenda to collapse or expand its
+chapters without leaving the current lesson. Selecting the session title
+reopens its chapter list.
 
 Give participants the page address. Nothing needs to be installed and no sign-in is
 required: the page is public and already points at the public workshop server.

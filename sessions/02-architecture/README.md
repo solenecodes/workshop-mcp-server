@@ -1,6 +1,6 @@
 # Session 2 - MCP in enterprise and Azure architectures
 
-[Workshop](../../README.md) · **10:30–11:00 · 30 minutes** · [Presenter page](presentation.html)
+[Workshop](../../README.md) · **10:15–10:45 · 30 minutes** · [Presenter page](presentation.html)
 
 Overview of the main options for integrating and exposing MCP servers within an
 enterprise architecture, including Azure API Management (APIM). It starts from the

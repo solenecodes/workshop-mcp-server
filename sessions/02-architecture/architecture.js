@@ -1,4 +1,5 @@
-import { demoCommands, demoSettings, doorEdges, doorSteps, tokenEdges, tokenSteps } from './architecture-steps.mjs?v=session-2-5';
+import { demoCommands, demoSettings, doorEdges, doorSteps, tokenEdges, tokenSteps } from './architecture-steps.mjs?v=session-2-main-6';
+import { initializeAgenda } from '../01-mcp-fondamentaux/presentation-agenda.mjs?v=agenda-collapse-1';
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -133,6 +134,7 @@ $('#demo-signed-in').textContent = commands.signedIn;
 
 const chapters = $$('.chapter:not(.agenda-panel)');
 const navigation = $$('.chapters a:not(.agenda-row)');
+initializeAgenda();
 const lessons = chapters.length - 1;
 let chapterIndex = 0;
 function showChapter(focus = false) {
@@ -144,7 +146,7 @@ function showChapter(focus = false) {
     if (link.getAttribute('href') === `#${chapters[chapterIndex].id}`) link.setAttribute('aria-current', 'step');
     else link.removeAttribute('aria-current');
   });
-  const currentLink = $('.chapters a[aria-current="step"]');
+  const currentLink = $('.agenda-sub:not([hidden]) a[aria-current="step"]') ?? $('.agenda li.current .agenda-row');
   const menu = $('.chapters');
   if (currentLink && menu.scrollHeight > menu.clientHeight) {
     const top = currentLink.getBoundingClientRect().top - menu.getBoundingClientRect().top + menu.scrollTop;
