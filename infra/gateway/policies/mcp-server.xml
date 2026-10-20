@@ -1,0 +1,83 @@
+<!--
+  Session 2 - Policy at MCP server scope, shared by both patterns:
+    pattern A, the existing protected MCP server on Container Apps, forwarded as is (passthrough);
+    pattern B, the Contoso Tickets REST API exposed as MCP tools.
+  Same rules as the protected sandbox (src/sandbox/auth.ts): a Microsoft Entra v2 token for this API only (401),
+  then the delegated scope or application role Mcp.Read (403). The gateway adds what the server alone cannot:
+  one public address, a limit per caller (429) and a 401 challenge naming the Protected Resource Metadata (RFC 9728),
+  so clients such as VS Code learn where to sign in.
+  Never reads the request or response body: MCP responses are streamed (Microsoft Learn).
+  Placeholders between double underscores are replaced by infra/gateway/main.bicep with non-secret values.
+  Adapted from Azure-Samples/AI-Gateway, lab mcp-prm-oauth (src/bicep/apim-mcp/mcp-api.policy.xml),
+  commit 1679e3137d2fe7592d2a668d77ff71550d35b69e, MIT License, Copyright (c) Microsoft Corporation.
+-->
+<policies>
+  <inbound>
+    <base />
+    <!-- Passthrough servers get their 401 challenge rewritten under the API path: answer that anonymous metadata GET here. -->
+    <choose>
+      <when condition="@(context.Request.Method == "GET" && context.Request.OriginalUrl.Path.EndsWith("/.well-known/oauth-protected-resource/__MCP_PATH__/mcp"))">
+        <rate-limit-by-key calls="60" renewal-period="60" counter-key="@("workshop-prm-" + context.Request.IpAddress)" />
+        <return-response>
+          <set-status code="200" reason="OK" />
+          <set-header name="Content-Type" exists-action="override">
+            <value>application/json</value>
+          </set-header>
+          <set-body>__PRM_JSON__</set-body>
+        </return-response>
+      </when>
+    </choose>
+    <validate-azure-ad-token tenant-id="__TENANT_ID__" header-name="Authorization" failed-validation-httpcode="401" failed-validation-error-message="Use a tenant-issued access token for this API with Mcp.Read permission." output-token-variable-name="mcp-jwt">
+      <audiences>
+        <audience>__CLIENT_ID__</audience>
+      </audiences>
+    </validate-azure-ad-token>
+    <!-- The caller comes only from the validated token, never from a header the caller can set. -->
+    <set-variable name="mcp-caller-oid" value="@{
+        var claims = ((Jwt)context.Variables["mcp-jwt"]).Claims;
+        return claims.ContainsKey("oid") ? claims["oid"][0] : string.Empty;
+    }" />
+    <choose>
+      <when condition="@{
+          var claims = ((Jwt)context.Variables["mcp-jwt"]).Claims;
+          string[] scopes = claims.ContainsKey("scp") ? claims["scp"][0].Split(' ') : new string[0];
+          string[] roles = claims.ContainsKey("roles") ? claims["roles"] : new string[0];
+          return string.IsNullOrEmpty((string)context.Variables["mcp-caller-oid"])
+              || (Array.IndexOf(scopes, "Mcp.Read") < 0 && Array.IndexOf(roles, "Mcp.Read") < 0);
+      }">
+        <return-response>
+          <set-status code="403" reason="Forbidden" />
+          <set-header name="Content-Type" exists-action="override">
+            <value>application/json</value>
+          </set-header>
+          <set-body>{"error":"MISSING_MCP_READ_PERMISSION","message":"Use a tenant-issued access token for this API with Mcp.Read permission."}</set-body>
+        </return-response>
+      </when>
+    </choose>
+    <!-- One counter per caller object ID: a burst gets HTTP 429 with Retry-After. -->
+    <rate-limit-by-key calls="__RATE_LIMIT_CALLS__" renewal-period="__RATE_LIMIT_PERIOD__" counter-key="@("__MCP_PATH__-" + (string)context.Variables["mcp-caller-oid"])" />
+  </inbound>
+  <backend>
+    <base />
+  </backend>
+  <outbound>
+    <base />
+  </outbound>
+  <on-error>
+    <base />
+    <choose>
+      <when condition="@(context.LastError != null ? context.LastError.Source == "validate-azure-ad-token" : false)">
+        <return-response>
+          <set-status code="401" reason="Unauthorized" />
+          <set-header name="WWW-Authenticate" exists-action="override">
+            <value>Bearer resource_metadata="__PRM_URL__"</value>
+          </set-header>
+          <set-header name="Content-Type" exists-action="override">
+            <value>application/json</value>
+          </set-header>
+          <set-body>{"error":"MISSING_ACCESS_TOKEN","message":"Use a tenant-issued access token for this API with Mcp.Read permission."}</set-body>
+        </return-response>
+      </when>
+    </choose>
+  </on-error>
+</policies>
