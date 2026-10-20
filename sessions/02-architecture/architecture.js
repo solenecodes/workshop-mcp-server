@@ -1,4 +1,4 @@
-import { demoCommands, demoSettings, doorEdges, doorSteps, tokenEdges, tokenSteps } from './architecture-steps.mjs?v=session-2-3';
+import { demoCommands, demoSettings, doorEdges, doorSteps, tokenEdges, tokenSteps } from './architecture-steps.mjs?v=session-2-4';
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];

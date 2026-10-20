@@ -123,3 +123,12 @@ test('every lesson ends with direct Microsoft Learn links, and the page states t
   assert.match(html, /MCP version 2025-06-18 or later, over Streamable HTTP or SSE/);
   assert.match(html, /log 0 bytes of the front-end response body/);
 });
+test('the demo carries presenter notes and the deployed-architecture diagram generated from its drawio source', () => {
+  for (const ext of ['drawio', 'svg', 'png']) assert.ok(readFileSync(new URL(`../sessions/02-architecture/diagrams/deployed-architecture.${ext}`, import.meta.url)).length > 1000, `${ext} exists`);
+  const drawio = read('sessions/02-architecture/diagrams/deployed-architecture.drawio');
+  for (const name of ['contoso-tickets-mcp', 'contoso-tickets-existing', 'ca-mcp-public-', 'ca-mcp-auth-', 'ca-mcp-apis-', 'apim-mcp-', 'Mcp.Backend.Read']) assert.ok(drawio.includes(name), `diagram names ${name}`);
+  const svg = read('sessions/02-architecture/diagrams/deployed-architecture.svg');
+  assert.doesNotMatch(svg, /<script|<image[^>]+href="https?:/);
+  assert.match(html, /class="presenter-notes"[\s\S]*never reaches the Container Apps[\s\S]*isError: false/);
+  assert.match(html, /src="diagrams\/deployed-architecture\.svg"/);
+});

@@ -8,8 +8,8 @@
   <title>MCP in enterprise and Azure architectures</title>
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="../01-mcp-fondamentaux/presentation.css?v=day-strip-2">
-  <link rel="stylesheet" href="architecture.css?v=session-2-3">
-  <script type="module" src="architecture.js?v=session-2-3"></script>
+  <link rel="stylesheet" href="architecture.css?v=session-2-4">
+  <script type="module" src="architecture.js?v=session-2-4"></script>
 </head>
 <body>
   <svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -257,9 +257,18 @@
             <div class="copy-panel dark"><div><span>Bash · after az login</span><button class="text-button" type="button" data-copy="demo-signed-in"><svg class="icon"><use href="#i-copy"/></svg>Copy</button></div><pre><code id="demo-signed-in"></code></pre></div></li>
           <li><h3>In the Azure portal</h3><p>API Management → <strong>MCP Servers</strong> → <code>contoso-tickets-mcp</code> → <strong>Tools</strong>: two tools, each mapped to one REST operation. Then <strong>Policies</strong>: token check, Mcp.Read, call budget. No subscription key.</p></li>
         </ol>
-        <p class="legend"><svg class="icon" aria-hidden="true"><use href="#i-shield"/></svg><span>Replace the placeholders with the deployed values. This page never runs these commands and never asks for a token.</span></p>
+        <p class="legend"><svg class="icon" aria-hidden="true"><use href="#i-shield"/></svg><span>Open this page with <code>?gateway=&lt;apim-name&gt;.azure-api.net&amp;clientId=&lt;api-client-id&gt;</code> to fill in the deployed values (<code>deploy-all.ps1</code> prints this link). This page never runs these commands and never asks for a token.</span></p>
         <p class="learn-links"><svg class="icon"><use href="#i-course"/></svg><span>Microsoft Learn: <a href="https://learn.microsoft.com/azure/api-management/manage-mcp-servers-rest-api">Manage MCP servers programmatically</a> · <a href="https://learn.microsoft.com/azure/api-management/secure-mcp-servers">Secure access to MCP servers</a></span></p>
         <details><summary>Fallback if the gateway is not deployed</summary><p>Show the 401, 403 and authorized flow of the Session 3 preview on the Session 1 page, then the animation of Lesson 3. Say clearly that the gateway was not called.</p></details>
+        <details class="presenter-notes"><summary>Presenter notes: what the room will see, and why</summary><ul>
+          <li><strong>The demo uses pattern B, and pattern B never reaches the Container Apps.</strong> The gateway policy answers with the same three synthetic tickets. If asked, say so; pattern A (<code>contoso-tickets-existing</code>) is the one that forwards to the protected server.</li>
+          <li><strong>The output looks different from Session 1.</strong> Session 1 showed <code>structuredContent</code> with <code>sources: SQLite</code>. Here the ticket arrives as plain JSON text with no source, and the tool descriptions are the gateway's (“Returns the synthetic Contoso tickets…”).</li>
+          <li><strong>An unknown or malformed ticket is not a tool error here.</strong> CT-9999 and a malformed identifier come back as a 404 or 400 problem written in the text, with <code>isError: false</code>: the gateway passes the REST answer to the model. Through pattern A, the same calls return <code>isError: true</code>, as in Session 1.</li>
+          <li><strong>No 403 live.</strong> Azure CLI always delivers <code>Mcp.Read</code>, so <code>MISSING_MCP_READ_PERMISSION</code> stays an illustration (Lesson 4).</li>
+          <li><strong>Portal.</strong> Under <em>Tools</em>, the resource names may read <code>list-tickets-…</code> and <code>get-ticket-…</code>; clients see the display names <code>list_tickets</code> and <code>get_ticket</code>. Check it during the rehearsal.</li>
+          <li><strong>Logs.</strong> “The logs keep who asked” is an illustration: Application Insights is not configured on the gateway yet.</li>
+        </ul></details>
+        <details class="architecture-figure"><summary>Deployed architecture (diagram)</summary><figure><a href="diagrams/deployed-architecture.png"><img src="diagrams/deployed-architecture.svg" alt="Workshop clients call the public Container App directly, or API Management with an Entra token: pattern B answers from synthetic tickets, pattern A forwards to the protected Container App, which calls the internal ticket API with its managed identity." loading="lazy"></a><figcaption>Source: <code>diagrams/deployed-architecture.drawio</code>. Names come from Bicep: <code>&lt;token&gt;</code> is a <code>uniqueString</code> per environment.</figcaption></figure></details>
       </section>
 
       <div class="chapter-pagination" hidden><button class="button" id="chapter-prev" type="button">← Previous</button><span id="chapter-count"></span><button class="button primary" id="chapter-next" type="button">Next lesson →</button></div>
