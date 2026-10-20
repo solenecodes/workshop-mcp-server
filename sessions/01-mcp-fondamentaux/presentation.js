@@ -1,5 +1,5 @@
-import { defaultEndpoint, defaultProtectedEndpoint, labCommand, labSteps, parseCommandRequest, securityCode, setupCode, shareUrl, validateEndpoint } from './presentation-lab.mjs?v=day-strip-1';
-import { callMcp, jsonTokens } from './mcp-console.mjs?v=day-strip-1';
+import { defaultEndpoint, defaultProtectedEndpoint, labCommand, labSteps, parseCommandRequest, securityCode, setupCode, shareUrl, validateEndpoint } from './presentation-lab.mjs?v=day-strip-2';
+import { callMcp, jsonTokens } from './mcp-console.mjs?v=day-strip-2';
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];

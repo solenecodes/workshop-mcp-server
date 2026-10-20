@@ -53,7 +53,7 @@ test('shared links preserve both endpoints but never page parameters or credenti
   assert.throws(() => shareUrl(url.href, { endpoint: defaultEndpoint, protectedEndpoint: 'https://protected.example.org/?token=secret' }));
 });
 
-test('six guided steps build one copyable curl request each and mark only what changed', () => {
+test('three guided steps build one copyable curl request each and mark only what changed', () => {
   const settings = { endpoint: 'https://sandbox.example.org/mcp' };
   const commands = labSteps.map((_, index) => labCommand(index, settings));
   assert.equal(commands.length, 3);
