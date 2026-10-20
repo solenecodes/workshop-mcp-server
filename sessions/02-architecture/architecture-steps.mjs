@@ -156,7 +156,11 @@ export function demoSettings(search = '') {
 
 // Presenter demo, with the Session 1 terminal client. The token goes straight into a variable: never shown, never in a URL.
 // infra/prepare-identity.mjs pre-authorizes Azure CLI for the delegated Mcp.Read scope.
-export function demoCommands(gatewayHost = '<apim-name>.azure-api.net', clientId = '<api-client-id>') {
+// The workshop gateway (deployed by infra/deploy-all.ps1). A client ID is a public identifier, not a secret.
+export const defaultGateway = 'apim-mcp-l3n3ubiuprdcm.azure-api.net';
+export const defaultClientId = '9b10d3e8-744b-4def-bf59-7477e7f60957';
+
+export function demoCommands(gatewayHost = defaultGateway, clientId = defaultClientId) {
   const url = `https://${gatewayHost}/${gatewayPath}/mcp`;
   return {
     anonymous: `npm run workshop -- --url '${url}' --anonymous tools`,

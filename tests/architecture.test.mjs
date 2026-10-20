@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { demoCommands, demoSettings, doorEdges, doorNodes, doorSteps, gatewayPath, tokenEdges, tokenNodes, tokenSteps } from '../sessions/02-architecture/architecture-steps.mjs';
+import { defaultClientId, defaultGateway, demoCommands, demoSettings, doorEdges, doorNodes, doorSteps, gatewayPath, tokenEdges, tokenNodes, tokenSteps } from '../sessions/02-architecture/architecture-steps.mjs';
 const handsOn = 'https://web-mcp-host01-f80ce789cb05568a-portal.azurewebsites.net/?lang=en#/tracks';
 
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8').replace(/\r\n/g, '\n');
@@ -80,7 +80,10 @@ test('the presenter link fills the demo with a real gateway and client ID, and r
   assert.deepEqual(demoSettings('?gateway=evil.example.org/x&clientId=nope'), [undefined, undefined]);
   assert.deepEqual(demoSettings(`?gateway=a'$(id).azure-api.net&clientId=${id}'`), [undefined, undefined]);
   assert.deepEqual(demoSettings(''), [undefined, undefined]);
-  assert.match(demoCommands(...demoSettings('')).anonymous, /<apim-name>\.azure-api\.net/);
+  assert.match(demoCommands(...demoSettings('')).anonymous, new RegExp(`https://${defaultGateway.replace(/\./g, '\\.')}/`));
+  assert.match(demoCommands(...demoSettings('')).signedIn, new RegExp(`api://${defaultClientId}/Mcp\\.Read`));
+  assert.match(defaultGateway, /^[a-z0-9-]+\.azure-api\.net$/);
+  assert.match(defaultClientId, /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
 });
 
 test('cache suffixes match between the page and its module import', () => {
