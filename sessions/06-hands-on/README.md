@@ -6,6 +6,13 @@ Participants reconnect and call the prepared server; they do **not** configure
 Entra, APIM or the security infrastructure during this exercise. The 15-minute
 morning read/write practice is separate and is not counted again here.
 
+**Two ways through the afternoon.** Participants with their own non-production
+subscription build the same levels themselves with the
+[90-minute afternoon path](https://web-mcp-host01-f80ce789cb05568a-portal.azurewebsites.net/?lang=en#/tracks)
+(modules 01 to 03, 04 as a stretch, always clean up with 99). Everyone else follows
+this observation plan on the prepared environment. Both groups use the same levels:
+open, Entra-protected, behind the gateway.
+
 ## Target schedule
 
 | Duration | Prepared environment | Participant observations |

@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { demoCommands, doorEdges, doorNodes, doorSteps, gatewayPath, tokenEdges, tokenNodes, tokenSteps } from '../sessions/02-architecture/architecture-steps.mjs';
-const handsOn = 'https://web-mcp-host01-f80ce789cb05568a-portal.azurewebsites.net/?lang=en#/start';
+const handsOn = 'https://web-mcp-host01-f80ce789cb05568a-portal.azurewebsites.net/?lang=en#/tracks';
 
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8').replace(/\r\n/g, '\n');
 const html = read('sessions/02-architecture/presentation.html');

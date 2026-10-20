@@ -49,15 +49,21 @@ show the same 401, 403 and authorized calls, labeled as illustrations.
 | --- | --- | --- | --- |
 | Container Apps environment, registry, public MCP, protected MCP, internal ticket API | Workshop owner (Solene) | [infra/main.bicep](../../infra/main.bicep), then the image build and redeploy | Sessions 1, 3, 6; pattern A |
 | Entra API registration: `Mcp.Read` scope and role, `Mcp.Backend.Read`, Azure CLI pre-authorized | Workshop owner | [infra/prepare-identity.mjs](../../infra/prepare-identity.mjs), then assign `Mcp.Backend.Read` to the MCP apps' identities | Every protected call; the demo token |
-| API Management gateway, both MCP servers, metadata | Session 2 presenter | [infra/gateway/main.bicep](../../infra/gateway/main.bicep) with `entraClientId` = the API client ID above and `protectedMcpOrigin` = `https://<protectedAppFqdn>` (output of `infra/main.bicep`) | The demo; session 6 |
-| API Center entry | Session 2 presenter, optional | Azure portal, manual (Preview) | Lesson 6, session 6 |
+| API Management gateway, both MCP servers, metadata | Workshop owner, in the same resource group | [infra/gateway/main.bicep](../../infra/gateway/main.bicep) with `entraTenantId` = the workshop tenant, `entraClientId` = the API client ID above and `protectedMcpOrigin` = `https://<protectedAppFqdn>` (output of `infra/main.bicep`) | The demo; session 6 |
+| API Center entry | Workshop owner, optional | Azure portal, manual (Preview) | Lesson 6, session 6 |
+| Rehearsal and presentation of the gateway | Session 2 presenter | Reader on the resource group, and a user in the workshop tenant for the demo token | The demo |
 | Presenter pages | Nobody | GitHub Pages serves `sessions/` | All sessions |
-| Hands-on resources at 14:30 | Each participant, in their own non-production subscription | The [self-paced guide](https://web-mcp-host01-f80ce789cb05568a-portal.azurewebsites.net/?lang=en#/start), modules 00 to 07, then 99 | The hands-on workshop |
+| Hands-on resources at 14:30 | Each participant, in their own non-production subscription | The [90-minute afternoon path](https://web-mcp-host01-f80ce789cb05568a-portal.azurewebsites.net/?lang=en#/tracks) of the self-paced guide: modules 01 to 03, 04 as a stretch, always 99 | The hands-on workshop |
 
-The presenter needs Contributor on the resource group for the gateway, and a user in the
-workshop tenant for the demo token. The hands-on guide asks participants to clone
-[olivMertens/workshop-mcp](https://github.com/olivMertens/workshop-mcp): make sure they can
-access it before 14:30.
+One tenant, one owner and one clean-up: the workshop owner deploys and deletes the gateway
+with the Container Apps, because session 6 relies on it. The session 2 presenter needs only
+Reader on the resource group and a user in the workshop tenant. The hands-on guide asks
+participants to clone [olivMertens/workshop-mcp](https://github.com/olivMertens/workshop-mcp).
+
+The gateway can also live in another subscription or tenant:
+`validate-azure-ad-token` trusts the tenant you name, not the tenant of the gateway. Then set
+`entraTenantId` explicitly (the template defaults to the deployment tenant), and close the
+direct-backend gap of session 6 by allowing that gateway's outbound addresses on the Container App.
 
 ## Checked against Microsoft Learn (2026-10-20)
 
@@ -106,15 +112,15 @@ Both add what the server alone cannot: one public address, a call budget per cal
 ([RFC 9728](https://www.rfc-editor.org/rfc/rfc9728)) so that VS Code finds where to sign
 in. No subscription key: access depends on the Entra token only.
 
-## Prepare the gateway (presenter, before the day)
+## Prepare the gateway (workshop owner, before the day)
 
 The gateway is optional and separate from [infra/main.bicep](../../infra/main.bicep).
-Deploy it into the existing resource group after the Container Apps and the Entra API
-registration ([prepare-identity.mjs](../../infra/prepare-identity.mjs)). Copy
+The workshop owner deploys it into the existing resource group after the Container Apps and
+the Entra API registration ([prepare-identity.mjs](../../infra/prepare-identity.mjs)). Copy
 [infra/gateway/main.parameters.json](../../infra/gateway/main.parameters.json) to an
 ignored file and replace every placeholder: the API Management name, a team or example
-publisher address, the API client ID, and the HTTPS origin of the protected Container App
-(leave it empty for pattern B only).
+publisher address, the workshop tenant ID, the API client ID, and the HTTPS origin of the
+protected Container App (leave it empty for pattern B only).
 
 ```sh
 az deployment group what-if --resource-group '<resource-group>' \
@@ -128,7 +134,8 @@ servers (one with pattern A), two tools and the metadata API. Basic v2 is enough
 creation takes several minutes and the service is billed while it exists. Delete it the
 same day, or keep it only until session 6.
 
-Then rehearse the [demo](presentation.html#demo) from the venue network:
+Then the session 2 presenter rehearses the [demo](presentation.html#demo) from the venue
+network, signed in with a user of the workshop tenant (`az login --tenant <workshop-tenant-id>`):
 
 1. `--anonymous tools` through the gateway: `HTTP 401`.
 2. The metadata URL: the gateway URL as resource, the tenant, the `Mcp.Read` scope.

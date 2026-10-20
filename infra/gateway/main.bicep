@@ -19,6 +19,7 @@ param skuName string = 'BasicV2'
 @description('A team or example address. Never a personal address in a public repository.')
 param publisherEmail string
 param publisherName string = 'MCP workshop'
+@description('Workshop tenant that issues the tokens. Set it explicitly when the gateway is deployed in another tenant.')
 param entraTenantId string = tenant().tenantId
 @description('Client ID of the workshop API registration (infra/prepare-identity.mjs). Tokens are v2: the audience is this GUID.')
 param entraClientId string
