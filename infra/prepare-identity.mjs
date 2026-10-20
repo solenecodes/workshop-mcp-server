@@ -67,7 +67,7 @@ async function main() {
   if (!application) {
     const scopeId = randomUUID();
     const permissionName = 'Read the synthetic MCP workshop sandbox';
-    const permissionDescription = 'Discover and call read-only tools against fictional workshop customer records.';
+    const permissionDescription = 'Discover and call read-only tools against fictional Contoso support tickets.';
     application = await graph('POST', 'applications', {
       displayName: values.name,
       signInAudience: 'AzureADMyOrg',

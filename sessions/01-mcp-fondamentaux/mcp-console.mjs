@@ -1,6 +1,6 @@
 import { validateEndpoint } from './presentation-lab.mjs';
 
-const tools = new Set(['get_customer_file', 'get_customer_overview', 'list_customer_claims', 'get_incident_weather']);
+const tools = new Set(['list_tickets', 'get_ticket']);
 
 // Splits formatted JSON into typed tokens. `focus` marks every value on the lines
 // of the listed keys so the page can draw attention to the important information.

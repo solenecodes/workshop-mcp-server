@@ -7,8 +7,8 @@
   <meta name="color-scheme" content="light">
   <title>MCP, from idea to first call</title>
   <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="presentation.css?v=weather-lab-1">
-  <script type="module" src="presentation.js?v=weather-lab-1"></script>
+  <link rel="stylesheet" href="presentation.css?v=tickets-lab-1">
+  <script type="module" src="presentation.js?v=tickets-lab-1"></script>
 </head>
 <body>
   <svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -164,24 +164,23 @@
       <section id="lab" class="chapter" aria-labelledby="lab-title">
         <p class="eyebrow practice-label"><svg class="icon"><use href="#i-practice"/></svg>Your turn · Live lab · 15 minutes</p>
         <h2 id="lab-title" tabindex="-1">Call an MCP server yourself</h2>
-        <p class="intro">Send six real requests to a live MCP server. Copy each command into a terminal, or run it from this page. No installation and no AI model needed.</p>
+        <p class="intro">Send five real requests to a live MCP server. Copy each command into a terminal, or run it from this page. No installation and no AI model needed.</p>
         <article class="lab-scenario" aria-labelledby="scenario-title">
           <h3 id="scenario-title"><svg class="icon"><use href="#i-chat"/></svg>The scenario</h3>
-          <p>Robin Sample reports storm damage to the roof of a home in Lyon on 10 June 2024. A claims handler asks an AI assistant: <q>Does the weather that day support this claim?</q></p>
-          <p>The assistant knows none of this. It asks an MCP server, which gathers the answer from three systems: the customer file, the claim, and a public weather archive. <strong>In this lab, you play the assistant</strong>: you send the same requests it would send, one step at a time.</p>
+          <p>An IT support engineer at Contoso asks an AI assistant: <q>Which tickets need attention, and what is CT-1001 about?</q></p>
+          <p>The assistant cannot see the ticketing system. It asks an MCP server that sits in front of the ticket API. <strong>In this lab, you play the assistant</strong>: you send the same requests it would send, one step at a time.</p>
         </article>
-        <div class="source-overview" aria-label="The MCP server connects to three data sources">
-          <div class="source-hub"><svg class="icon"><use href="#i-server"/></svg><strong>MCP server</strong><span>One endpoint, four tools</span></div>
-          <div class="source-cards">
-            <article><span class="source-kind"><svg class="icon"><use href="#i-file"/></svg>Private REST API</span><strong>Customers API</strong><p>Name, date of birth and address of five fictional customers: DEMO-PERSON-1 to DEMO-PERSON-5. Reachable only from the MCP server.</p><code>GET /api/customers/v1/customers/{id}</code></article>
-            <article><span class="source-kind"><svg class="icon"><use href="#i-database"/></svg>Private REST APIs + SQLite</span><strong>Claims and Policies APIs</strong><p>Each customer's home-insurance claim (storm or flooding, date, town, amount in euros) and its policy coverage, stored in SQLite behind two REST APIs.</p><code>GET /api/claims/v1/claims?customerId=…</code></article>
-            <article><span class="source-kind"><svg class="icon"><use href="#i-globe"/></svg>Public Internet API</span><strong>Weather API</strong><p>Real observed weather for a town on a past date: wind gusts, rain, temperature. Only the town's coordinates and the date leave the server.</p><code>GET archive-api.open-meteo.com/v1/archive</code></article>
+        <div class="source-overview" aria-label="The MCP server connects to the ticket API">
+          <div class="source-hub"><svg class="icon"><use href="#i-server"/></svg><strong>MCP server</strong><span>One endpoint, two tools</span></div>
+          <div class="source-cards single">
+            <article><span class="source-kind"><svg class="icon"><use href="#i-database"/></svg>Private REST API + SQLite</span><strong>Contoso Tickets API</strong><p>A read-only REST API in front of a small database of fictional support tickets. It is reachable only from the MCP server. Each tool maps to one REST operation.</p>
+              <ul class="tool-map"><li><code>list_tickets</code><span>→</span><code>GET /tickets</code></li><li><code>get_ticket</code><span>→</span><code>GET /tickets/{ticketId}</code></li></ul></article>
           </div>
         </div>
         <p id="endpoint-status" class="notice" role="status">The lab connects to the public workshop server. Enable JavaScript to use it.</p>
         <p id="endpoint-error" class="error" role="alert" hidden></p>
         <article class="lab-steps" aria-labelledby="lab-steps-title">
-          <h3 id="lab-steps-title"><svg class="icon"><use href="#i-code"/></svg>Six requests, one at a time</h3>
+          <h3 id="lab-steps-title"><svg class="icon"><use href="#i-code"/></svg>Five requests, one at a time</h3>
           <div id="lab-tabs" class="step-tabs" role="group" aria-label="Lab steps"></div>
           <div class="lab-step-head"><span class="step-count" id="lab-count"></span><h4 id="lab-step-title"></h4><p id="lab-why"></p></div>
           <div class="lab-split">
@@ -211,30 +210,30 @@
           </form>
           <p>Use only the dedicated read-only sandbox here, never the intentionally insecure write-capable server. Remote endpoints require HTTPS. This page does not verify server availability. Shared links contain endpoint URLs only, never tokens.</p>
         </details>
-        <noscript><p class="notice">The lab needs JavaScript to run steps and generate commands for the presenter's endpoint. See the <a href="https://github.com/solenecodes/workshop-mcp-server#multi-source-terminal-lab">terminal instructions</a>.</p></noscript>
+        <noscript><p class="notice">The lab needs JavaScript to run steps and generate commands for the presenter's endpoint. See the <a href="https://github.com/solenecodes/workshop-mcp-server#terminal-lab">terminal instructions</a>.</p></noscript>
       </section>
 
       <section id="auth" class="chapter" aria-labelledby="auth-title">
         <p class="eyebrow"><svg class="icon"><use href="#i-shield"/></svg>Next session · Security</p>
         <h2 id="auth-title" tabindex="-1">Who can call which tools?</h2>
-        <p class="intro">Authentication identifies the caller. Authorization checks what they can access. Human approval adds a separate check before a sensitive change.</p>
+        <p class="intro">Authentication identifies the caller. Authorization checks what that caller is allowed to do. Both happen before any tool runs.</p>
         <div class="flow" data-flow="auth">
-          <div class="flow-top"><span class="tag">Illustration · local demo policy</span><label>Request <select data-scenario><option value="allowed">Reader → assigned claim</option><option value="denied">Reader → another claim</option><option value="write">Adjuster → propose a note</option><option value="anonymous">No token → 401</option></select></label></div>
+          <div class="flow-top"><span class="tag">Illustration · protected endpoint</span><label>Request <select data-scenario><option value="allowed">Valid token → tickets</option><option value="denied">Valid token, no permission → 403</option><option value="anonymous">No token → 401</option></select></label></div>
           <div class="flow-diagram">
             <svg class="flow-lines" aria-hidden="true"><g data-paths></g><path data-active-path/><circle data-packet r="5" visibility="hidden"/></svg>
             <article data-node="user"><svg class="icon"><use href="#i-user"/></svg><h3>Caller</h3><span>Trusted identity?</span></article>
             <article data-node="app"><svg class="icon"><use href="#i-key"/></svg><h3>Authentication</h3><span>Who are you?</span></article>
-            <article data-node="server"><svg class="icon"><use href="#i-shield"/></svg><h3>Authorization</h3><span>This tool + this claim?</span></article>
-            <article data-node="data"><svg class="icon"><use href="#i-file"/></svg><h3>Result</h3><span>Minimal data or denial</span></article>
+            <article data-node="server"><svg class="icon"><use href="#i-shield"/></svg><h3>Authorization</h3><span>Allowed to call this server?</span></article>
+            <article data-node="data"><svg class="icon"><use href="#i-file"/></svg><h3>Result</h3><span>Tickets or a denial</span></article>
           </div>
           <div class="flow-controls"><button class="button primary" data-play aria-pressed="false"><svg class="icon"><use href="#i-play"/></svg><span>Play</span></button><button class="button icon-button" data-prev aria-label="Previous animation step">←</button><button class="button icon-button" data-next aria-label="Next animation step">→</button><button class="text-button" data-reset>Restart</button><span class="flow-count"></span></div>
           <div class="flow-explanation" aria-live="polite"><h3 data-step-title>1. Identify the caller</h3><p data-step-text>A protected endpoint requires an appropriate credential before executing a tool.</p></div>
           <div class="flow-dots" role="group" aria-label="Security animation steps"></div>
           <p class="motion-note" hidden>Reduced motion: use the arrows or numbered steps.</p>
-          <details class="wire"><summary>See the policy decision</summary><pre><code data-wire></code></pre></details>
+          <details class="wire"><summary>See the decision</summary><pre><code data-wire></code></pre></details>
         </div>
-        <details class="flow-fallback" open><summary>Read the control sequence</summary><ol><li>No valid credential: HTTP 401, no business operation.</li><li>A server-trusted identity determines roles and assignments.</li><li>The server checks the tool allowlist and claim assignment.</li><li>Reader results are minimized; a different customer's claim is denied.</li><li>Writes produce an expiring proposal. A different human-controlled supervisor/admin identity must confirm it.</li></ol></details>
-        <div class="distinctions"><p><strong>Authentication</strong> Who is calling?</p><p><strong>Authorization</strong> What may they do?</p><p><strong>Approval</strong> Should this write happen?</p></div>
+        <details class="flow-fallback" open><summary>Read the control sequence</summary><ol><li>No valid credential: HTTP 401, no tool runs.</li><li>A valid Entra token proves who is calling: signature, issuer, audience and expiry are checked.</li><li>The server checks that the token carries the Mcp.Read permission. If not: HTTP 403.</li><li>The server reaches the private ticket API with its own managed identity. The caller token is never forwarded.</li><li>Only read-only tools with validated inputs are available.</li></ol></details>
+        <div class="distinctions"><p><strong>Authentication</strong> Who is calling?</p><p><strong>Authorization</strong> What may they do?</p><p><strong>Least privilege</strong> Which identity reaches the backend?</p></div>
         <div class="protected-lab">
           <h3>Try the same call on the protected endpoint</h3>
           <p id="protected-status" class="notice">No protected endpoint configured. The presenter must configure Entra ID and supply this endpoint before session 3.</p>
@@ -245,13 +244,13 @@
 cd workshop-mcp-server
 npm ci</code></pre></div>
             </details>
-            <p><strong>Without a token:</strong> the server returns HTTP 401 before any source is queried.</p>
+            <p><strong>Without a token:</strong> the server returns HTTP 401 before the ticket API is reached.</p>
             <div class="copy-panel"><div><span>Bash · no identity</span><button class="text-button" data-copy="anonymous-code">Copy</button></div><pre><code id="anonymous-code"></code></pre></div>
-            <p><strong>With your Entra access token:</strong> paste it only into your terminal. A reader receives masked customer fields; an invalid token returns 401 and missing <code>Mcp.Read</code> permission returns 403.</p>
+            <p><strong>With your Entra access token:</strong> paste it only into your terminal. A valid token returns the tickets; an invalid token returns 401 and a missing <code>Mcp.Read</code> permission returns 403.</p>
             <div class="copy-panel"><div><span>Bash · authenticated</span><button class="text-button" data-copy="authenticated-code">Copy</button></div><pre><code id="authenticated-code"></code></pre></div>
           </div>
         </div>
-        <details><summary>What is implemented, and what must be configured?</summary><p>The multi-source sandbox has a separate protected mode that validates Entra v2 JWT signatures, issuer, audience, expiry and <code>Mcp.Read</code> scope or application role. It masks customer details unless the signed identity has the <code>Mcp.Pii.Read</code> application role. It accepts no public demo tokens. Hosting, an Entra application registration and participant access must be configured before using it.</p><p>The animation above instead illustrates the existing local Claims demo: public teaching tokens, claim-level authorization and human approval. Those write controls are not tools of the read-only sandbox. Neither server implements interactive OAuth discovery or downstream OBO; the private synthetic API uses loopback, not a forwarded user token.</p></details>
+        <details><summary>What is implemented, and what must be configured?</summary><p>The protected endpoint runs the same two read-only tools. It validates Microsoft Entra v2 JWT signatures, issuer, audience, expiry and the <code>Mcp.Read</code> scope or application role, and accepts no demo tokens. The MCP server calls the ticket API with its own managed identity and a separate backend app role. Hosting, an Entra application registration and participant access must be configured before using it.</p><p>This workshop does not implement interactive OAuth discovery or on-behalf-of token exchange; the caller token is never forwarded to the backend. Write tools, approvals and per-record permissions are not part of this read-only server.</p></details>
       </section>
 
       <div class="chapter-pagination" hidden><button class="button" id="chapter-prev">← Previous</button><span id="chapter-count"></span><button class="button primary" id="chapter-next">Next chapter →</button></div>

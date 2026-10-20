@@ -1,37 +1,11 @@
 import type { Server } from 'node:http';
 import { z } from 'zod';
 import { createBackendApp } from '../backend/api.js';
-import { claimRecord, createBackendStore, perilSchema, policyRecord } from '../backend/store.js';
+import { createBackendStore, ticketRecord } from '../backend/store.js';
 import { ManagedIdentityError } from '../backend/identity.js';
 
-export const customerIdSchema = z.string().regex(/^DEMO-PERSON-[1-5]$/);
-export const claimIdSchema = z.string().regex(/^CLM-100[1-5]$/);
-const customerSchema = z.object({
-  customerId: customerIdSchema,
-  customerName: z.string(),
-  dateOfBirth: z.string(),
-  address: z.string(),
-}).strict();
-const claimRowSchema = z.object({
-  claimId: z.string(), policyId: z.string(), amount: z.number().nonnegative(),
-  currency: z.literal('EUR'), status: z.string(), peril: perilSchema, incidentDate: z.iso.date(),
-  city: z.string(), latitude: z.number(), longitude: z.number(), coverage: z.string(), coverageLimit: z.number(),
-});
-const dailyWeatherSchema = z.object({
-  daily: z.object({
-    time: z.tuple([z.iso.date()]),
-    temperature_2m_max: z.tuple([z.number().finite()]),
-    precipitation_sum: z.tuple([z.number().finite().nonnegative()]),
-    wind_gusts_10m_max: z.tuple([z.number().finite().nonnegative()]),
-  }),
-});
-type ClaimRow = z.infer<typeof claimRowSchema>;
-type Observation = { maxWindGustKmh: number; precipitationMm: number; maxTemperatureC: number };
-// Illustrative thresholds for the workshop, not an insurer's rules.
-const rules = {
-  storm: { label: 'Wind gusts of at least 80 km/h', severe: (o: Observation) => o.maxWindGustKmh >= 80 },
-  flooding: { label: 'At least 20 mm of rain during the day', severe: (o: Observation) => o.precipitationMm >= 20 },
-} as const;
+export const ticketIdSchema = z.string().regex(/^CT-\d{4}$/);
+export type Ticket = z.infer<typeof ticketRecord>;
 
 export class SourceError extends Error {
   constructor(public readonly code: string, message: string) { super(message); }
@@ -67,16 +41,15 @@ export async function createSources(internalApiUrl: string, fetcher: typeof fetc
     throw new Error('Business APIs require a loopback HTTP origin, or an HTTPS origin with service authentication.');
   }
   const shutdown = new AbortController();
-  const observations = new Map<string, { expires: number; value: Observation }>();
-  const pendingObservations = new Map<string, Promise<Observation>>();
 
-  async function getJson(url: URL, source: string) {
+  async function getJson(url: URL, source: string, notFoundIsError = false) {
     try {
       const token = url.origin === internalUrl.origin && accessToken ? await accessToken() : undefined;
       const response = await fetcher(url, {
         signal: AbortSignal.any([AbortSignal.timeout(5000), shutdown.signal]), redirect: 'error',
         ...(token ? { headers: { Authorization: `Bearer ${token}` } } : {}),
       });
+      if (notFoundIsError && response.status === 404) throw new SourceError('TICKET_NOT_FOUND', 'No ticket has this identifier.');
       if (!response.ok) throw new SourceError('SOURCE_UNAVAILABLE', `${source} returned HTTP ${response.status}. Retry later.`);
       return await response.json() as unknown;
     } catch (error) {
@@ -87,77 +60,20 @@ export async function createSources(internalApiUrl: string, fetcher: typeof fetc
     }
   }
   return {
-    async customer(customerId: string) {
-      const id = customerIdSchema.parse(customerId);
-      const response = z.object({ data: customerSchema }).safeParse(await getJson(new URL(`/api/customers/v1/customers/${id}`, internalUrl), 'Customers API'));
-      if (!response.success || response.data.data.customerId !== id) {
-        throw new SourceError('INVALID_SOURCE_RESPONSE', 'Internal dossier API returned an invalid or mismatched customer.');
-      }
-      return response.data.data;
+    async listTickets() {
+      const parsed = z.array(ticketRecord).safeParse(await getJson(new URL('/contoso-tickets/tickets', internalUrl), 'Contoso Tickets API'));
+      if (!parsed.success) throw new SourceError('INVALID_SOURCE_RESPONSE', 'Tickets API returned an invalid list.');
+      return parsed.data;
     },
-    async claims(customerId: string) {
-      const id = customerIdSchema.parse(customerId);
-      const claims = z.object({ data: z.array(claimRecord), meta: z.object({ total: z.number().int().nonnegative() }) }).safeParse(
-        await getJson(new URL(`/api/claims/v1/claims?customerId=${id}&limit=100`, internalUrl), 'Claims API'));
-      if (!claims.success || claims.data.meta.total !== claims.data.data.length || claims.data.data.some((claim) => claim.customerId !== id)) {
-        throw new SourceError('INVALID_SOURCE_RESPONSE', 'Claims API returned incomplete or mismatched records.');
+    async ticket(ticketId: string) {
+      const id = ticketIdSchema.parse(ticketId);
+      const parsed = ticketRecord.safeParse(await getJson(new URL(`/contoso-tickets/tickets/${id}`, internalUrl), 'Contoso Tickets API', true));
+      if (!parsed.success || parsed.data.id !== id) {
+        throw new SourceError('INVALID_SOURCE_RESPONSE', 'Tickets API returned an invalid or mismatched ticket.');
       }
-      const rows: z.infer<typeof claimRowSchema>[] = [];
-      for (const claim of claims.data.data) {
-        const policy = z.object({ data: policyRecord }).safeParse(
-          await getJson(new URL(`/api/policies/v1/policies/${encodeURIComponent(claim.policyId)}`, internalUrl), 'Policies API'));
-        if (!policy.success || policy.data.data.policyId !== claim.policyId || policy.data.data.customerId !== id) {
-          throw new SourceError('INVALID_SOURCE_RESPONSE', 'Policies API returned invalid or mismatched coverage.');
-        }
-        rows.push(claimRowSchema.parse({ ...claim, coverage: policy.data.data.coverage, coverageLimit: policy.data.data.coverageLimit }));
-      }
-      return rows;
+      return parsed.data;
     },
-    async claim(claimId: string) {
-      const id = claimIdSchema.parse(claimId);
-      const response = z.object({ data: claimRecord }).safeParse(await getJson(new URL(`/api/claims/v1/claims/${id}`, internalUrl), 'Claims API'));
-      if (!response.success || response.data.data.claimId !== id) {
-        throw new SourceError('INVALID_SOURCE_RESPONSE', 'Claims API returned an invalid or mismatched claim.');
-      }
-      return response.data.data;
-    },
-    // Only a town's coordinates and a past date leave this server: no customer data.
-    async incidentWeather(claim: Pick<ClaimRow, 'claimId' | 'peril' | 'incidentDate' | 'city' | 'latitude' | 'longitude'>) {
-      const key = `${claim.latitude},${claim.longitude},${claim.incidentDate}`;
-      const cached = observations.get(key);
-      let observed = cached && cached.expires > Date.now() ? cached.value : undefined;
-      const wasCached = Boolean(observed);
-      if (!observed) {
-        let pending = pendingObservations.get(key);
-        if (!pending) {
-          pending = (async () => {
-            const url = new URL('https://archive-api.open-meteo.com/v1/archive');
-            url.search = new URLSearchParams({
-              latitude: String(claim.latitude), longitude: String(claim.longitude),
-              start_date: claim.incidentDate, end_date: claim.incidentDate,
-              daily: 'temperature_2m_max,precipitation_sum,wind_gusts_10m_max', timezone: 'UTC',
-            }).toString();
-            const parsed = dailyWeatherSchema.safeParse(await getJson(url, 'Open-Meteo public weather API'));
-            if (!parsed.success || parsed.data.daily.time[0] !== claim.incidentDate) {
-              throw new SourceError('INVALID_SOURCE_RESPONSE', 'Weather API returned no observation for this date and place.');
-            }
-            const { daily } = parsed.data;
-            const value = { maxWindGustKmh: daily.wind_gusts_10m_max[0], precipitationMm: daily.precipitation_sum[0], maxTemperatureC: daily.temperature_2m_max[0] };
-            observations.set(key, { value, expires: Date.now() + 3_600_000 });
-            return value;
-          })();
-          pendingObservations.set(key, pending);
-        }
-        try { observed = await pending; }
-        finally { pendingObservations.delete(key); }
-      }
-      const rule = rules[claim.peril];
-      return {
-        claimId: claim.claimId, peril: claim.peril, incidentDate: claim.incidentDate, city: claim.city,
-        observed, test: rule.label, severeWeatherObserved: rule.severe(observed), cached: wasCached,
-      };
-    },
-    close() { shutdown.abort(); observations.clear(); pendingObservations.clear(); },
+    close() { shutdown.abort(); },
   };
 }
 

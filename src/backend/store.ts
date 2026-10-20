@@ -4,31 +4,12 @@ import { dirname } from 'node:path';
 import { setTimeout } from 'node:timers/promises';
 import initSqlJs from 'sql.js';
 import { z } from 'zod';
-import { createDemoData } from '../data/demoData.js';
+import { createContosoTickets } from '../data/contosoTickets.js';
 
-export const customerRecord = z.object({
-  customerId: z.string(), customerName: z.string(), dateOfBirth: z.string(), address: z.string(),
+export const ticketRecord = z.object({
+  id: z.string(), title: z.string(), severity: z.enum(['low', 'medium', 'high']),
+  status: z.enum(['open', 'in-progress', 'resolved']), service: z.string(),
 });
-export const policyRecord = z.object({
-  policyId: z.string(), customerId: z.string(), coverage: z.string(), coverageLimit: z.number(),
-});
-export const perilSchema = z.enum(['storm', 'flooding']);
-export const claimRecord = z.object({
-  claimId: z.string(), customerId: z.string(), policyId: z.string(), amount: z.number(),
-  currency: z.literal('EUR'), status: z.enum(['open', 'escalated']),
-  peril: perilSchema, incidentDate: z.iso.date(), city: z.string(), latitude: z.number(), longitude: z.number(),
-});
-
-// Fictional home-insurance incidents at real towns on real past dates, so a public
-// weather archive can be compared with the claim. Customer names and amounts stay invented.
-const incidents = {
-  'CLM-1001': { peril: 'storm', incidentDate: '2023-11-02', city: 'Brest', latitude: 48.39, longitude: -4.49 },
-  'CLM-1002': { peril: 'storm', incidentDate: '2024-06-10', city: 'Lyon', latitude: 45.76, longitude: 4.84 },
-  'CLM-1003': { peril: 'flooding', incidentDate: '2023-10-20', city: 'Lille', latitude: 50.63, longitude: 3.06 },
-  'CLM-1004': { peril: 'storm', incidentDate: '2023-11-02', city: 'Nantes', latitude: 47.22, longitude: -1.55 },
-  'CLM-1005': { peril: 'flooding', incidentDate: '2025-02-12', city: 'Strasbourg', latitude: 48.58, longitude: 7.75 },
-} as const;
-const homeCoverage = 'Demo home insurance: storm and flood damage to the insured property; subject to evidence review.';
 
 export async function createBackendStore(databasePath?: string) {
   const SQL = await initSqlJs();
@@ -42,22 +23,10 @@ export async function createBackendStore(databasePath?: string) {
   let database = existing ? new SQL.Database(existing) : new SQL.Database();
   try {
     if (!existing) {
-      database.run(`CREATE TABLE customers (customerId TEXT PRIMARY KEY, customerName TEXT NOT NULL, dateOfBirth TEXT NOT NULL, address TEXT NOT NULL);
-        CREATE TABLE policies (policyId TEXT PRIMARY KEY, customerId TEXT NOT NULL REFERENCES customers, coverage TEXT NOT NULL, coverageLimit REAL NOT NULL);
-        CREATE TABLE claims (claimId TEXT PRIMARY KEY, customerId TEXT NOT NULL REFERENCES customers, policyId TEXT NOT NULL REFERENCES policies, amount REAL NOT NULL, currency TEXT NOT NULL, status TEXT NOT NULL, documents TEXT NOT NULL,
-          peril TEXT NOT NULL, incidentDate TEXT NOT NULL, city TEXT NOT NULL, latitude REAL NOT NULL, longitude REAL NOT NULL);
-        PRAGMA user_version = 2;`);
-      const data = createDemoData();
-      for (const claim of data.claims.values()) {
-        database.run('INSERT INTO customers VALUES (?, ?, ?, ?)', [claim.policyholderId, claim.customerName, claim.dateOfBirth, claim.address]);
-      }
-      for (const policy of data.policies.values()) {
-        database.run('INSERT INTO policies VALUES (?, ?, ?, ?)', [policy.policyId, policy.policyholderId, homeCoverage, policy.limit]);
-      }
-      for (const claim of data.claims.values()) {
-        const incident = incidents[claim.claimId as keyof typeof incidents];
-        database.run('INSERT INTO claims VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [claim.claimId, claim.policyholderId, claim.policyId, claim.claimAmount, claim.currency, claim.status, JSON.stringify(claim.documents),
-          incident.peril, incident.incidentDate, incident.city, incident.latitude, incident.longitude]);
+      database.run(`CREATE TABLE tickets (id TEXT PRIMARY KEY, title TEXT NOT NULL, severity TEXT NOT NULL, status TEXT NOT NULL, service TEXT NOT NULL);
+        PRAGMA user_version = 4;`);
+      for (const ticket of createContosoTickets()) {
+        database.run('INSERT INTO tickets VALUES (?, ?, ?, ?, ?)', [ticket.id, ticket.title, ticket.severity, ticket.status, ticket.service]);
       }
       if (databasePath) {
         const published = new SQL.Database(await persistInitialDatabase(databasePath, database.export()));
@@ -65,7 +34,7 @@ export async function createBackendStore(databasePath?: string) {
         database = published;
       }
     }
-    if (database.exec('PRAGMA user_version')[0]?.values[0]?.[0] !== 2 ||
+    if (database.exec('PRAGMA user_version')[0]?.values[0]?.[0] !== 4 ||
         database.exec('PRAGMA integrity_check')[0]?.values[0]?.[0] !== 'ok') {
       throw new Error('Unsupported or damaged workshop database. No replacement database was created.');
     }
@@ -81,16 +50,8 @@ export async function createBackendStore(databasePath?: string) {
     }
     return {
       persistent: Boolean(databasePath),
-      customers: () => query('SELECT * FROM customers ORDER BY customerId', [], customerRecord),
-      customer: (id: string) => query('SELECT * FROM customers WHERE customerId = ?', [id], customerRecord)[0],
-      policies: () => query('SELECT * FROM policies ORDER BY policyId', [], policyRecord),
-      policy: (id: string) => query('SELECT * FROM policies WHERE policyId = ?', [id], policyRecord)[0],
-      claims: () => query('SELECT * FROM claims ORDER BY claimId', [], claimRecord),
-      claim: (id: string) => query('SELECT * FROM claims WHERE claimId = ?', [id], claimRecord)[0],
-      documents: (id: string) => {
-        const row = query('SELECT documents FROM claims WHERE claimId = ?', [id], z.object({ documents: z.string() }))[0];
-        return row ? z.array(z.string()).parse(JSON.parse(row.documents)) : undefined;
-      },
+      tickets: () => query('SELECT * FROM tickets ORDER BY id', [], ticketRecord),
+      ticket: (id: string) => query('SELECT * FROM tickets WHERE id = ?', [id], ticketRecord)[0],
       close: () => database.close(),
     };
   } catch (error) {

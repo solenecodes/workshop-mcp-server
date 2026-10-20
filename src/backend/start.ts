@@ -20,8 +20,8 @@ async function main() {
       listener.once('error', reject);
     });
   } catch (error) { store.close(); throw error; }
-  console.log(`Customers, Policies and Claims APIs: ${process.env.PUBLIC_API_URL ?? `http://${host}:${port}`}`);
-  console.log('OpenAPI: /openapi/customers.json, /openapi/policies.json, /openapi/claims.json. All customer data is synthetic.');
+  console.log(`Contoso Tickets API: ${process.env.PUBLIC_API_URL ?? `http://${host}:${port}`}`);
+  console.log('OpenAPI: /openapi/contoso-tickets.json. All tickets are synthetic.');
   let stopping = false;
   for (const signal of ['SIGINT', 'SIGTERM'] as const) {
     process.once(signal, () => {

@@ -199,6 +199,12 @@ html:not(.enhanced) #integration-play { display:none; }
 .source-kind .icon { width:14px; height:14px; }
 .source-cards article>p { margin:0; font-size:.8rem; color:var(--muted); }
 .source-cards code { margin-top:auto; padding:6px 8px; border-radius:4px; background:#f6f8fb; font-size:.68rem; }
+.source-cards.single { grid-template-columns:minmax(0,560px); justify-content:center; }
+.source-cards.single::before { display:none; }
+.tool-map { display:grid; gap:6px; margin:4px 0 0; padding:0; list-style:none; }
+.tool-map li { display:flex; flex-wrap:wrap; align-items:center; gap:8px; font-size:.78rem; }
+.tool-map li span { color:var(--muted); }
+.tool-map code { margin-top:0; font-size:.74rem; }
 .lab-scenario { margin:0 0 24px; padding:20px 24px; border:1px solid #d8d6f2; border-left:4px solid var(--blue); border-radius:var(--radius); background:var(--blue-soft); }
 .lab-scenario h3 { display:flex; gap:10px; align-items:center; margin-bottom:8px; }
 .lab-scenario h3 .icon { color:var(--blue); }

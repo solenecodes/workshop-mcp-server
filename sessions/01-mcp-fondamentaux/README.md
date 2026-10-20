@@ -3,7 +3,7 @@
 [Workshop and runnable server](../../README.md)
 
 **09:20–10:20 · 60 minutes**, including two demos followed by **15 minutes of
-participant practice**. Use the same multi-source read-only MCP sandbox throughout.
+participant practice**. Use the same read-only Contoso Tickets MCP server throughout.
 
 | Time | Duration | Activity |
 | --- | ---: | --- |
@@ -21,7 +21,7 @@ synthetic records and a public currency API. The model is not the server.
 The terminal client makes the same protocol calls without a model.
 
 **Tools** query or change state; **resources** supply URI-addressable context;
-**prompts** supply reusable interaction templates. This claims implementation
+**prompts** supply reusable interaction templates. This ticket implementation
 has tools only. JSON-RPC is the message format; Streamable HTTP is the transport
 used here. Local stdio is another transport, not another business capability.
 
@@ -34,27 +34,23 @@ client support and authentication requirements must be checked separately.
 
 - Participants install Node 20+, npm, Git and the repository client once.
 - They need Bash on macOS/Linux, WSL or Git Bash, not a configured AI host.
-- Follow the [terminal setup](../../README.md#multi-source-terminal-lab).
+- Follow the [terminal setup](../../README.md#terminal-lab).
 - Locally, start `npm run start:sandbox`; the public-mode default is loopback
   `http://127.0.0.1:3201/mcp`. This is not reachable from another laptop.
 - With approved hosting, the presenter configures the actual public HTTPS URL
   in the page and shares the generated link. Participants then run only the client.
 - Never expose the old intentionally insecure write-capable Claims edition.
 
-The sandbox has four tools: `get_customer_file`, `list_customer_claims`,
-`get_incident_weather`, `get_customer_overview`. One story links them: a
-fictional home-insurance claim (storm or flooding, a date and a town) and the
-weather actually observed there that day. The overview combines a real
-Customers REST API, Claims and Policies REST APIs backed by persistent SQLite,
-and the public Open-Meteo weather archive. The MCP adapter uses HTTP, not direct SQL.
-Only a town's coordinates and a date leave for Open-Meteo. Customers and claims
-are fictional; the weather is real and dated. There are no write actions.
+The server has two tools: `list_tickets` and `get_ticket`. Each maps to one
+operation of the Contoso Tickets REST API (`GET /tickets`, `GET /tickets/{ticketId}`),
+which reads a SQLite database of fictional tickets. The MCP adapter uses HTTP, not
+direct SQL. There are no write actions and no Internet calls.
 
 The older [MCP configuration](examples/mcp.remote.example.json) targets the
 local advanced Claims security demos, not this terminal exercise.
 
 The [visual presentation](presentation.html) starts with general MCP concepts,
-not the claims domain. Its teaching sequence draws on the
+not the ticket domain. Its teaching sequence draws on the
 [Hugging Face MCP course foundations](https://huggingface.co/learn/mcp-course/unit1/introduction),
 the course's [architectural components](https://huggingface.co/learn/mcp-course/unit1/architectural-components)
 and the [official architecture](https://modelcontextprotocol.io/docs/learn/architecture).
@@ -71,9 +67,9 @@ The narration and diagrams are original workshop material:
    MCP. An alternative illustrates a proposed update, not a completed write.
 4. **MCP vs API.** Keep the same document example to distinguish the AI-facing
    protocol from the backend implementation.
-5. **Demo and practice.** Only here introduce the actual multi-source sandbox:
-   list tools, read a dossier, then combine the three sources.
-6. **Security transition.** Separate identity, permissions and human approval.
+5. **Demo and practice.** Only here introduce the actual ticket server:
+   list tools, list tickets, read one, change a value, then trigger an error.
+6. **Security transition.** Separate identity from permissions.
 
 The opening diagram uses only glowing, unlabelled dots for requests and results.
 The right-hand design illustrates one MCP server wrapping several systems; it is

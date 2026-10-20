@@ -15,7 +15,7 @@ async function fixture() {
   const sources = await createSources(internal.url, async (input, init) => {
     if (new URL(String(input)).hostname === '127.0.0.1') return fetch(input, init);
     internetCalls++;
-    return Response.json({ daily: { time: [new URL(String(input)).searchParams.get('start_date')], temperature_2m_max: [18], precipitation_sum: [0], wind_gusts_10m_max: [34] } });
+    return new Response('The workshop server must not call the Internet.', { status: 503 });
   });
   const app = createSandboxApp({ sources, consoleOrigin: origin, log: () => {} });
   const server = await new Promise(resolve => {
@@ -40,23 +40,23 @@ async function fixture() {
   };
 }
 
-test('the six guided requests run against the real stateless server and only read-only requests can be sent', async () => {
+test('the five guided requests run against the real stateless server and only read-only requests can be sent', async () => {
   const f = await fixture();
   try {
     const replies = [];
-    for (let index = 0; index < 6; index++) replies.push(await callMcp(f.url, stepRequest(index), f.browserFetch));
-    assert.equal(replies[0].result.tools.length, 4);
-    for (const reply of replies.slice(1)) assert.notEqual(reply.result.isError, true);
-    assert.equal(replies[1].result.structuredContent.customer.customerId, 'DEMO-PERSON-1');
-    assert.equal(replies[2].result.structuredContent.customer.customerId, 'DEMO-PERSON-2');
-    assert.equal(replies[3].result.structuredContent.claims[0].city, 'Lyon');
-    assert.equal(replies[4].result.structuredContent.weatherCheck.severeWeatherObserved, false);
-    assert.equal(replies[5].result.structuredContent.weatherChecks[0].claimId, 'CLM-1002');
-    assert.equal(replies[5].result.structuredContent.sources.length, 3);
-    await assert.rejects(callMcp(f.url, tool('escalate_claim', {})), /read-only/);
+    for (let index = 0; index < 5; index++) replies.push(await callMcp(f.url, stepRequest(index), f.browserFetch));
+    assert.deepEqual(replies[0].result.tools.map((tool) => tool.name).sort(), ['get_ticket', 'list_tickets']);
+    assert.deepEqual(replies[1].result.structuredContent.tickets.map((ticket) => ticket.id), ['CT-1001', 'CT-1002', 'CT-1003']);
+    assert.equal(replies[2].result.structuredContent.ticket.id, 'CT-1001');
+    assert.equal(replies[3].result.structuredContent.ticket.id, 'CT-1002');
+    assert.equal(replies[4].result.isError, true);
+    assert.equal(replies[4].result.structuredContent.error, 'TICKET_NOT_FOUND');
+    for (const reply of replies.slice(0, 4)) assert.notEqual(reply.result.isError, true);
+    await assert.rejects(callMcp(f.url, tool('close_ticket', {})), /read-only/);
     await assert.rejects(callMcp(f.url, { jsonrpc: '2.0', id: 1, method: 'resources/list' }), /read-only/);
-    const invalid = await callMcp(f.url, tool('get_customer_file', { customerId: 'DEMO-PERSON-99' }), f.browserFetch);
-    assert.equal(invalid.result.isError, true);
+    const malformed = await callMcp(f.url, tool('get_ticket', { ticketId: 'not-an-id' }), f.browserFetch);
+    assert.equal(malformed.result.isError, true);
+    assert.equal(f.internetCalls(), 0);
   } finally { await f.close(); }
 });
 
@@ -82,17 +82,17 @@ test('console CORS is exact-origin, rejects credentials and leaves protected end
   } finally { await f.close(); }
 });
 
-test('twenty concurrent browser participants get complete results and share one Internet fetch per claim', async t => {
+test('twenty concurrent browser participants get complete results without any Internet call', async t => {
   const f = await fixture();
   try {
     const results = await Promise.all(Array.from({ length: 20 }, (_, index) =>
-      callMcp(f.url, tool('get_customer_overview', { customerId: `DEMO-PERSON-${index % 5 + 1}` }), f.browserFetch)));
-    assert.ok(results.every(reply => reply.result.isError !== true && reply.result.structuredContent.sources.length === 3));
-    assert.equal(f.internetCalls(), 5);
+      callMcp(f.url, tool('get_ticket', { ticketId: `CT-100${index % 3 + 1}` }), f.browserFetch)));
+    assert.ok(results.every((reply, index) => reply.result.isError !== true && reply.result.structuredContent.ticket.id === `CT-100${index % 3 + 1}`));
+    assert.equal(f.internetCalls(), 0);
     const times = results.map(reply => reply.elapsedMs).sort((a, b) => a - b);
     const p95 = times[Math.ceil(times.length * 0.95) - 1];
     assert.ok(p95 < 5000, `Local 20-participant p95 ${p95} ms exceeds 5 seconds`);
-    t.diagnostic(`20/20 successful, p95 ${p95} ms, five shared weather fetches`);
+    t.diagnostic(`20/20 successful, p95 ${p95} ms`);
   } finally { await f.close(); }
 });
 

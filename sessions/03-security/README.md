@@ -6,7 +6,7 @@
 | --- | --- |
 | 10 min | Authentication vs authorization; delegated/OBO vs application identities |
 | 5 min | Inspect illustrative `aud`, `scp`, `roles`; one intended resource per token |
-| 10 min | Repeat the multi-source call: 401, Entra identity, missing permission, redaction |
+| 10 min | Repeat the call: 401, Entra identity, missing permission |
 | 5 min | Propose a write, human review in a separate identity, single-use confirmation |
 | 5 min | Threats, minimal rights, audit, questions |
 
@@ -17,18 +17,18 @@ as a separate instance of the same code. Keep the public endpoint for session 1;
 do not change its authentication halfway through participant practice.
 
 1. Use the page's configured protected endpoint without a token: HTTP 401;
-   no source is queried.
-2. Obtain an Entra API access token outside the page. Repeat
-   `get_customer_overview` for `DEMO-PERSON-1`: the same three sources return,
-   but customer name, date of birth and address are masked for an ordinary reader.
+   the ticket API is never reached.
+2. Obtain an Entra API access token outside the page. Repeat `list_tickets`:
+   the same three tickets return for a caller holding `Mcp.Read`.
 3. Compare a valid token without `Mcp.Read`: HTTP 403, not access by default.
-4. Explain `Mcp.Pii.Read`: an explicit app role is needed for unmasked fictional
-   dossier fields. Do not give that role to all attendees.
+4. Explain least privilege: the MCP server reaches the ticket API with its own
+   managed identity and a separate `Mcp.Backend.Read` role; the caller token is
+   never forwarded.
 
 The resource server validates real signed Entra v2 tokens. The Entra application,
 client consent, participant identities and hosted URL must be configured first;
 tests use locally signed test JWTs, not a claim of live tenant sign-in.
-The read-only sandbox has no claim-assignment policy, write actions or approval
+The read-only ticket server has no per-record policy, write actions or approval
 queue. Those controls belong to the separate advanced demo below.
 
 ## Advanced local Claims controls

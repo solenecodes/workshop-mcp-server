@@ -1,16 +1,23 @@
-# MCP Workshop: real APIs, one MCP endpoint
+# MCP Workshop: a Contoso Tickets MCP server
 
 **Start with the [visual presentation & participant lab](https://solenecodes.github.io/workshop-mcp-server/).**
-Six short chapters: why MCP exists, its architecture, an animated call, MCP vs
-API, a guided six-step live lab (copy a curl command or run it from the page), and access controls.
+Short chapters: why MCP exists, its architecture, an animated call, MCP vs
+API, a guided five-step live lab (copy a curl command or run it from the page),
+and access controls.
 
-**All customer and insurance data is invented.** The read-only sandbox tells one
-story: a fictional home-insurance claim (storm or flooding, a date and a town)
-checked against the weather actually observed there that day, from a public
-weather API. Only a town's coordinates and a date leave the server; customer IDs,
-names and dossiers are never sent to that API.
+**All tickets are invented.** The read-only MCP server wraps a small *Contoso
+Tickets API* with two operations. No real system is connected and no data leaves
+the server.
 
-## Multi-source terminal lab
+| MCP tool | REST operation (`/contoso-tickets`) | Result |
+| --- | --- | --- |
+| `list_tickets` | `GET /tickets` (`list-tickets`) | `CT-1001`, `CT-1002`, `CT-1003` with severity, status and service |
+| `get_ticket({ticketId})` | `GET /tickets/{ticketId}` (`get-ticket`) | One ticket, or an explicit `TICKET_NOT_FOUND` tool error |
+
+Unlike an API simulated by a gateway, this implementation returns the ticket that
+was requested, and an unknown identifier is an error, never another ticket.
+
+## Terminal lab
 
 Requires Node.js 20+, npm and Git. Use Bash on macOS/Linux, WSL or Git Bash.
 Install once:
@@ -27,194 +34,94 @@ For a local workshop, start the server in a second terminal:
 npm run start:sandbox
 ```
 
-Then run these **three commands**, from the repository folder:
+Then run, from the repository folder:
 
 ```sh
 npm run workshop -- --url 'http://127.0.0.1:3201/mcp' --anonymous tools
-npm run workshop -- --url 'http://127.0.0.1:3201/mcp' --anonymous get_customer_file '{"customerId":"DEMO-PERSON-1"}'
-npm run workshop -- --url 'http://127.0.0.1:3201/mcp' --anonymous get_customer_overview '{"customerId":"DEMO-PERSON-2"}'
+npm run workshop -- --url 'http://127.0.0.1:3201/mcp' --anonymous list_tickets
+npm run workshop -- --url 'http://127.0.0.1:3201/mcp' --anonymous get_ticket '{"ticketId":"CT-1001"}'
 ```
 
-For a hosted workshop, participants use the presenter's HTTPS URL instead of
-loopback and do **not** start their own server. No hosted endpoint is bundled
-or claimed to be live. The presentation's collapsed presenter panel generates
-the six steps and a shareable link from the actual URLs, never credentials.
-The lab sends one stateless JSON-RPC request per step to the configured
-anonymous MCP endpoint, either from a copied `curl` command or directly from the page.
-The presentation never receives protected-endpoint tokens.
+The presentation's lab sends one stateless JSON-RPC request per step to the
+configured anonymous MCP endpoint, either from a copied `curl` command or
+directly from the page. Its collapsed presenter panel generates a shareable
+link from the actual URLs, never credentials. The presentation never receives
+protected-endpoint tokens.
 
 | Step | Request | What to observe |
 | --- | --- | --- |
-| 1 | `tools/list` | Four read-only tools with their names |
-| 2 | `get_customer_file` (DEMO-PERSON-1) | Alex Example, source Customers REST API |
-| 3 | same tool, DEMO-PERSON-2 | Only `customerId` changes: Robin Sample |
-| 4 | `list_customer_claims` | CLM-1002: storm damage in Lyon on 2024-06-10, 18000 EUR (Claims and Policies APIs, SQLite) |
-| 5 | `get_incident_weather` (CLM-1002) | Observed gusts and rain that day from Open-Meteo: a calm day, `severeWeatherObserved: false` |
-| 6 | `get_customer_overview` | Customer, claim, weather check and three `sources` in one answer |
+| 1 | `tools/list` | Two read-only tools with their names |
+| 2 | `list_tickets` | Three tickets and the source that answered |
+| 3 | `get_ticket` (CT-1001) | VPN gateway timeouts, severity high |
+| 4 | same tool, CT-1002 | Only `ticketId` changes: shared drive quota |
+| 5 | `get_ticket` (CT-9999) | `isError: true`, `TICKET_NOT_FOUND` |
 
 ```text
-Terminal / MCP SDK -> MCP server -> Customers REST API -----> SQLite
-                                -> Claims + Policies APIs -> SQLite
-                                -> Open-Meteo Internet weather archive
+Terminal / MCP SDK -> MCP server -> Contoso Tickets REST API -> SQLite
 ```
 
-`list_customer_claims(customerId)` calls the Claims and Policies REST APIs to
-combine claims with their coverage. `get_incident_weather(claimId)` looks up
-the claim, then isolates the Internet call. The overview reads the customer
-and claims, then checks the weather for each incident date.
-Each claim is a storm or flooding event at a real town on a real past date.
-The illustrative test is wind gusts of at least 80 km/h (storm) or at least
-20 mm of rain (flooding). It is evidence for a human reviewer, not a coverage,
-payment or fraud decision.
+The REST API and the SQLite database (`sql.js`) run on an ephemeral
+**127.0.0.1** listener in the same process for local use; the MCP adapter still
+makes real HTTP requests. The database is initialized once at
+`.workshop-data/business.sqlite` and survives restarts. Existing data is not
+replaced; corrupt or unsupported databases fail explicitly. After upgrading from
+an older version, delete the `.workshop-data` folder so the new schema is
+created. The server exposes no writes. Network calls time out after five
+seconds, and a failed source returns `isError: true` instead of made-up data.
 
-The three versioned REST APIs share a real SQLite database using `sql.js`.
-In local sandbox mode they run on an ephemeral **127.0.0.1** HTTP listener
-in the same process; the MCP adapter still makes real HTTP requests.
-The database is initialized once at `.workshop-data/business.sqlite` and
-survives restarts. Existing data is not replaced; corrupt or unsupported
-databases fail explicitly. After this version, delete an older local
-`.workshop-data` folder so the new schema is created. The server exposes no database writes.
-[Open-Meteo's historical archive](https://open-meteo.com/en/docs/historical-weather-api)
-supplies daily observations (CC BY 4.0, free for non-commercial use). Results are
-cached for one hour and concurrent requests for one place and date share the same
-fetch. Network calls time out after five seconds. A failed or malformed source
-returns `isError: true`; there is no made-up weather or success-shaped partial overview.
+### The ticket REST API and its OpenAPI contract
 
-### Business APIs and OpenAPI contracts
-
-To inspect the APIs independently of MCP, start this separate process:
+To inspect the API independently of MCP, start this separate process:
 
 ```sh
 npm run start:apis
+curl -fsS 'http://127.0.0.1:3210/contoso-tickets/tickets'
+curl -fsS 'http://127.0.0.1:3210/contoso-tickets/tickets/CT-1001'
+curl -fsS 'http://127.0.0.1:3210/openapi/contoso-tickets.json'
 ```
 
-Its default URL is `http://127.0.0.1:3210`. Only synthetic records exist:
-five customers, five policies and five claims.
+Responses follow the contract: an array for the list, an object for one ticket.
+Malformed identifiers return 400, unknown tickets 404, writes 405, with
+`application/problem+json` bodies. Request IDs correlate with structured logs
+without tokens. A shared in-memory limit of 1,200 requests/minute returns 429
+and `Retry-After`.
 
-| API | Read operations | OpenAPI 3.0.3 contract |
-| --- | --- | --- |
-| Customers | `/api/customers/v1/customers`, `/api/customers/v1/customers/{customerId}` | `/openapi/customers.json` |
-| Policies | `/api/policies/v1/policies`, `/api/policies/v1/policies/{policyId}` | `/openapi/policies.json` |
-| Claims | `/api/claims/v1/claims`, `/api/claims/v1/claims/{claimId}`, `/api/claims/v1/claims/{claimId}/documents` | `/openapi/claims.json` |
+### Azure hosting: Container Apps
 
-```sh
-curl -fsS 'http://127.0.0.1:3210/api/customers/v1/customers/DEMO-PERSON-1'
-curl -fsS 'http://127.0.0.1:3210/api/claims/v1/claims?customerId=DEMO-PERSON-1&limit=10'
-curl -fsS 'http://127.0.0.1:3210/api/policies/v1/policies/POL-1001'
-curl -fsS 'http://127.0.0.1:3210/openapi/claims.json'
-```
+The deployment is in resource group `rg-mcp-dev-7af4` (France Central): a Container
+Apps environment, an ACR Basic registry and three apps: public MCP, protected MCP and
+the internal ticket API (internal ingress only). Two separate HTTPS MCP endpoints run
+the same two read-only tools:
 
-Lists support `limit` (1–100) and `offset`; Policies and Claims also accept
-`customerId`. Responses contain `data` and `meta` with `synthetic: true`,
-a request ID and pagination where relevant. Malformed inputs return 400;
-unknown records return 404; writes return 405. Error bodies use
-`application/problem+json`. Request IDs correlate with structured logs,
-which omit tokens and customer/document contents. A shared in-memory limit
-of 1,200 API requests/minute returns 429 and `Retry-After`.
-
-Claim documents deliberately include a prompt-injection example, returned
-as untrusted evidence with a warning. This is not an approval instruction,
-nor a complete prompt-injection defence. Claim summaries exclude document
-text, internal notes and medical details.
-
-### Azure hosting reset: Container Apps
-
-**The previous App Service and Foundry deployment has been deleted.**
-The project resource group, its three web apps, hosting plan, Foundry account
-and project, and its dedicated Entra application/service principal were removed;
-their absence was verified. The old endpoints must not be used.
-
-The replacement Container Apps deployment is **live and verified**. Its
-scope is two separate HTTPS MCP endpoints (anonymous read-only and
-Entra-protected), backed by the same synthetic business APIs. Foundry and APIM
-are excluded from this hosting reset; they can be integrated separately later.
-Both endpoints run the same four read-only tools:
-
-- Public: `https://ca-mcp-public-dev-7af4.orangebeach-99baafe8.francecentral.azurecontainerapps.io/mcp`
-- Protected: `https://ca-mcp-auth-dev-7af4.orangebeach-99baafe8.francecentral.azurecontainerapps.io/mcp`
-
-Verified: anonymous discovery/read/aggregate; missing token returns 401;
-a real Entra token succeeds with customer name, birth date and address masked;
-20 concurrent cloud aggregates succeed (warm p95 854 ms, maximum 874 ms).
-Exact participant-page origin is allowed by public CORS.
-These timings are a workshop acceptance measurement, not an SLA.
-
-Use ordinary Container Apps for stable public endpoints.
-[Dynamic Sessions](https://learn.microsoft.com/azure/container-apps/sessions)
-provide disposable isolated execution environments, not the simple anonymous
-public MCP hosting needed for this workshop.
-
-The new target separates these responsibilities:
-
-```text
-Participant console / MCP client
-                  |
-            MCP endpoint (public or Entra-protected)
-                  |
-            managed service identity
-                  |
-       Customers / Policies / Claims REST APIs -> persistent SQLite
-                  |
-       Three OpenAPI contracts for inspecting the backend services
-
-MCP server -> Open-Meteo (town coordinates and a date only)
-```
-
-The environment separates business APIs, public MCP and protected
-MCP. All three APIs share one backend application; they are distinct contracts,
-not three independently deployed microservices. The SQLite dataset is entirely
-synthetic and read-only. Without a persistent volume, replacement containers
-recreate the original seed; this must be acknowledged before provisioning.
-This workshop store is not a production HA database.
+- Public (anonymous): `https://ca-mcp-public-dev-7af4.orangebeach-99baafe8.francecentral.azurecontainerapps.io/mcp`
+- Protected (Entra): `https://ca-mcp-auth-dev-7af4.orangebeach-99baafe8.francecentral.azurecontainerapps.io/mcp`
 
 For the live workshop, `workshopAlwaysReady=true` keeps one public MCP replica
-and one internal API replica running to avoid chained cold-start timeouts.
-This incurs additional idle compute charges; the protected MCP still scales
-to zero. Set the parameter to `false` and redeploy to restore scale-to-zero
-for all three apps. The browser allows 60 seconds for a call and reports
-timeouts explicitly; source failures never become synthetic successes.
-At the quoted idle rates, these two 0.5-vCPU/1-GiB replicas cost roughly
-US$0.0324/hour (US$23.65 for 730 idle hours), before shared free grants.
-Active usage and the approximately US$5/month registry are additional;
-this is an estimate, not a billing guarantee.
+and one internal API replica running to avoid chained cold-start timeouts. This
+incurs idle compute charges (roughly US$0.0324/hour for the two 0.5-vCPU/1-GiB
+replicas, before free grants; an estimate, not a billing guarantee), plus about
+US$5/month for the registry. The protected MCP still scales to zero, so its first
+call after idle can fail. Set the parameter to `false` and redeploy to restore
+scale-to-zero. The browser allows 60 seconds per call and reports timeouts
+explicitly. Without a persistent volume, replacement containers recreate the
+original seed. This is not a production HA database.
 
-For remote business API hosting, configure `HOST`, `PORT`,
-`PUBLIC_API_URL=https://<actual-business-api-host>`, `BACKEND_MODE=entra`,
-`ENTRA_TENANT_ID`, `BACKEND_CLIENT_ID` and `BACKEND_DATABASE_PATH`.
-Anonymous API mode refuses a non-loopback bind.
+For remote API hosting, configure `HOST`, `PORT`, `PUBLIC_API_URL=https://<host>`,
+`BACKEND_MODE=entra`, `ENTRA_TENANT_ID`, `BACKEND_CLIENT_ID` and
+`BACKEND_DATABASE_PATH`. Anonymous API mode refuses a non-loopback bind.
+For each hosted MCP instance, set `BACKEND_API_URL` to that HTTPS origin and
+`BACKEND_CLIENT_ID` to the backend API registration. Its managed identity gets a
+separate service token from the platform-local identity endpoint
+(`IDENTITY_ENDPOINT`, `IDENTITY_HEADER`, API version `2019-08-01`) and needs the
+`Mcp.Backend.Read` application role. A participant's `Mcp.Read` scope cannot
+authorize backend access, and the caller token is never forwarded.
 
-For each hosted MCP instance, set `BACKEND_API_URL` to that HTTPS origin
-and `BACKEND_CLIENT_ID` to the backend API registration. Its managed identity
-obtains a separate service token using the platform-local identity endpoint
-(`IDENTITY_ENDPOINT`, `IDENTITY_HEADER`, API version `2019-08-01`, supported
-by both App Service and Container Apps). Grant that identity the
-`Mcp.Backend.Read` application
-role. A participant's delegated `Mcp.Read` scope cannot authorize backend
-access. Grant `Mcp.Pii.Read` only to workloads that need full synthetic
-customer fields; otherwise the backend masks name, DOB and address.
-The MCP instance also applies its own participant-level redaction.
-Tokens are never forwarded to Open-Meteo.
-
-In a future Foundry integration, the same application-only permission is required when a project
-identity calls an API directly. Select the supported managed-identity
-authentication configuration when adding its OpenAPI tool; the bearer
-scheme in the OpenAPI contract alone does not grant access.
-The three contracts have distinct titles and seven unique operation IDs.
-After hosting, verify their actual HTTPS URLs before importing them.
-Local loopback URLs are not reachable from Foundry.
-
-Foundry tool governance uses an APIM-backed AI gateway; it is not automatic
-protection for a directly exposed backend. Its current preview limitations
-and gateway routing must be checked in the deployed environment. APIM remains
-the colleague's session, not an implicitly provisioned extra service.
-See [remote MCP hosting](https://learn.microsoft.com/azure/foundry/mcp/build-your-own-mcp-server)
-and [Foundry tool governance](https://learn.microsoft.com/azure/foundry/agents/how-to/tools/governance).
-New infrastructure, model usage, permissions and costs need a fresh approval;
-the cancelled deployment's approval does not carry over.
+Foundry and APIM are not part of this deployment; Azure API Management can expose
+a similar API as an MCP server (a preview feature) in the colleague's session.
 
 ### Separate protected endpoint for session 3
 
-The **same sandbox code and four tools** have an Entra-protected mode:
+The **same two tools** have an Entra-protected mode:
 
 ```sh
 export SANDBOX_MODE=protected
@@ -223,93 +130,57 @@ export ENTRA_CLIENT_ID='<your-api-application-client-id>'
 npm run start:sandbox
 ```
 
-Default protected URL: `http://127.0.0.1:3202/mcp`.
-This mode will **not start** without valid tenant/client UUIDs and accepts
-**no hardcoded demo tokens**.
+Default protected URL: `http://127.0.0.1:3202/mcp`. This mode will **not start**
+without valid tenant/client UUIDs and accepts **no hardcoded demo tokens**.
 
-The presenter must register an Entra API with v2 access tokens
-(`api.requestedAccessTokenVersion: 2`), expose delegated scope `Mcp.Read`,
-and grant participant/client access. Application callers instead need the
-`Mcp.Read` application role. Optional application role `Mcp.Pii.Read` permits
-full synthetic dossier fields; ordinary readers receive masked name, DOB and
-address plus `redactedFields`. This sandbox permits all five **synthetic**
-customers to an authorized reader; it is not the claim-assignment/approval
-demo described below. Cross-tenant attendees need an explicit guest/tenant
-access plan, not a shared privileged account.
-
-JWT verification enforces RS256 signature via tenant JWKS, exact tenant,
-issuer and API audience, expiry, identity and read permission. A token without
-`Mcp.Read` returns 403; a missing/invalid token returns 401 **before source
-access**. This is resource-server validation, not an interactive MCP OAuth
-discovery/sign-in implementation. There is no OBO or token forwarding.
-
-Acquire a token in an authorized client outside the page. For Azure CLI,
-the API registration must authorize the Azure CLI client, with the necessary
-user/admin consent; then an attendee in the correct tenant can use:
+Register an Entra API with v2 access tokens (`api.requestedAccessTokenVersion: 2`),
+expose delegated scope `Mcp.Read`, and grant participant/client access. Application
+callers instead need the `Mcp.Read` application role. JWT verification enforces the
+RS256 signature via the tenant JWKS, exact tenant, issuer and API audience, expiry,
+identity and read permission. No token returns 401; a valid token without the
+permission returns 403.
 
 ```sh
-az login --tenant '<your-tenant-id>' --allow-no-subscriptions
-export MCP_TOKEN="$(az account get-access-token --scope 'api://<your-api-application-client-id>/Mcp.Read' --query accessToken -o tsv)"
-npm run workshop -- --url 'http://127.0.0.1:3202/mcp' get_customer_overview '{"customerId":"DEMO-PERSON-2"}'
+export MCP_URL='http://127.0.0.1:3202/mcp'
+read -r -s -p "Entra access token: " MCP_TOKEN
+export MCP_TOKEN
+npm run workshop -- get_ticket '{"ticketId":"CT-1001"}'
 unset MCP_TOKEN
 ```
 
-Do not paste access tokens into this repository, a shared URL or the page.
-The protected chapter can instead prompt silently for an already acquired
-token. `--anonymous` always suppresses `MCP_TOKEN`, including on public calls.
+`--anonymous` always suppresses `MCP_TOKEN`, including on public calls.
 
 ### Hosting boundaries
 
-Only `start:sandbox` is designed as the Internet-facing read-only candidate;
-never expose `start:insecure` or the public-token `start:secure` edition.
-Two separately configured instances provide public and protected endpoints.
-The default remains loopback. A non-loopback bind requires `HOST` and an
-explicit `PUBLIC_MCP_URL=https://<actual-host>/mcp` for Host validation.
-`PORT` is configurable. Build with `npm run build`; the compiled entry is
-`node dist/src/sandbox/start.js`.
+Only `start:sandbox` is designed as the Internet-facing read-only candidate; never
+expose `start:insecure` or the public-token `start:secure` edition. The default
+remains loopback. A non-loopback bind requires `HOST` and an explicit
+`PUBLIC_MCP_URL=https://<actual-host>/mcp` for Host validation. Build with
+`npm run build`; the compiled entry is `node dist/src/sandbox/start.js`.
 
-Both sandbox modes reject browser Origins and unexpected inputs, expose no
-writes or arbitrary URL/SQL access, and log decisions without tokens or dossier
-contents. A fixed global limit of 600 POSTs/minute and 32 concurrent requests
-bounds per-instance load; 429 includes `Retry-After`. These in-memory counters
-are **not** distributed abuse protection: use one replica for this workshop,
-add gateway limits as needed, and stop/delete resources afterwards. The
-public version intentionally reveals full **fictional** dossiers so session
-3 can contrast redaction. No real customer system belongs here.
-
-Replacement cloud resources, application registration, participant consent
-and hosting cost require separate approval/configuration. The deleted
-deployment's approval does not authorize the replacement.
+Both modes reject browser Origins (except the exact approved lab page on the public
+endpoint) and unexpected inputs, expose no writes or arbitrary URL/SQL access, and log
+decisions without tokens. A fixed global limit of 600 POSTs/minute and 32 concurrent
+requests bounds per-instance load; 429 includes `Retry-After`. These in-memory counters
+are not distributed abuse protection: use one replica and stop/delete resources afterwards.
 
 ### Container Apps infrastructure
 
-The [Bicep entry point](infra/main.bicep) now prepares an environment,
-an ACR Basic registry and three Container Apps: public MCP, protected MCP and
-internal business APIs. The [parameter example](infra/main.parameters.json)
-deliberately contains placeholders: **do not deploy it unchanged**. Actual
-approved names and identity settings belong in the ignored deployment session.
-
-The [container build](infra/Dockerfile) runs Node 24 as a non-root user and
-copies only the sandbox, backend and synthetic-data modules. Its
-[upload exclusions](.dockerignore) exclude credentials, local state,
-tests, unrelated experiments and both legacy write-capable Claims editions.
-Build from the repository root with `--file infra/Dockerfile`.
-
-Deployment has two phases: initialize hosting and managed identities, then
-build the real image and redeploy it after registry and API permissions are
-assigned. Placeholder hosting is not a working workshop endpoint. Resource creation requires deployment approval; the current deployment has
-passed real MCP checks and 20 simultaneous participant flows before sharing
-the URLs above.
-
-The discarded App Service ZIP deployment path is not used for Container Apps.
-The presentation defaults to the verified endpoints above. Local development
-can still be selected explicitly with `http://127.0.0.1:3201/mcp`.
+The [Bicep entry point](infra/main.bicep) prepares the environment, the registry and
+the three apps. The [parameter example](infra/main.parameters.json) deliberately
+contains placeholders: **do not deploy it unchanged**. Actual names and identity
+settings belong in the ignored deployment session. The [container build](infra/Dockerfile)
+runs Node 24 as a non-root user and copies only the sandbox, backend and synthetic-data
+modules; its [upload exclusions](.dockerignore) exclude credentials, local state, tests and
+the legacy Claims editions. Build from the repository root with `--file infra/Dockerfile`.
+Deployment has two phases: initialize hosting and managed identities, then build the real
+image and redeploy it after registry and API permissions are assigned.
 
 ## Advanced local Claims security demo
 
 Two existing implementations demonstrate intentionally insecure writes versus
 RBAC, claim assignments, approval, audit and redaction. These editions use only
-in-process fixtures, not the three sandbox sources. Compare observed results,
+in-process fixtures, not the ticket server above. Compare observed results,
 not an AI model's promises. They remain local-only and unchanged.
 
 ## Run locally
@@ -602,7 +473,7 @@ to demonstrate a backend weakness or does not invoke the expected tool.
 
 Only sessions with demos/practice have folders. The
 [web presentation](sessions/01-mcp-fondamentaux/presentation.html) teaches general
-MCP concepts, then provides three calls to the multi-source synthetic sandbox.
+MCP concepts, then a five-step lab against the synthetic Contoso Tickets server.
 
 ### Share the presentation with participants
 

@@ -56,9 +56,9 @@ test('shared links preserve both endpoints but never page parameters or credenti
 test('six guided steps build one copyable curl request each and mark only what changed', () => {
   const settings = { endpoint: 'https://sandbox.example.org/mcp' };
   const commands = labSteps.map((_, index) => labCommand(index, settings));
-  assert.equal(commands.length, 6);
+  assert.equal(commands.length, 5);
   assert.deepEqual(commands.map((step) => step.request.params?.name ?? step.request.method), [
-    'tools/list', 'get_customer_file', 'get_customer_file', 'list_customer_claims', 'get_incident_weather', 'get_customer_overview']);
+    'tools/list', 'list_tickets', 'get_ticket', 'get_ticket', 'get_ticket']);
   for (const step of commands) {
     assert.ok(step.title && step.why && step.notice && step.focus.length);
     assert.match(step.code, /^curl -s 'https:\/\/sandbox.example.org\/mcp' \\\n/);
@@ -67,17 +67,17 @@ test('six guided steps build one copyable curl request each and mark only what c
     assert.ok(step.segments.some(({ changed }) => changed), 'each step highlights something');
     assert.doesNotMatch(step.code, /MCP_TOKEN|Authorization|demo-.*-token/i);
   }
-  // Step 3 differs from step 2 only by the customer.
-  assert.deepEqual(commands[2].segments.filter(({ changed }) => changed).map(({ text }) => text), ['DEMO-PERSON-2']);
-  assert.deepEqual(commands[5].segments.filter(({ changed }) => changed).map(({ text }) => text),
-    ['get_customer_overview', '{"customerId":"DEMO-PERSON-2"}']);
-  for (const index of [-1, 6, 8]) assert.throws(() => labCommand(index, settings));
+  // Step 4 differs from step 3 only by the ticket identifier.
+  assert.deepEqual(commands[3].segments.filter(({ changed }) => changed).map(({ text }) => text), ['CT-1002']);
+  assert.deepEqual(commands[4].segments.filter(({ changed }) => changed).map(({ text }) => text), ['CT-9999']);
+  assert.deepEqual(commands[1].request.params, { name: 'list_tickets', arguments: {} });
+  for (const index of [-1, 5, 8]) assert.throws(() => labCommand(index, settings));
   assert.match(setupCode, /npm ci/);
 });
 
 test('protected commands contrast no identity and prompted identity without putting tokens in a URL', () => {
   const commands = securityCode('https://protected.example.org/mcp');
-  assert.match(commands.anonymous, /--anonymous get_customer_overview/);
+  assert.match(commands.anonymous, /--anonymous get_ticket/);
   assert.match(commands.authenticated, /read -r -s/);
   assert.match(commands.authenticated, /unset MCP_TOKEN$/);
   assert.doesNotMatch(commands.authenticated, /--anonymous|demo-.*-token/);
@@ -92,5 +92,6 @@ test('shell-quoted endpoints cannot become shell expansion and the page contains
   assert.doesNotMatch(html, /id="console-(form|operation)"|class="terminal-exercise"/);
   const visible = [html, readFileSync(new URL('../sessions/01-mcp-fondamentaux/presentation-lab.mjs', import.meta.url), 'utf8')].join('\n');
   assert.doesNotMatch(visible, /[àâçéèêëîïôûùüœ]|\b(?:le|la|les|des|pour|avec|votre|vous|une?)\b(?=\s+[a-z])/i);
-  for (const customer of ['DEMO-PERSON-1', 'DEMO-PERSON-5']) assert.ok(html.includes(customer));
+  for (const word of ['list_tickets', 'get_ticket', 'Contoso Tickets API']) assert.ok(html.includes(word));
+  assert.doesNotMatch(html, /claim|customer|weather|DEMO-PERSON/i);
 });

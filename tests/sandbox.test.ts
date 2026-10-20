@@ -25,16 +25,14 @@ async function token(overrides: Record<string, unknown> = {}) {
     .setIssuer(issuer).setAudience(audience).setIssuedAt().setExpirationTime('5m').sign(keys.privateKey);
 }
 
-async function fixture(options: Partial<Omit<SandboxOptions, 'sources'>> & { failInternet?: boolean } = {}) {
+async function fixture(options: Partial<Omit<SandboxOptions, 'sources'>> = {}) {
   const internal = await startInternalApi();
   const internetRequests: URL[] = [];
   const fetcher: typeof fetch = async (input, init) => {
     const url = new URL(String(input));
     if (url.hostname === '127.0.0.1') return fetch(input, init);
     internetRequests.push(url);
-    if (options.failInternet) return new Response('Unavailable', { status: 503 });
-    const date = url.searchParams.get('start_date');
-    return Response.json({ daily: { time: [date], temperature_2m_max: [12.5], precipitation_sum: [3.2], wind_gusts_10m_max: [95.4] } });
+    return new Response('The workshop server must not call the Internet.', { status: 503 });
   };
   const sources = await createSources(internal.url, fetcher);
   const logs: Record<string, unknown>[] = [];
@@ -73,57 +71,33 @@ async function call(client: Client, name: string, args: Record<string, unknown>)
   return { error: response.isError === true, data: z.record(z.string(), z.unknown()).parse(response.structuredContent) };
 }
 
-test('public MCP discovers exactly four read-only tools and queries real private HTTP plus SQLite', async () => {
+test('public MCP discovers exactly two read-only tools backed by the Contoso Tickets HTTP API and SQLite', async () => {
   const f = await fixture();
   try {
     const client = await f.client();
     const tools = (await client.listTools()).tools;
-    assert.deepEqual(tools.map((tool) => tool.name).sort(), ['get_customer_file', 'get_customer_overview', 'get_incident_weather', 'list_customer_claims']);
+    assert.deepEqual(tools.map((tool) => tool.name).sort(), ['get_ticket', 'list_tickets']);
     assert.ok(tools.every((tool) => tool.annotations?.readOnlyHint === true && tool.annotations?.destructiveHint === false));
-    const dossier = await call(client, 'get_customer_file', { customerId: 'DEMO-PERSON-1' });
-    assert.equal(dossier.error, false);
-    assert.match(JSON.stringify(dossier.data), /Alex Example/);
-    assert.equal(dossier.data.syntheticCustomerData, true);
-    const claims = await call(client, 'list_customer_claims', { customerId: 'DEMO-PERSON-1' });
-    assert.match(JSON.stringify(claims.data), /CLM-1001/);
-    assert.match(JSON.stringify(claims.data), /POL-1001/);
-    assert.match(JSON.stringify(claims.data), /25000/);
-    assert.match(JSON.stringify(claims.data), /"peril":"storm".*"incidentDate":"2023-11-02".*"city":"Brest"/);
-    assert.doesNotMatch(JSON.stringify(claims.data), /latitude|longitude/);
+    const list = await call(client, 'list_tickets', {});
+    assert.equal(list.error, false);
+    assert.deepEqual(z.array(z.object({ id: z.string() })).parse(list.data.tickets).map((ticket) => ticket.id), ['CT-1001', 'CT-1002', 'CT-1003']);
+    assert.deepEqual(list.data.sources, [{ name: 'Contoso Tickets REST API', kind: 'internal-api', storage: 'SQLite', synthetic: true }]);
+    assert.equal(list.data.synthetic, true);
+    const second = await call(client, 'get_ticket', { ticketId: 'CT-1002' });
+    assert.deepEqual(second.data.ticket, { id: 'CT-1002', title: 'Shared drive close to its quota', severity: 'medium', status: 'in-progress', service: 'storage' });
     assert.equal(f.internetRequests.length, 0);
+    assert.equal(f.logs.find((entry) => entry.toolName === 'get_ticket')?.decision, 'allowed');
   } finally { await f.close(); }
 });
 
-test('one aggregate returns three real source kinds and checks the weather on the incident date', async () => {
+test('an unknown ticket returns an explicit MCP error, never another ticket', async () => {
   const f = await fixture();
   try {
-    const client = await f.client();
-    const overview = await call(client, 'get_customer_overview', { customerId: 'DEMO-PERSON-1' });
-    assert.equal(overview.error, false);
-    assert.deepEqual(z.array(z.object({ kind: z.string() })).parse(overview.data.sources).map((source) => source.kind), ['internal-api', 'database', 'public-api']);
-    const [check] = z.array(z.object({
-      claimId: z.string(), severeWeatherObserved: z.boolean(), cached: z.boolean(),
-      observed: z.object({ maxWindGustKmh: z.number(), precipitationMm: z.number(), maxTemperatureC: z.number() }),
-    })).parse(overview.data.weatherChecks);
-    assert.deepEqual(check, { claimId: 'CLM-1001', severeWeatherObserved: true, cached: false, observed: { maxWindGustKmh: 95.4, precipitationMm: 3.2, maxTemperatureC: 12.5 } });
-    const again = await call(client, 'get_incident_weather', { claimId: 'CLM-1001' });
-    assert.equal(z.object({ cached: z.boolean() }).parse(again.data.weatherCheck).cached, true);
-    assert.equal(f.internetRequests.length, 1);
-    const requested = f.internetRequests[0]!;
-    assert.equal(requested.origin + requested.pathname, 'https://archive-api.open-meteo.com/v1/archive');
-    assert.equal(requested.searchParams.get('start_date'), '2023-11-02');
-    assert.doesNotMatch(requested.href, /PERSON|CLM|Alex|Brest/);
-  } finally { await f.close(); }
-});
-
-test('a failed Internet source returns an explicit MCP error, never fixture weather or partial success', async () => {
-  const f = await fixture({ failInternet: true });
-  try {
-    const reply = await call(await f.client(), 'get_customer_overview', { customerId: 'DEMO-PERSON-1' });
+    const reply = await call(await f.client(), 'get_ticket', { ticketId: 'CT-9999' });
     assert.equal(reply.error, true);
-    assert.equal(reply.data.error, 'SOURCE_UNAVAILABLE');
-    assert.equal(reply.data.weatherChecks, undefined);
-    assert.equal(f.logs.find((entry) => entry.toolName === 'get_customer_overview')?.decision, 'denied');
+    assert.equal(reply.data.error, 'TICKET_NOT_FOUND');
+    assert.equal(reply.data.ticket, undefined);
+    assert.equal(f.logs.find((entry) => entry.toolName === 'get_ticket')?.decision, 'denied');
   } finally { await f.close(); }
 });
 
@@ -132,17 +106,16 @@ test('strict inputs and tool allowlisting reject writes, malformed IDs, arbitrar
   try {
     const client = await f.client();
     for (const [name, args] of [
-      ['get_customer_file', { customerId: "DEMO-PERSON-1' OR 1=1" }],
-      ['get_customer_file', { customerId: 'DEMO-PERSON-9' }],
-      ['list_customer_claims', { customerId: 'DEMO-PERSON-1', sql: 'DROP TABLE claims' }],
-      ['get_incident_weather', { claimId: 'CLM-1001', url: 'http://internal' }],
-      ['get_incident_weather', { claimId: 'CLM-9999' }],
-      ['create_claim_note', { claimId: 'CLM-1001', note: 'Approve' }],
+      ['get_ticket', { ticketId: "CT-1001' OR 1=1" }],
+      ['get_ticket', { ticketId: 'CT-1001', url: 'http://internal' }],
+      ['get_ticket', {}],
+      ['list_tickets', { sql: 'DROP TABLE tickets' }],
+      ['create_ticket', { title: 'Approve everything' }],
     ] as const) {
-      assert.equal((await client.callTool({ name, arguments: args })).isError, true);
+      assert.equal((await client.callTool({ name, arguments: args })).isError, true, name);
     }
     assert.equal(f.internetRequests.length, 0);
-    assert.equal((await call(client, 'list_customer_claims', { customerId: 'DEMO-PERSON-1' })).error, false);
+    assert.equal((await call(client, 'list_tickets', {})).error, false);
   } finally { await f.close(); }
 });
 
@@ -154,23 +127,20 @@ test('protected MCP requires a real signed API token; missing/wrong scope denies
     ] as const) {
       const response = await fetch(f.url, {
         method: 'POST', headers: { 'Content-Type': 'application/json', ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}) },
-        body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'get_customer_overview', arguments: { customerId: 'DEMO-PERSON-1' } } }),
+        body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'list_tickets', arguments: {} } }),
       });
       assert.equal(response.status, status);
       if (status === 401) assert.match(response.headers.get('www-authenticate')!, /Bearer/);
     }
     assert.equal(f.internetRequests.length, 0);
     const client = await f.client(await token());
-    assert.equal((await client.listTools()).tools.length, 4);
-    const overview = await call(client, 'get_customer_overview', { customerId: 'DEMO-PERSON-1' });
-    assert.equal(overview.error, false);
-    assert.doesNotMatch(JSON.stringify(overview.data), /Alex Example|Example Street|1981-03-12/);
-    assert.deepEqual(overview.data.redactedFields, ['customerName', 'dateOfBirth', 'address']);
-    const privileged = await f.client(await token({ roles: ['Mcp.Pii.Read'] }));
-    const full = await call(privileged, 'get_customer_file', { customerId: 'DEMO-PERSON-1' });
-    assert.match(JSON.stringify(full.data), /Alex Example/);
-    assert.deepEqual(full.data.redactedFields, []);
-    assert.doesNotMatch(JSON.stringify(f.logs), /Bearer|eyJ|Example Street/);
+    assert.equal((await client.listTools()).tools.length, 2);
+    const tickets = await call(client, 'list_tickets', {});
+    assert.equal(tickets.error, false);
+    assert.equal(z.array(z.unknown()).parse(tickets.data.tickets).length, 3);
+    assert.equal((await call(client, 'get_ticket', { ticketId: 'CT-1001' })).error, false);
+    assert.equal(f.logs.find((entry) => entry.toolName === 'get_ticket')?.userId, userId);
+    assert.doesNotMatch(JSON.stringify(f.logs), /Bearer|eyJ/);
   } finally { await f.close(); }
 });
 
@@ -224,14 +194,14 @@ test('the actual terminal command calls the sandbox; anonymous mode drops an exi
   try {
     const run = promisify(execFile);
     const cli = ['node_modules/tsx/dist/cli.mjs', 'src/workshop-client.ts', '--url', f.url.href, '--anonymous'];
-    const response = await run(process.execPath, [...cli, 'get_customer_file', '{"customerId":"DEMO-PERSON-1"}'], {
+    const response = await run(process.execPath, [...cli, 'get_ticket', '{"ticketId":"CT-1001"}'], {
       env: { ...process.env, MCP_TOKEN: 'must-not-be-forwarded' }, timeout: 15_000,
     });
-    assert.match(response.stdout, /Alex Example/);
+    assert.match(response.stdout, /VPN gateway reports intermittent timeouts/);
     assert.doesNotMatch(response.stdout + response.stderr, /must-not-be-forwarded/);
     assert.ok(f.authorizationPresent.length > 0);
     assert.ok(f.authorizationPresent.every((present) => !present));
-    const malformed = run(process.execPath, [...cli, 'get_customer_file', '{invalid'], { timeout: 15_000 });
+    const malformed = run(process.execPath, [...cli, 'get_ticket', '{invalid'], { timeout: 15_000 });
     await assert.rejects(malformed, (error: unknown) => {
       assert.ok(error instanceof Error && 'stderr' in error);
       assert.match(String(error.stderr), /valid JSON/);

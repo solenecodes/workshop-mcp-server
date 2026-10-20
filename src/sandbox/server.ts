@@ -5,28 +5,20 @@ import { createMcpExpressApp } from '@modelcontextprotocol/sdk/server/express.js
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { AuthenticationError, type Identity, type VerifyToken } from './auth.js';
-import { claimIdSchema, customerIdSchema, SourceError, type Sources } from './sources.js';
+import { SourceError, ticketIdSchema, type Sources } from './sources.js';
 
-const internalSource = { name: 'Customers REST API', kind: 'internal-api', synthetic: true };
-const sqlSource = { name: 'Claims and Policies REST APIs', kind: 'database', transport: 'HTTP', storage: 'SQLite', synthetic: true };
-const internetSource = { name: 'Open-Meteo', kind: 'public-api', url: 'https://open-meteo.com/', synthetic: false };
+const ticketsSource = { name: 'Contoso Tickets REST API', kind: 'internal-api', storage: 'SQLite', synthetic: true };
 const result = (data: Record<string, unknown>): CallToolResult => ({
   content: [{ type: 'text', text: JSON.stringify(data) }], structuredContent: data,
 });
 const schemas = {
-  get_customer_file: z.object({ customerId: customerIdSchema }).strict(),
-  list_customer_claims: z.object({ customerId: customerIdSchema }).strict(),
-  get_incident_weather: z.object({ claimId: claimIdSchema }).strict(),
-  get_customer_overview: z.object({ customerId: customerIdSchema }).strict(),
+  list_tickets: z.object({}).strict(),
+  get_ticket: z.object({ ticketId: ticketIdSchema }).strict(),
 };
 const descriptions = {
-  get_customer_file: 'Read a fictional customer dossier through a private HTTP API. Does not change data.',
-  list_customer_claims: 'Call the Claims and Policies REST APIs backed by SQLite: home-insurance claims with incident date, town and coverage. Does not change data.',
-  get_incident_weather: 'Look up a claim, then fetch the observed weather in that town on the incident date from the public Open-Meteo API. Only the town coordinates and the date leave this server.',
-  get_customer_overview: 'Call the Customers, Claims and Policies REST APIs, then check the weather on each incident date with a public API. Returns source provenance; no model, coverage or fraud decision.',
+  list_tickets: 'List the Contoso support tickets: id, title, severity, status and affected service. Does not change data.',
+  get_ticket: 'Read one Contoso support ticket by its identifier, for example CT-1001. Does not change data.',
 };
-const weatherWarning = 'Weather observed for the town on that day: evidence for a human reviewer, not a coverage, payment or fraud decision.';
-const publicClaim = ({ latitude: _latitude, longitude: _longitude, ...claim }: Awaited<ReturnType<Sources['claims']>>[number]) => claim;
 type ToolName = keyof typeof schemas;
 
 export interface SandboxOptions {
@@ -92,7 +84,7 @@ export function createSandboxApp(options: SandboxOptions) {
   });
   app.get('/health', (_req, res) => res.json({
     status: 'ok', mode: verifyToken ? 'protected-entra' : 'public-read-only',
-    syntheticCustomerData: true, sources: ['customers-api', 'claims-api', 'policies-api', 'public-weather-api'],
+    syntheticCustomerData: true, sources: ['contoso-tickets-api'],
   }));
   let windowStart = now();
   let requestCount = 0;
@@ -134,43 +126,28 @@ export function createSandboxApp(options: SandboxOptions) {
         return;
       }
     }
-    const server = new McpServer({ name: 'multi-source-mcp-workshop', version: '1.0.0' });
+    const server = new McpServer({ name: 'contoso-tickets-mcp', version: '1.0.0' });
     for (const name of Object.keys(schemas) as ToolName[]) {
       server.registerTool(name, {
         description: descriptions[name], inputSchema: schemas[name],
-        annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: name === 'get_incident_weather' || name === 'get_customer_overview' },
+        annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
       }, async (args: Record<string, unknown>) => {
         try {
           let data: Record<string, unknown>;
-          const customerId = name === 'get_incident_weather' ? undefined : customerIdSchema.parse(args.customerId);
-          const redact = (customer: Awaited<ReturnType<Sources['customer']>>) => {
-            if (!identity || identity.canReadPii) return customer;
-            redactedFields = ['customerName', 'dateOfBirth', 'address'];
-            return { ...customer, customerName: '[REDACTED]', dateOfBirth: '[REDACTED]', address: '[REDACTED]' };
-          };
-          if (name === 'get_customer_file' && customerId) {
-            data = { customer: redact(await sources.customer(customerId)), sources: [internalSource] };
-          } else if (name === 'list_customer_claims' && customerId) {
-            data = { customerId, claims: (await sources.claims(customerId)).map(publicClaim), sources: [sqlSource] };
-          } else if (name === 'get_incident_weather') {
-            const claim = await sources.claim(claimIdSchema.parse(args.claimId));
-            data = { weatherCheck: await sources.incidentWeather(claim), sources: [sqlSource, internetSource], warning: weatherWarning };
-          } else if (name === 'get_customer_overview' && customerId) {
-            const [customer, claims] = await Promise.all([sources.customer(customerId), sources.claims(customerId)]);
-            data = {
-              customer: redact(customer), claims: claims.map(publicClaim),
-              weatherChecks: await Promise.all(claims.map((claim) => sources.incidentWeather(claim))),
-              sources: [internalSource, sqlSource, internetSource], warning: weatherWarning,
-            };
+          if (name === 'list_tickets') {
+            schemas.list_tickets.parse(args);
+            data = { tickets: await sources.listTickets(), sources: [ticketsSource] };
+          } else if (name === 'get_ticket') {
+            data = { ticket: await sources.ticket(schemas.get_ticket.parse(args).ticketId), sources: [ticketsSource] };
           } else {
             throw new SourceError('INVALID_ARGUMENTS', 'Choose a documented tool and valid arguments.');
           }
           decision = 'allowed';
-          return result({ ...data, syntheticCustomerData: true, redactedFields });
+          return result({ ...data, synthetic: true });
         } catch (error) {
-          code = error instanceof SourceError ? error.code : 'TOOL_FAILED';
-          if (!(error instanceof SourceError)) console.error('Multi-source tool failed.', { tool: name, category: error instanceof Error ? error.name : 'UNKNOWN' });
-          return { ...result({ error: code, message: error instanceof SourceError ? error.message : 'Tool failed. Check server diagnostics; no substitute data was returned.' }), isError: true };
+          code = error instanceof SourceError ? error.code : error instanceof z.ZodError ? 'INVALID_ARGUMENTS' : 'TOOL_FAILED';
+          if (!(error instanceof SourceError) && !(error instanceof z.ZodError)) console.error('Workshop tool failed.', { tool: name, category: error instanceof Error ? error.name : 'UNKNOWN' });
+          return { ...result({ error: code, message: error instanceof SourceError ? error.message : 'Tool failed or received invalid arguments. No substitute data was returned.' }), isError: true };
         }
       });
     }

@@ -1,5 +1,5 @@
-import { defaultEndpoint, defaultProtectedEndpoint, labCommand, labSteps, securityCode, setupCode, shareUrl, validateEndpoint } from './presentation-lab.mjs?v=weather-lab-1';
-import { callMcp, jsonTokens } from './mcp-console.mjs?v=weather-lab-1';
+import { defaultEndpoint, defaultProtectedEndpoint, labCommand, labSteps, securityCode, setupCode, shareUrl, validateEndpoint } from './presentation-lab.mjs?v=tickets-lab-1';
+import { callMcp, jsonTokens } from './mcp-console.mjs?v=tickets-lab-1';
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -65,36 +65,27 @@ function callSteps(mode) {
 function authSteps(mode) {
   const anonymous = mode === 'anonymous';
   const denied = mode === 'denied';
-  const write = mode === 'write';
   const base = [
-    step('Identify the caller.', anonymous ? 'No token was supplied. The protected endpoint must stop before running business logic.'
-      : 'A credential maps to a server-trusted identity. The local demo uses a fixed token table, not Entra.', 'user', 'app',
-    anonymous ? 'No Authorization header.' : { credential: '[not displayed]', userId: write ? 'adjuster-1' : 'reader-1' }),
+    step('Identify the caller.', anonymous ? 'No token was supplied. The protected endpoint stops before running any tool.'
+      : 'The client sends a Microsoft Entra access token. The server checks its signature, issuer, audience and expiry.', 'user', 'app',
+    anonymous ? 'No Authorization header.' : { credential: '[not displayed]', issuer: 'Microsoft Entra ID', audience: 'this MCP server', expired: false }),
   ];
   if (anonymous) return [...base,
-    step('401. Nothing executes.', 'The client needs an appropriate credential. A successful network connection is not authentication.', 'app', 'user',
-      { httpStatus: 401, error: 'UNAUTHENTICATED', claimWrites: 0 }, { blocked: true }),
+    step('401. Nothing executes.', 'A network connection is not authentication. Without a valid token the server returns 401 and the ticket API is never reached.', 'app', 'user',
+      { httpStatus: 401, error: 'MISSING_ACCESS_TOKEN', ticketsRead: 0 }, { blocked: true }),
   ];
-  base.push(step('Check the tool allowlist.', 'Roles come from the server’s identity record, never from arguments such as role: admin.', 'app', 'server',
-    { role: write ? 'claims_adjuster' : 'claims_reader', tool: write ? 'create_claim_note' : 'get_claim_summary', toolAllowed: true }));
-  base.push(step('Check this specific claim.', denied ? 'The reader is assigned CLM-1001, not CLM-1002. Changing the ID does not change the caller’s rights.'
-    : 'The caller is assigned CLM-1001. Tool permission alone is not enough; record access must also pass.', null, 'server',
-    { assignedClaims: ['CLM-1001'], requestedClaim: denied ? 'CLM-1002' : 'CLM-1001', allowed: !denied }));
+  base.push(step('Check the permission.', denied ? 'The token is valid, but it does not carry the Mcp.Read permission this server requires.'
+    : 'The token carries the Mcp.Read permission this server requires.', 'app', 'server',
+  { requiredPermission: 'Mcp.Read', granted: !denied }));
   if (denied) return [...base,
-    step('Deny without reading the other record.', 'The server returns an MCP tool error. This application denial is not a claim that every MCP server returns HTTP 403.', 'server', 'user',
-      { isError: true, error: 'CLAIM_ACCESS_DENIED', claimWrites: 0 }, { blocked: true }),
+    step('403. Nothing executes.', 'Authentication succeeded, authorization failed: the caller is known but not allowed.', 'server', 'user',
+      { httpStatus: 403, error: 'MISSING_MCP_READ_PERMISSION', ticketsRead: 0 }, { blocked: true }),
   ];
   return [...base,
-    step(write ? 'Propose, do not execute.' : 'Minimize the returned data.', write
-      ? 'The stored proposal expires in five minutes. Its payload cannot be replaced during confirmation.'
-      : 'Mask personal and medical fields. Withhold arbitrary free text and report redactedFields.', 'server', 'data',
-      write ? { requiresApproval: true, claimWrites: 0, expiresInMinutes: 5 }
-        : { customerName: '[REDACTED]', dateOfBirth: '[REDACTED]', redactedFields: ['customerName', 'dateOfBirth', 'address', 'description', 'internalNotes', 'documents'] }),
-    step(write ? 'A separate human reviews the action.' : 'Return only what this caller needs.', write
-      ? 'Only a different supervisor/admin identity can call confirm_action. The initiating agent must not hold those credentials.'
-      : 'Authentication, tool RBAC, claim assignment and redaction are distinct checks. Secure tool calls are also audited.', 'data', 'user',
-      write ? 'Human reviews exact payload → confirm_action(actionId) → re-read → single-use action consumed.'
-        : 'Reader gets an allowed, redacted result. No unrestricted PII access.'),
+    step('Call the private ticket API.', 'The MCP server reaches the ticket API with its own managed identity. The caller token is never forwarded.', 'server', 'data',
+      { backendCredential: 'managed identity with a backend app role', callerTokenForwarded: false }),
+    step('Return the tickets.', 'Every tool is read-only and its inputs are validated. The result comes from the ticket API.', 'data', 'user',
+      'CT-1001, CT-1002, CT-1003'),
   ];
 }
 
@@ -505,7 +496,7 @@ function applyEndpoint() {
     $('#endpoint-error').hidden = true;
     $('#endpoint-status').textContent = settings.local
       ? `Local sandbox: ${settings.endpoint}. Start npm run start:sandbox in a second terminal. This is not a public workshop endpoint.`
-      : `Public workshop endpoint: ${settings.endpoint}. The six steps below call this server.`;
+      : `Public workshop endpoint: ${settings.endpoint}. The five steps below call this server.`;
     $$('[data-copy],#share').forEach((button) => { button.disabled = false; });
     renderLab();
     return true;

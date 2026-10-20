@@ -34,42 +34,35 @@ export const labSteps = [
     short: 'Discover', title: 'Ask the server what it can do',
     why: 'Before reading any data, a client asks the server for its list of tools. The server describes itself: this is what an API alone does not do.',
     method: 'tools/list', changes: ['tools/list'], focus: ['name'],
-    notice: 'the name of each of the four tools the server offers.',
+    notice: 'the name of each of the two tools the server offers.',
   },
   {
-    short: 'Customer', title: 'Read one customer',
-    why: 'Now call a tool. The MCP server forwards the request to the private Customers API and returns the dossier. All people here are fictional.',
-    tool: 'get_customer_file', args: { customerId: 'DEMO-PERSON-1' },
-    changes: ['tools/call', 'get_customer_file', 'DEMO-PERSON-1'], focus: ['customerName', 'name'],
-    notice: 'the customer, and the source that answered (Customers REST API).',
+    short: 'List', title: 'List the tickets',
+    why: 'Now call a tool. The MCP server forwards the request to the private Contoso Tickets API, which reads its database. All tickets are fictional.',
+    tool: 'list_tickets', args: {},
+    changes: ['tools/call', 'list_tickets'], focus: ['id', 'title', 'severity', 'status', 'name'],
+    notice: 'each ticket with its severity and status, and the source that answered.',
   },
   {
-    short: 'Another customer', title: 'Change one value',
-    why: 'Same tool, one different input. The database holds five fictional customers so you can see that a tool is reusable: only the customerId changes.',
-    tool: 'get_customer_file', args: { customerId: 'DEMO-PERSON-2' },
-    changes: ['DEMO-PERSON-2'], focus: ['customerId', 'customerName'],
-    notice: 'a different customer, returned by the same tool.',
+    short: 'One ticket', title: 'Read one ticket',
+    why: 'A second tool takes an input: the ticket identifier. The server passes it to the ticket API and returns that one ticket.',
+    tool: 'get_ticket', args: { ticketId: 'CT-1001' },
+    changes: ['get_ticket', '{"ticketId":"CT-1001"}'], focus: ['id', 'title', 'severity', 'status', 'service'],
+    notice: 'the ticket: its title, severity, status and affected service.',
   },
   {
-    short: 'Claims', title: 'Read the claim of that customer',
-    why: 'A second tool reads a second system: the Claims and Policies APIs, backed by a SQLite database. Robin reports storm damage to the home, with a date and a town.',
-    tool: 'list_customer_claims', args: { customerId: 'DEMO-PERSON-2' },
-    changes: ['list_customer_claims'], focus: ['claimId', 'amount', 'peril', 'incidentDate', 'city', 'name'],
-    notice: 'the claim: storm damage, the date, the town and the amount in EUR.',
+    short: 'Another ticket', title: 'Change one value',
+    why: 'Same tool, one different input. Only the ticketId changes, so the server returns another ticket.',
+    tool: 'get_ticket', args: { ticketId: 'CT-1002' },
+    changes: ['CT-1002'], focus: ['id', 'title', 'status', 'service'],
+    notice: 'a different ticket, returned by the same tool.',
   },
   {
-    short: 'Weather', title: 'Check the weather that day',
-    why: 'A third source is outside the company: a public weather archive. The server finds the claim, then asks what the weather was in that town on that day. Only the town’s coordinates and the date leave the server.',
-    tool: 'get_incident_weather', args: { claimId: 'CLM-1002' },
-    changes: ['get_incident_weather', '{"claimId":"CLM-1002"}'], focus: ['city', 'incidentDate', 'maxWindGustKmh', 'precipitationMm', 'test', 'severeWeatherObserved', 'name'],
-    notice: 'the observed wind gusts and rain, and whether severe weather was observed. Here it was a calm day.',
-  },
-  {
-    short: 'Combine', title: 'Combine the three sources in one call',
-    why: 'This is the call an AI assistant would make for the question in the scenario. One tool reads the customer, the claim and the weather that day, and returns everything in one answer.',
-    tool: 'get_customer_overview', args: { customerId: 'DEMO-PERSON-2' },
-    changes: ['get_customer_overview', '{"customerId":"DEMO-PERSON-2"}'], focus: ['customerName', 'claimId', 'peril', 'city', 'maxWindGustKmh', 'severeWeatherObserved', 'name'],
-    notice: 'the customer, the claim, the weather that day and the three sources used.',
+    short: 'Unknown ticket', title: 'Ask for a ticket that does not exist',
+    why: 'When the identifier is well formed but unknown, the server returns an explicit tool error. It never invents or substitutes a ticket.',
+    tool: 'get_ticket', args: { ticketId: 'CT-9999' },
+    changes: ['CT-9999'], focus: ['error', 'message'],
+    notice: 'the error code and message. This error is the expected result of this step.',
   },
 ];
 
@@ -90,9 +83,9 @@ export function labCommand(index, settings) {
 
 export function securityCode(endpoint) {
   const url = validateEndpoint(endpoint).endpoint;
-  const command = `npm run workshop -- --url ${quote(url)} get_customer_overview ${quote('{"customerId":"DEMO-PERSON-2"}')}`;
+  const command = `npm run workshop -- --url ${quote(url)} get_ticket ${quote('{"ticketId":"CT-1001"}')}`;
   return {
-    anonymous: `${command.replace(' get_customer_overview ', ' --anonymous get_customer_overview ')}`,
+    anonymous: command.replace(' get_ticket ', ' --anonymous get_ticket '),
     authenticated: 'read -r -s -p "Entra access token: " MCP_TOKEN\nexport MCP_TOKEN\nprintf "\\n"\n' + command + '\nunset MCP_TOKEN',
   };
 }

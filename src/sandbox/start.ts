@@ -36,7 +36,7 @@ async function main() {
     throw error;
   }
   console.log(`${mode === 'public' ? 'Read-only synthetic sandbox' : 'Entra-protected sandbox'}: ${process.env.PUBLIC_MCP_URL ?? `http://${host}:${port}/mcp`}`);
-  console.log(`Sources: Customers, Claims and Policies HTTP APIs (${remoteApi ? 'remote, managed identity' : 'local, persistent SQLite'}) + Open-Meteo. No real customer data.`);
+  console.log(`Source: Contoso Tickets HTTP API (${remoteApi ? 'remote, managed identity' : 'local, persistent SQLite'}). All data is synthetic.`);
   let stopping = false;
   for (const signal of ['SIGINT', 'SIGTERM'] as const) {
     process.once(signal, () => {
