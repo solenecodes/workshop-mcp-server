@@ -58,7 +58,7 @@ show the same 401, 403 and authorized calls, labeled as illustrations.
 One tenant, one owner and one clean-up: the workshop owner deploys and deletes the gateway
 with the Container Apps, because session 6 relies on it. The session 2 presenter needs only
 Reader on the resource group and a user in the workshop tenant. The hands-on guide asks
-participants to clone [olivMertens/workshop-mcp](https://github.com/olivMertens/workshop-mcp).
+participants to clone [olivMertens/governed-mcp-workshop](https://github.com/olivMertens/governed-mcp-workshop).
 
 The gateway can also live in another subscription or tenant:
 `validate-azure-ad-token` trusts the tenant you name, not the tenant of the gateway. Then set
@@ -81,7 +81,7 @@ direct-backend gap of session 6 by allowing that gateway's outbound addresses on
 | Registry and catalog (Preview) | [API Center](https://learn.microsoft.com/azure/api-center/register-discover-mcp-server), [Foundry private tool catalog](https://learn.microsoft.com/azure/foundry/agents/how-to/private-tool-catalog) |
 
 The passthrough forwarding the same `Authorization` header to a backend that validates it again
-was also verified live in [olivMertens/workshop-mcp](https://github.com/olivMertens/workshop-mcp)
+was also verified live in [olivMertens/governed-mcp-workshop](https://github.com/olivMertens/governed-mcp-workshop)
 module 04 (2026-10-20).
 
 ## What stays the same all day
@@ -176,7 +176,7 @@ Insights logger with metadata only (no request or response bodies).
 - The page never calls the gateway and never asks for a token. The demo token goes
   straight into an environment variable and is removed with `unset MCP_TOKEN`.
 - Resource shapes follow Microsoft Learn and were verified live on a Standard v2 gateway
-  in [olivMertens/workshop-mcp](https://github.com/olivMertens/workshop-mcp) (module 04):
+  in [olivMertens/governed-mcp-workshop](https://github.com/olivMertens/governed-mcp-workshop) (module 04):
   a passthrough needs a backend entity, and `mcpProperties.endpoints` is a map.
 
 ## Sources

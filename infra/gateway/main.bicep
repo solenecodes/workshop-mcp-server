@@ -5,7 +5,7 @@
 // Same Microsoft Entra rules as the protected sandbox: a v2 token for this API only (401), then Mcp.Read (403).
 // No subscription key and no secret. API Management MCP servers need API version 2025-09-01-preview (Preview).
 // Resource shapes follow Microsoft Learn "Manage MCP servers programmatically in API Management" and were verified
-// live on a Standard v2 gateway in olivMertens/workshop-mcp (module 04, 2026-10-19 and 2026-10-20).
+// live on a Standard v2 gateway in olivMertens/governed-mcp-workshop (module 04, 2026-10-19 and 2026-10-20).
 targetScope = 'resourceGroup'
 
 @description('API Management instance name. Its gateway URL is https://<name>.azure-api.net.')
