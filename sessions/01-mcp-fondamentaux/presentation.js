@@ -1,5 +1,6 @@
-import { defaultEndpoint, defaultProtectedEndpoint, labCommand, labSteps, parseCommandRequest, securityCode, setupCode, shareUrl, validateEndpoint } from './presentation-lab.mjs?v=day-strip-2';
-import { callMcp, jsonTokens } from './mcp-console.mjs?v=day-strip-2';
+import { defaultEndpoint, defaultProtectedEndpoint, labCommand, labSteps, parseCommandRequest, securityCode, setupCode, shareUrl, validateEndpoint } from './presentation-lab.mjs?v=session3-4';
+import { callMcp, jsonTokens } from './mcp-console.mjs?v=session3-4';
+import { securityChapters, securityPractice } from './presentation-security.mjs?v=session3-4';
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -276,8 +277,8 @@ function showChapter(focus = false) {
     if (link.getAttribute('href') === `#${chapters[chapterIndex].id}`) link.setAttribute('aria-current', 'step');
     else link.removeAttribute('aria-current');
   });
-  // The agenda follows the content on screen: session 1 chapters, then the session 3 preview.
-  const agendaKey = activePanel ? activePanel.id.replace('day-', '') : chapterIndex === 5 ? 'session-3' : 'session-1';
+  const securityIndex = securityChapters.findIndex(({ id }) => id === chapters[chapterIndex].id);
+  const agendaKey = activePanel ? activePanel.id.replace('day-', '') : securityIndex >= 0 ? 'session-3' : 'session-1';
   $$('.agenda li[data-key]').forEach((item) => {
     const active = item.dataset.key === agendaKey;
     item.classList.toggle('current', active);
@@ -292,10 +293,12 @@ function showChapter(focus = false) {
   }
   $('#chapter-prev').disabled = chapterIndex === 0;
   $('#chapter-next').disabled = chapterIndex === chapters.length - 1;
-  $('#chapter-prev').textContent = chapterIndex === 4 ? '← Back to course' : chapterIndex === 5 ? '← Back to exercises' : '← Previous lesson';
-  $('#chapter-next').textContent = chapterIndex < 3 ? 'Next lesson →' : chapterIndex === 3 ? 'Start hands-on →' : chapterIndex === 4 ? 'Next: security →' : 'End of workshop';
+  $('#chapter-prev').textContent = chapterIndex === 4 ? '← Back to course' : securityIndex === 0 ? '← Back to exercises' : '← Previous lesson';
+  $('#chapter-next').textContent = chapterIndex === chapters.length - 1 ? 'Session complete'
+    : chapterIndex === 3 ? 'Start hands-on →' : chapterIndex === 4 ? 'Next: security →'
+      : 'Next lesson →';
   $('#chapter-count').textContent = chapterIndex < 4 ? `Course · Lesson ${chapterIndex + 1} of 4`
-    : chapterIndex === 4 ? 'Your turn · Live lab' : 'Session 3 · Security';
+    : chapterIndex === 4 ? 'Your turn · Live lab' : `Session 3 · ${securityIndex + 1} of ${securityChapters.length}`;
   requestAnimationFrame(() => controllers.forEach((controller) => controller.redraw()));
   if (focus) {
     $('h1,h2', activePanel ?? chapters[chapterIndex]).focus({ preventScroll: true });
@@ -429,10 +432,72 @@ let consoleBusy = false;
 let currentStep = 0;
 let stepResults = [];
 let stepEdits = [];
+let practiceCase = 0;
+let practiceEdit;
+let practiceResult;
+let practiceBusy = false;
 const endpointInput = $('#endpoint');
 const protectedInput = $('#protected-endpoint');
-const codeTargets = ['anonymous-code', 'authenticated-code'];
+const codeTargets = ['anonymous-code', 'authenticated-code', 'acquired-code'];
 $('#setup-code').textContent = setupCode;
+
+const practiceTabs = $('#security-tabs');
+securityPractice({ endpoint: defaultEndpoint, protectedEndpoint: defaultProtectedEndpoint }).forEach((item, index) => {
+  const tab = document.createElement('button');
+  tab.type = 'button';
+  tab.className = 'step-tab';
+  const number = document.createElement('span');
+  number.textContent = String(index + 1);
+  tab.append(number, document.createTextNode(item.short));
+  tab.addEventListener('click', () => { practiceCase = index; renderSecurityPractice(); });
+  practiceTabs.append(tab);
+});
+function renderSecurityPractice() {
+  const item = settings ? securityPractice(settings)[practiceCase] : undefined;
+  const browser = practiceCase === 0;
+  $$('.step-tab', practiceTabs).forEach((tab, index) => {
+    tab.setAttribute('aria-pressed', String(index === practiceCase));
+    tab.disabled = practiceBusy;
+  });
+  $('#security-count').textContent = `Case ${practiceCase + 1} of 4`;
+  $('#security-step-title').textContent = item?.title ?? 'Apply valid endpoints before testing';
+  $('#security-why').textContent = item?.why ?? 'Open the presenter settings in the session 1 lab. No request has been sent.';
+  $('#security-question').textContent = item?.question ?? 'What should you observe?';
+  $('#security-answer').textContent = item?.answer ?? 'Apply valid endpoints before comparing access decisions.';
+  $('#security-observation').open = false;
+  $('#security-command-kind').textContent = browser ? 'Bash · public request · editable' : 'Bash · protected request · terminal only';
+  $('#security-output-kind').textContent = browser ? 'Actual public response' : 'Expected outcome · observe actual output in terminal';
+  const command = $('#security-command');
+  if (browser && item && practiceEdit === undefined) {
+    command.replaceChildren(...item.segments.map(({ text, changed }) => {
+      const span = document.createElement(changed ? 'mark' : 'span');
+      if (changed) span.className = 'hl';
+      span.textContent = text;
+      return span;
+    }));
+  } else command.textContent = (browser ? practiceEdit ?? item?.code : item?.code)
+    ?? 'Configure separate public and protected endpoints in the presenter settings.';
+  command.contentEditable = browser && settings && !practiceBusy ? 'plaintext-only' : 'false';
+  $('#security-copy').disabled = !item?.code;
+  $('#security-reset').hidden = !browser || practiceEdit === undefined;
+  $('#security-reset').disabled = practiceBusy;
+  $('#security-run').hidden = !browser;
+  $('#security-run').disabled = !settings || practiceBusy;
+  const output = $('#security-output');
+  const failed = browser && Boolean(practiceResult?.error || practiceResult?.reply?.result.isError);
+  if (browser && practiceResult?.reply) {
+    const { result } = practiceResult.reply;
+    renderJson(output, result.structuredContent ?? result, ['id', 'title', 'status', 'error', 'message']);
+  } else output.textContent = browser && practiceResult?.error ? practiceResult.error
+    : item?.output ?? 'Apply valid endpoints. No server response is available.';
+  const status = $('#security-status');
+  status.className = failed ? 'error' : '';
+  status.textContent = practiceBusy ? 'Waiting up to 60 seconds for the actual public response...'
+    : !settings ? 'Endpoints are invalid or have unapplied changes. Requests are disabled.'
+      : failed ? 'Actual request failed or the tool reported an error. No substitute response was used.'
+        : browser && practiceResult?.reply ? `Actual response received in ${practiceResult.reply.elapsedMs} ms.`
+          : 'Public calls run here. Protected calls and tokens stay in your terminal. Expected outcomes are not live results.';
+}
 
 const tabs = $('#lab-tabs');
 labSteps.forEach((step, index) => {
@@ -500,17 +565,23 @@ function renderLab() {
   $('#lab-status').dataset.error = 'false';
   renderStep();
   $('#protected-commands').hidden = !settings.protectedEndpoint;
-  $('#protected-status').textContent = settings.protectedEndpoint
-    ? `Configured protected endpoint: ${settings.protectedEndpoint}. Availability and Entra setup are not verified by this page.`
-    : 'No protected endpoint configured. The presenter must configure Entra ID and supply this endpoint before session 3.';
+  if (settings.protectedEndpoint) {
+    const endpoint = document.createElement('code');
+    endpoint.textContent = settings.protectedEndpoint;
+    $('#protected-status').replaceChildren('Configured protected endpoint: ', endpoint,
+      '. Availability and Entra setup are not verified by this page.');
+  } else $('#protected-status').textContent = 'No protected endpoint configured. The presenter must configure Entra ID and supply this endpoint before session 3.';
   if (settings.protectedEndpoint) {
     const commands = securityCode(settings.protectedEndpoint);
     $('#anonymous-code').textContent = commands.anonymous;
     $('#authenticated-code').textContent = commands.authenticated;
+    $('#acquired-code').textContent = commands.withToken;
   } else {
     $('#anonymous-code').textContent = '';
     $('#authenticated-code').textContent = '';
+    $('#acquired-code').textContent = '';
   }
+  renderSecurityPractice();
 }
 function applyEndpoint() {
   try {
@@ -521,6 +592,8 @@ function applyEndpoint() {
     settings = { ...validated, protectedEndpoint };
     stepResults = [];
     stepEdits = [];
+    practiceEdit = undefined;
+    practiceResult = undefined;
     endpointInput.value = settings.endpoint;
     protectedInput.value = protectedEndpoint ?? '';
     $('#endpoint-error').hidden = true;
@@ -534,13 +607,17 @@ function applyEndpoint() {
     settings = undefined;
     stepResults = [];
     stepEdits = [];
+    practiceEdit = undefined;
+    practiceResult = undefined;
     renderStep();
+    renderSecurityPractice();
     codeTargets.forEach((id) => { document.getElementById(id).textContent = 'Apply a valid endpoint to generate this command.'; });
     $('#participant-link')?.remove();
     $('#endpoint-error').textContent = error.message;
     $('#endpoint-error').hidden = false;
     $('#endpoint-status').textContent = 'Commands disabled. Correct the URLs, then apply endpoints.';
     $('#protected-commands').hidden = true;
+    $('#protected-status').textContent = 'Protected commands disabled. Correct the URLs in the presenter settings, then apply endpoints.';
     $$('[data-copy]:not([data-copy="setup-code"]),#share').forEach((button) => { button.disabled = true; });
     return false;
   }
@@ -549,11 +626,15 @@ function markEndpointDirty() {
   settings = undefined;
   stepResults = [];
   stepEdits = [];
+  practiceEdit = undefined;
+  practiceResult = undefined;
   renderStep();
+  renderSecurityPractice();
   codeTargets.forEach((id) => { document.getElementById(id).textContent = 'Apply the endpoint changes to regenerate this command.'; });
   $('#participant-link')?.remove();
   $('#endpoint-status').textContent = 'Changes not applied. Select “Apply endpoints” to regenerate all commands.';
   $('#protected-commands').hidden = true;
+  $('#protected-status').textContent = 'Endpoint changes are not applied. Apply endpoints in the presenter settings before using protected commands.';
   $$('[data-copy]:not([data-copy="setup-code"]),#share').forEach((button) => { button.disabled = true; });
 }
 $('#endpoint-form').addEventListener('submit', (event) => { event.preventDefault(); applyEndpoint(); });
@@ -600,6 +681,45 @@ $('#lab-run').addEventListener('click', async () => {
     consoleBusy = false;
     if (failed) $('#lab-run').disabled = !settings;
     else renderStep();
+  }
+});
+
+$('#security-command').addEventListener('input', () => {
+  if (!settings || practiceCase !== 0) return;
+  practiceEdit = $('#security-command').innerText.replace(/\r/g, '').replace(/\n$/, '');
+  practiceResult = undefined;
+  $('#security-reset').hidden = false;
+  $('#security-output').textContent = 'Command changed. Run it to see the actual response.';
+  $('#security-status').className = '';
+  $('#security-status').textContent = 'Only the JSON after -d is used. The configured public endpoint does not change.';
+});
+$('#security-reset').addEventListener('click', () => {
+  practiceEdit = undefined;
+  practiceResult = undefined;
+  renderSecurityPractice();
+});
+$('#security-copy').addEventListener('click', () => {
+  if (!settings) return;
+  const item = securityPractice(settings)[practiceCase];
+  if (item.code) void copy(practiceCase === 0 ? practiceEdit ?? item.code : item.code);
+});
+$('#security-run').addEventListener('click', async () => {
+  if (!settings || practiceCase !== 0 || practiceBusy) return;
+  const config = settings;
+  const command = practiceEdit ?? securityPractice(config)[0].code;
+  practiceBusy = true;
+  practiceResult = undefined;
+  renderSecurityPractice();
+  $('#security-output').textContent = 'Waiting for the actual public server...';
+  try {
+    const reply = await callMcp(config.endpoint, parseCommandRequest(command));
+    if (settings !== config) throw new Error('Endpoints changed during the request. Apply settings and run again.');
+    practiceResult = { reply };
+  } catch (error) {
+    practiceResult = { error: error.message };
+  } finally {
+    practiceBusy = false;
+    renderSecurityPractice();
   }
 });
 

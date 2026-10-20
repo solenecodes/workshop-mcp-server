@@ -28,9 +28,13 @@ async function token(overrides: Record<string, unknown> = {}) {
 async function fixture(options: Partial<Omit<SandboxOptions, 'sources'>> = {}) {
   const internal = await startInternalApi();
   const internetRequests: URL[] = [];
+  const backendRequests: URL[] = [];
   const fetcher: typeof fetch = async (input, init) => {
     const url = new URL(String(input));
-    if (url.hostname === '127.0.0.1') return fetch(input, init);
+    if (url.hostname === '127.0.0.1') {
+      backendRequests.push(url);
+      return fetch(input, init);
+    }
     internetRequests.push(url);
     return new Response('The workshop server must not call the Internet.', { status: 503 });
   };
@@ -47,7 +51,7 @@ async function fixture(options: Partial<Omit<SandboxOptions, 'sources'>> = {}) {
   const url = new URL(`http://127.0.0.1:${address.port}/mcp`);
   const clients: Client[] = [];
   return {
-    url, sources, internetRequests, logs, authorizationPresent,
+    url, sources, internetRequests, backendRequests, logs, authorizationPresent,
     async client(accessToken?: string) {
       const client = new Client({ name: 'sandbox-test', version: '1.0' });
       clients.push(client);
@@ -122,6 +126,7 @@ test('strict inputs and tool allowlisting reject writes, malformed IDs, arbitrar
 test('protected MCP requires a real signed API token; missing/wrong scope denies before backend access', async () => {
   const f = await fixture({ verifyToken });
   try {
+    const readsBefore = f.backendRequests.length;
     for (const [accessToken, status] of [
       [undefined, 401], ['demo-admin-token', 401], [await token({ scp: 'other' }), 403],
     ] as const) {
@@ -132,6 +137,7 @@ test('protected MCP requires a real signed API token; missing/wrong scope denies
       assert.equal(response.status, status);
       if (status === 401) assert.match(response.headers.get('www-authenticate')!, /Bearer/);
     }
+    assert.equal(f.backendRequests.length, readsBefore, '401 and 403 must not reach the ticket API');
     assert.equal(f.internetRequests.length, 0);
     const client = await f.client(await token());
     assert.equal((await client.listTools()).tools.length, 2);
@@ -142,6 +148,27 @@ test('protected MCP requires a real signed API token; missing/wrong scope denies
     assert.equal(f.logs.find((entry) => entry.toolName === 'get_ticket')?.userId, userId);
     assert.doesNotMatch(JSON.stringify(f.logs), /Bearer|eyJ/);
   } finally { await f.close(); }
+});
+
+test('public and protected policies expose the same MCP tools and ticket results for an authorized caller', async () => {
+  const publicServer = await fixture();
+  const protectedServer = await fixture({ verifyToken });
+  try {
+    const publicClient = await publicServer.client();
+    const delegatedClient = await protectedServer.client(await token());
+    const applicationClient = await protectedServer.client(await token({ scp: '', roles: ['Mcp.Read'] }));
+    const publicTools = (await publicClient.listTools()).tools;
+    assert.deepEqual((await delegatedClient.listTools()).tools, publicTools);
+    assert.deepEqual((await applicationClient.listTools()).tools, publicTools);
+    for (const [name, args] of [['list_tickets', {}], ['get_ticket', { ticketId: 'CT-1001' }]] as const) {
+      const publicResult = await call(publicClient, name, args);
+      assert.deepEqual(await call(delegatedClient, name, args), publicResult);
+      assert.deepEqual(await call(applicationClient, name, args), publicResult);
+    }
+    assert.equal(publicServer.internetRequests.length + protectedServer.internetRequests.length, 0);
+  } finally {
+    await Promise.all([publicServer.close(), protectedServer.close()]);
+  }
 });
 
 test('JWT verification rejects wrong audience, issuer, lifetime, tenant, unsigned token and ID-only permissions', async () => {

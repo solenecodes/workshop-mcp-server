@@ -88,5 +88,6 @@ export function securityCode(endpoint) {
   return {
     anonymous: command.replace(' get_ticket ', ' --anonymous get_ticket '),
     authenticated: 'read -r -s -p "Entra access token: " MCP_TOKEN\nexport MCP_TOKEN\nprintf "\\n"\n' + command + '\nunset MCP_TOKEN',
+    withToken: command + '\nunset MCP_TOKEN',
   };
 }

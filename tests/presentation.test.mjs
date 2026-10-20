@@ -91,7 +91,7 @@ test('shell-quoted endpoints cannot become shell expansion and the page contains
   const visible = [html, readFileSync(new URL('../sessions/01-mcp-fondamentaux/presentation-lab.mjs', import.meta.url), 'utf8')].join('\n');
   assert.doesNotMatch(visible, /[àâçéèêëîïôûùüœ]|\b(?:le|la|les|des|pour|avec|votre|vous|une?)\b(?=\s+[a-z])/i);
   for (const word of ['list_tickets', 'get_ticket', 'Contoso Tickets API']) assert.ok(html.includes(word));
-  assert.doesNotMatch(html, /claim|customer|weather|DEMO-PERSON/i);
+  assert.doesNotMatch(html.slice(0, html.indexOf('<section id="security-lab"')), /claim|customer|weather|DEMO-PERSON/i);
 });
 
 test('an edited command is parsed back into a JSON-RPC request, never into a new endpoint', () => {

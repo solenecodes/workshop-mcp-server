@@ -3,7 +3,13 @@
 **Start with the [visual presentation & participant lab](https://solenecodes.github.io/workshop-mcp-server/).**
 Short chapters: why MCP exists, its architecture, an animated call, MCP vs
 API, a guided three-step live lab (copy an editable curl command or run it from the page),
-and access controls.
+and access controls. **[Session 3](sessions/01-mcp-fondamentaux/presentation.html#security-lab)**
+continues in the same page and theme: test the same ticket request publicly and
+with protected access, then explain identity, permissions, token boundaries and
+agent governance. Its
+[comparison lab](sessions/01-mcp-fondamentaux/presentation.html#security-lab) keeps
+the public request in the browser and real Entra-protected requests in the
+terminal. See the [session 3 guide](sessions/03-security/README.md) for prerequisites.
 
 **All tickets are invented.** The read-only MCP server wraps a small *Contoso
 Tickets API* with two operations. No real system is connected and no data leaves
