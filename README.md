@@ -493,8 +493,9 @@ https://solenecodes.github.io/workshop-mcp-server/sessions/01-mcp-fondamentaux/p
   credentials, query parameters or a fragment are rejected.
 - Only the dedicated read-only server is eligible for unauthenticated HTTPS; the old
   intentionally insecure write-capable edition remains loopback-only.
-- The day agenda in the left menu follows the participant's local time. Add
-  `?time=HH:MM` to preview a moment of the day, for example `...presentation.html?time=10:40`.
+- The top bar shows where the day should be now in **Paris time** (current step, with the
+  previous and next steps greyed out). Add `?time=HH:MM` to the address to preview a moment of the
+  day, for example `...presentation.html?time=10:40`. The agenda in the left menu is clickable.
 - Open the page through its `https://` address, not as a local file: `file://` cannot load its JavaScript modules reliably. GitHub Pages only serves the page; the MCP servers run separately on Azure Container Apps.
 - Before the workshop, open the page from the venue network and run the three lab
   steps: some corporate networks block `github.io` or `azurecontainerapps.io`. The

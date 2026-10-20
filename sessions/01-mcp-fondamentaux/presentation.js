@@ -1,5 +1,5 @@
-import { defaultEndpoint, defaultProtectedEndpoint, labCommand, labSteps, parseCommandRequest, securityCode, setupCode, shareUrl, validateEndpoint } from './presentation-lab.mjs?v=timeline-1';
-import { callMcp, jsonTokens } from './mcp-console.mjs?v=timeline-1';
+import { defaultEndpoint, defaultProtectedEndpoint, labCommand, labSteps, parseCommandRequest, securityCode, setupCode, shareUrl, validateEndpoint } from './presentation-lab.mjs?v=day-strip-1';
+import { callMcp, jsonTokens } from './mcp-console.mjs?v=day-strip-1';
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -660,48 +660,75 @@ window.addEventListener('beforeprint', preparePrint);
 window.addEventListener('afterprint', finishPrint);
 matchMedia('print').addEventListener('change', (event) => event.matches ? preparePrint() : finishPrint());
 $('.chapter-pagination').hidden = false;
-// Live timeline: compares the viewer's local time of day with the agenda.
-// Add ?time=HH:MM to the page address to preview a given moment (the clock then stays frozen).
-const agendaItems = $$('.agenda li[data-start]');
+// Day strip in the top bar: where the day should be now in Paris, with the previous and next steps greyed out.
+// Add ?time=HH:MM to the page address to preview a moment of the day (the clock then stays frozen).
 const toMinutes = (value) => { const [hours, minutes] = value.split(':').map(Number); return hours * 60 + minutes; };
 const previewTime = /^([01]\d|2[0-3]):[0-5]\d$/.test(new URLSearchParams(location.search).get('time') ?? '')
   ? new URLSearchParams(location.search).get('time') : undefined;
-const formatLeft = (minutes) => minutes >= 60 ? `${Math.floor(minutes / 60)} h ${String(minutes % 60).padStart(2, '0')} left` : `${minutes} min left`;
-agendaItems.forEach((item) => {
-  const row = $('.agenda-row', item);
-  const label = $('span', row);
-  item.dataset.duration = $('small', label).textContent;
-  const badge = document.createElement('span');
-  badge.className = 'agenda-badge';
-  badge.hidden = true;
-  badge.textContent = 'Now';
-  label.prepend(badge);
-  const bar = document.createElement('span');
-  bar.className = 'agenda-progress';
-  bar.hidden = true;
-  bar.append(document.createElement('i'));
-  label.append(bar);
-});
-function updateTimeline() {
-  const date = new Date();
-  const now = previewTime ? toMinutes(previewTime) : date.getHours() * 60 + date.getMinutes();
-  $('#agenda-clock').textContent = previewTime ? `Preview ${previewTime}` : `Now ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
-  agendaItems.forEach((item) => {
-    const start = toMinutes(item.dataset.start);
-    const end = toMinutes(item.dataset.end);
-    const state = now >= end ? 'past' : now >= start ? 'now' : 'next';
-    item.dataset.time = state;
-    $('.agenda-badge', item).hidden = state !== 'now';
-    const bar = $('.agenda-progress', item);
-    bar.hidden = state !== 'now';
-    if (state === 'now') $('i', bar).style.width = `${Math.round((now - start) / (end - start) * 100)}%`;
-    $('small', item).textContent = state === 'now' ? `${item.dataset.duration} · ${formatLeft(end - now)}` : item.dataset.duration;
-  });
+const dayItems = $$('.agenda li[data-start]').map((item) => ({
+  emoji: $('.agenda-emoji', item).textContent, short: item.dataset.short, href: $('.agenda-row', item).getAttribute('href'),
+  start: item.dataset.start, end: item.dataset.end,
+}));
+function parisClock() {
+  const parts = Object.fromEntries(new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Paris', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })
+    .formatToParts(new Date()).map(({ type, value }) => [type, value]));
+  return `${parts.hour}:${parts.minute}`;
 }
-updateTimeline();
+const formatLeft = (minutes) => minutes >= 60 ? `${Math.floor(minutes / 60)} h ${String(minutes % 60).padStart(2, '0')} left` : `${minutes} min left`;
+function dayChip(kind, { label, title, detail, href, progress }) {
+  const chip = document.createElement(href ? 'a' : 'div');
+  chip.className = `day-chip ${kind}`;
+  if (href) chip.href = href;
+  if (kind === 'is-now') chip.setAttribute('aria-current', 'time');
+  if (label) { const tag = document.createElement('span'); tag.className = 'day-label'; tag.textContent = label; chip.append(tag); }
+  const name = document.createElement('b');
+  name.textContent = title;
+  const small = document.createElement('small');
+  small.textContent = detail;
+  chip.append(name, small);
+  if (progress !== undefined) {
+    const bar = document.createElement('span');
+    bar.className = 'day-progress';
+    const fill = document.createElement('i');
+    fill.style.width = `${progress}%`;
+    bar.append(fill);
+    chip.append(bar);
+  }
+  return chip;
+}
+function updateDayStrip() {
+  const clock = previewTime ?? parisClock();
+  const now = toMinutes(clock);
+  const index = dayItems.findIndex((item) => now >= toMinutes(item.start) && now < toMinutes(item.end));
+  const label = (item) => `${item.emoji} ${item.short}`;
+  const chips = [];
+  const clockText = document.createElement('span');
+  clockText.className = 'day-clock';
+  clockText.textContent = previewTime ? `Preview ${clock}` : `Paris ${clock}`;
+  chips.push(clockText);
+  if (index >= 0) {
+    const [before, current, after] = [dayItems[index - 1], dayItems[index], dayItems[index + 1]];
+    const length = toMinutes(current.end) - toMinutes(current.start);
+    if (before) chips.push(dayChip('is-before', { title: label(before), detail: before.start, href: before.href }));
+    chips.push(dayChip('is-now', {
+      label: 'Now', title: label(current), detail: `${current.start}–${current.end} · ${formatLeft(toMinutes(current.end) - now)}`,
+      href: current.href, progress: Math.round((now - toMinutes(current.start)) / length * 100),
+    }));
+    if (after) chips.push(dayChip('is-after', { title: label(after), detail: after.start, href: after.href }));
+  } else if (now < toMinutes(dayItems[0].start)) {
+    chips.push(dayChip('is-now', { label: 'Today', title: `Starts at ${dayItems[0].start}`, detail: 'Paris time' }));
+    chips.push(dayChip('is-after', { title: label(dayItems[0]), detail: dayItems[0].start, href: dayItems[0].href }));
+  } else {
+    const last = dayItems[dayItems.length - 1];
+    chips.push(dayChip('is-before', { title: label(last), detail: last.start, href: last.href }));
+    chips.push(dayChip('is-now', { label: 'Today', title: 'The day is over', detail: `Ended at ${last.end}` }));
+  }
+  $('#day-strip').replaceChildren(...chips);
+}
+updateDayStrip();
 if (!previewTime) {
-  setInterval(() => { if (!document.hidden) updateTimeline(); }, 30000);
-  document.addEventListener('visibilitychange', () => { if (!document.hidden) updateTimeline(); });
+  setInterval(() => { if (!document.hidden) updateDayStrip(); }, 30000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) updateDayStrip(); });
 }
 document.documentElement.classList.add('enhanced');
 showChapter();
