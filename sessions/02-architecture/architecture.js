@@ -1,4 +1,4 @@
-import { demoCommands, doorEdges, doorSteps, tokenEdges, tokenSteps } from './architecture-steps.mjs?v=session-2-2';
+import { demoCommands, demoSettings, doorEdges, doorSteps, tokenEdges, tokenSteps } from './architecture-steps.mjs?v=session-2-3';
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -126,7 +126,7 @@ function createDoor(root) {
 $$('[data-door]').forEach((root) => controllers.push(createDoor(root)));
 $$('.flow-fallback').forEach((element) => { element.open = false; });
 
-const commands = demoCommands();
+const commands = demoCommands(...demoSettings(location.search));
 $('#demo-anonymous').textContent = commands.anonymous;
 $('#demo-metadata').textContent = commands.metadata;
 $('#demo-signed-in').textContent = commands.signedIn;

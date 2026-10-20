@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { demoCommands, doorEdges, doorNodes, doorSteps, gatewayPath, tokenEdges, tokenNodes, tokenSteps } from '../sessions/02-architecture/architecture-steps.mjs';
+import { demoCommands, demoSettings, doorEdges, doorNodes, doorSteps, gatewayPath, tokenEdges, tokenNodes, tokenSteps } from '../sessions/02-architecture/architecture-steps.mjs';
 const handsOn = 'https://web-mcp-host01-f80ce789cb05568a-portal.azurewebsites.net/?lang=en#/tracks';
 
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8').replace(/\r\n/g, '\n');
@@ -72,6 +72,15 @@ test('the demo reuses the Session 1 client against the deployed gateway path, wi
   assert.match(lines.at(-2), /get_ticket '\{"ticketId":"CT-1002"\}'$/);
   assert.equal(lines.at(-1), 'unset MCP_TOKEN');
   assert.doesNotMatch(commands.signedIn, /--anonymous|echo|printf/);
+});
+
+test('the presenter link fills the demo with a real gateway and client ID, and rejects anything else', () => {
+  const id = '11111111-1111-4111-8111-111111111111';
+  assert.deepEqual(demoSettings(`?gateway=apim-mcp-abc.azure-api.net&clientId=${id}`), ['apim-mcp-abc.azure-api.net', id]);
+  assert.deepEqual(demoSettings('?gateway=evil.example.org/x&clientId=nope'), [undefined, undefined]);
+  assert.deepEqual(demoSettings(`?gateway=a'$(id).azure-api.net&clientId=${id}'`), [undefined, undefined]);
+  assert.deepEqual(demoSettings(''), [undefined, undefined]);
+  assert.match(demoCommands(...demoSettings('')).anonymous, /<apim-name>\.azure-api\.net/);
 });
 
 test('cache suffixes match between the page and its module import', () => {

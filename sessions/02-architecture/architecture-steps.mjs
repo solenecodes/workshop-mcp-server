@@ -142,6 +142,18 @@ export const tokenSteps = [
   },
 ];
 
+// Presenter link: presentation.html?gateway=<apim-name>.azure-api.net&clientId=<api-client-id>#demo
+// Only an API Management host and a UUID are accepted; anything else keeps the placeholders. Never a token.
+export function demoSettings(search = '') {
+  const params = new URLSearchParams(search);
+  const gateway = (params.get('gateway') ?? '').toLowerCase();
+  const clientId = (params.get('clientId') ?? '').toLowerCase();
+  return [
+    /^[a-z0-9][a-z0-9-]{0,48}\.azure-api\.net$/.test(gateway) ? gateway : undefined,
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(clientId) ? clientId : undefined,
+  ];
+}
+
 // Presenter demo, with the Session 1 terminal client. The token goes straight into a variable: never shown, never in a URL.
 // infra/prepare-identity.mjs pre-authorizes Azure CLI for the delegated Mcp.Read scope.
 export function demoCommands(gatewayHost = '<apim-name>.azure-api.net', clientId = '<api-client-id>') {
