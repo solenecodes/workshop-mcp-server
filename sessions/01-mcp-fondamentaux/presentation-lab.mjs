@@ -61,7 +61,7 @@ export const labSteps = [
     short: 'Unknown ticket', title: 'Ask for a ticket that does not exist',
     why: 'When the identifier is well formed but unknown, the server returns an explicit tool error. It never invents or substitutes a ticket.',
     tool: 'get_ticket', args: { ticketId: 'CT-9999' },
-    changes: ['CT-9999'], focus: ['error', 'message'],
+    changes: ['CT-9999'], focus: ['error', 'message'], expectsError: true,
     notice: 'the error code and message. This error is the expected result of this step.',
   },
 ];

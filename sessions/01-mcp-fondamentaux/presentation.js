@@ -1,5 +1,5 @@
-import { defaultEndpoint, defaultProtectedEndpoint, labCommand, labSteps, securityCode, setupCode, shareUrl, validateEndpoint } from './presentation-lab.mjs?v=tickets-lab-1';
-import { callMcp, jsonTokens } from './mcp-console.mjs?v=tickets-lab-1';
+import { defaultEndpoint, defaultProtectedEndpoint, labCommand, labSteps, securityCode, setupCode, shareUrl, validateEndpoint } from './presentation-lab.mjs?v=tickets-lab-2';
+import { callMcp, jsonTokens } from './mcp-console.mjs?v=tickets-lab-2';
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -462,6 +462,15 @@ function renderStep() {
   $('#lab-timing').textContent = stored ? `· ${stored.elapsedMs} ms` : '';
   if (stored) renderJson(output, stored.result.structuredContent ?? stored.result, step.focus);
   else output.textContent = 'Run this step to see the real response.';
+  const status = $('#lab-status');
+  if (settings && !consoleBusy) {
+    const failed = stored?.result.isError === true;
+    status.dataset.error = String(failed && !step.expectsError);
+    status.textContent = !stored ? 'Ready. Copy the command, or run it from this page.'
+      : failed ? (step.expectsError ? `The server returned the expected tool error (${stored.elapsedMs} ms).`
+        : `The server returned a tool error (${stored.elapsedMs} ms). See the actual response.`)
+        : `Response received in ${stored.elapsedMs} ms.`;
+  }
 }
 $('#lab-prev').addEventListener('click', () => { currentStep = Math.max(0, currentStep - 1); renderStep(); });
 $('#lab-next').addEventListener('click', () => { currentStep = Math.min(labSteps.length - 1, currentStep + 1); renderStep(); });
@@ -551,10 +560,6 @@ $('#lab-run').addEventListener('click', async () => {
     const reply = await callMcp(endpoint, labCommand(index, settings).request);
     if (settings?.endpoint !== endpoint) throw new Error('The endpoint changed. Apply it and run the call again.');
     stepResults[index] = reply;
-    status.dataset.error = String(reply.result.isError === true);
-    status.textContent = reply.result.isError
-      ? `The server returned a tool error (${reply.elapsedMs} ms). See the actual response.`
-      : `Response received in ${reply.elapsedMs} ms.`;
   } catch (error) {
     failed = true;
     status.dataset.error = 'true';
@@ -562,7 +567,7 @@ $('#lab-run').addEventListener('click', async () => {
     if (currentStep === index) $('#lab-output').textContent = error.message;
   } finally {
     consoleBusy = false;
-    if (failed || currentStep !== index) $('#lab-run').disabled = !settings;
+    if (failed) $('#lab-run').disabled = !settings;
     else renderStep();
   }
 });
