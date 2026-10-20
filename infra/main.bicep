@@ -8,17 +8,29 @@ param location string
 param sessionId string
 param deployedBy string
 param createdAt string
-param resourceGroupName string
-param managedEnvironmentName string
-param registryName string
-param publicAppName string
-param protectedAppName string
-param backendAppName string
+@description('Override only to adopt an existing deployment. Empty: generated from a unique token.')
+param resourceGroupName string = ''
+param managedEnvironmentName string = ''
+param registryName string = ''
+param publicAppName string = ''
+param protectedAppName string = ''
+param backendAppName string = ''
 param consoleOrigin string = 'https://example.invalid'
 param entraClientId string = '00000000-0000-0000-0000-000000000000'
 param containerImage string = 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
 @description('Keep the public MCP and internal APIs ready during a live workshop; incurs idle compute charges.')
 param workshopAlwaysReady bool = false
+
+// Stable for one environment (reruns update in place), unique across subscriptions, environments and regions.
+var resourceToken = toLower(uniqueString(subscription().id, environmentName, location))
+var names = {
+  resourceGroup: empty(resourceGroupName) ? 'rg-mcp-${resourceToken}' : resourceGroupName
+  environment: empty(managedEnvironmentName) ? 'cae-mcp-${resourceToken}' : managedEnvironmentName
+  registry: empty(registryName) ? 'crmcp${resourceToken}' : registryName
+  publicApp: empty(publicAppName) ? 'ca-mcp-public-${resourceToken}' : publicAppName
+  protectedApp: empty(protectedAppName) ? 'ca-mcp-auth-${resourceToken}' : protectedAppName
+  backendApp: empty(backendAppName) ? 'ca-mcp-apis-${resourceToken}' : backendAppName
+}
 
 var tags = {
   'app-onboard-skill': 'true'
@@ -29,36 +41,36 @@ var tags = {
 }
 
 resource rg 'Microsoft.Resources/resourceGroups@2023-07-01' = {
-  name: resourceGroupName
+  name: names.resourceGroup
   location: location
   tags: tags
 }
 
 module registry './modules/registry.bicep' = {
-  name: 'container-registry'
+  name: 'container-registry-${resourceToken}'
   scope: rg
   params: {
     location: location
-    registryName: registryName
+    registryName: names.registry
     tags: tags
   }
 }
 
 module environment './modules/managed-environment.bicep' = {
-  name: 'container-apps-environment'
+  name: 'container-apps-environment-${resourceToken}'
   scope: rg
   params: {
     location: location
-    environmentName: managedEnvironmentName
+    environmentName: names.environment
     tags: tags
   }
 }
 
 module publicApp './modules/container-app.bicep' = {
-  name: 'public-mcp'
+  name: 'public-mcp-${resourceToken}'
   scope: rg
   params: {
-    appName: publicAppName
+    appName: names.publicApp
     environmentId: environment.outputs.resourceId
     containerImage: containerImage
     mode: 'public'
@@ -67,8 +79,8 @@ module publicApp './modules/container-app.bicep' = {
     acrLoginServer: registry.outputs.loginServer
     entraTenantId: tenant().tenantId
     entraClientId: entraClientId
-    publicMcpUrl: 'https://${publicAppName}.${environment.outputs.defaultDomain}/mcp'
-    backendApiUrl: 'https://${backendAppName}.internal.${environment.outputs.defaultDomain}'
+    publicMcpUrl: 'https://${names.publicApp}.${environment.outputs.defaultDomain}/mcp'
+    backendApiUrl: 'https://${names.backendApp}.internal.${environment.outputs.defaultDomain}'
     publicApiUrl: ''
     consoleOrigin: consoleOrigin
     tags: tags
@@ -76,10 +88,10 @@ module publicApp './modules/container-app.bicep' = {
 }
 
 module protectedApp './modules/container-app.bicep' = {
-  name: 'protected-mcp'
+  name: 'protected-mcp-${resourceToken}'
   scope: rg
   params: {
-    appName: protectedAppName
+    appName: names.protectedApp
     environmentId: environment.outputs.resourceId
     containerImage: containerImage
     mode: 'protected'
@@ -87,8 +99,8 @@ module protectedApp './modules/container-app.bicep' = {
     acrLoginServer: registry.outputs.loginServer
     entraTenantId: tenant().tenantId
     entraClientId: entraClientId
-    publicMcpUrl: 'https://${protectedAppName}.${environment.outputs.defaultDomain}/mcp'
-    backendApiUrl: 'https://${backendAppName}.internal.${environment.outputs.defaultDomain}'
+    publicMcpUrl: 'https://${names.protectedApp}.${environment.outputs.defaultDomain}/mcp'
+    backendApiUrl: 'https://${names.backendApp}.internal.${environment.outputs.defaultDomain}'
     publicApiUrl: ''
     consoleOrigin: ''
     tags: tags
@@ -96,10 +108,10 @@ module protectedApp './modules/container-app.bicep' = {
 }
 
 module backendApp './modules/container-app.bicep' = {
-  name: 'business-apis'
+  name: 'business-apis-${resourceToken}'
   scope: rg
   params: {
-    appName: backendAppName
+    appName: names.backendApp
     environmentId: environment.outputs.resourceId
     containerImage: containerImage
     mode: 'backend'
@@ -110,23 +122,24 @@ module backendApp './modules/container-app.bicep' = {
     entraClientId: entraClientId
     publicMcpUrl: ''
     backendApiUrl: ''
-    publicApiUrl: 'https://${backendAppName}.internal.${environment.outputs.defaultDomain}'
+    publicApiUrl: 'https://${names.backendApp}.internal.${environment.outputs.defaultDomain}'
     consoleOrigin: ''
     tags: tags
   }
 }
 
 module roleAssignments './modules/role-assignments.bicep' = {
-  name: 'acr-pull-role-assignments'
+  name: 'acr-pull-role-assignments-${resourceToken}'
   scope: rg
   params: {
-    registryName: registryName
+    registryName: names.registry
     publicPrincipalId: publicApp.outputs.principalId
     protectedPrincipalId: protectedApp.outputs.principalId
     backendPrincipalId: backendApp.outputs.principalId
   }
 }
 
+output resourceToken string = resourceToken
 output resourceGroupName string = rg.name
 output registryName string = registry.outputs.name
 output registryLoginServer string = registry.outputs.loginServer

@@ -8,10 +8,9 @@
 // live on a Standard v2 gateway in olivMertens/governed-mcp-workshop (module 04, 2026-10-19 and 2026-10-20).
 targetScope = 'resourceGroup'
 
-@description('API Management instance name. Its gateway URL is https://<name>.azure-api.net.')
-@minLength(1)
+@description('API Management instance name (globally unique). Its gateway URL is https://<name>.azure-api.net. Default: generated from the resource group ID.')
 @maxLength(50)
-param apimName string
+param apimName string = 'apim-mcp-${uniqueString(resourceGroup().id)}'
 param location string = resourceGroup().location
 @description('Basic v2 is enough for the workshop; Standard v2 adds outbound virtual network integration.')
 @allowed(['BasicV2', 'StandardV2'])
@@ -31,6 +30,9 @@ param rateLimitCalls int = 30
 @minValue(1)
 param rateLimitPeriod int = 60
 param tags object = {}
+@description('Bump only when MCP tool creation is stuck on HTTP 502: the tools are then created under new resource names. Clients still see list_tickets and get_ticket.')
+@minValue(1)
+param toolRevision int = 1
 
 var gatewayUrl = 'https://${apimName}.azure-api.net'
 var issuer = '${environment().authentication.loginEndpoint}${entraTenantId}/v2.0'
@@ -140,9 +142,13 @@ resource restMcp 'Microsoft.ApiManagement/service/apis@2025-09-01-preview' = {
   }
 }
 
+// Tools are created one at a time: parallel creation on a new gateway can fail with HTTP 502 and leave that
+// resource name unusable on the instance (seen live 2026-10-20). Clients see displayName, so the resource name
+// carries a unique suffix and the MCP tool name stays list_tickets / get_ticket.
+@batchSize(1)
 resource restTools 'Microsoft.ApiManagement/service/apis/tools@2025-09-01-preview' = [for tool in items(toolOperations): {
   parent: restMcp
-  name: tool.key
+  name: '${replace(tool.key, '_', '-')}-${toolRevision == 1 ? uniqueString(restMcp.id, tool.key) : uniqueString(restMcp.id, tool.key, string(toolRevision))}'
   properties: {
     displayName: tool.key
     description: operations[tool.value].description
@@ -162,7 +168,8 @@ resource restMcpPolicy 'Microsoft.ApiManagement/service/apis/policies@2025-09-01
 }
 
 // Pattern A: the existing protected MCP server, forwarded as is. The backend entity makes it a passthrough;
-// without it the service answers tools/list itself with an empty list (verified live in workshop-mcp).
+// without it the service answers tools/list itself with an empty list, even with serviceUrl set as in the Learn
+// sample (re-checked on Basic v2, 2026-10-20).
 resource existingBackend 'Microsoft.ApiManagement/service/backends@2025-09-01-preview' = if (patternA) {
   parent: apim
   name: 'contoso-tickets-protected-mcp'
@@ -187,7 +194,8 @@ resource existingMcp 'Microsoft.ApiManagement/service/apis@2025-09-01-preview' =
     #disable-next-line BCP037
     backendId: existingBackend.name
     subscriptionRequired: false
-    // The 2025-09-01-preview service expects endpoints as a map keyed by name (verified live; the reference shows an array).
+    // The live service expects endpoints as a map keyed by name. The array shown in Learn and in the Bicep
+    // type is rejected with 400 ValidationError (re-checked on Basic v2, 2026-10-20).
     mcpProperties: any({ transportType: 'streamable', endpoints: { message: { uriTemplate: '/mcp' } } })
   }
 }
@@ -234,6 +242,7 @@ resource prmPolicies 'Microsoft.ApiManagement/service/apis/operations/policies@2
   }
 }]
 
+output apimName string = apim.name
 output gatewayUrl string = gatewayUrl
 output restMcpUrl string = '${gatewayUrl}/${servers.rest.path}/mcp'
 output existingMcpUrl string = patternA ? '${gatewayUrl}/${servers.existing.path}/mcp' : ''

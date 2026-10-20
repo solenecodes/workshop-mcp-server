@@ -2,7 +2,6 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "apimName": { "value": "apim-mcp-dev-0000" },
     "skuName": { "value": "BasicV2" },
     "publisherEmail": { "value": "mcp-workshop@example.com" },
     "entraTenantId": { "value": "00000000-0000-0000-0000-000000000000" },
