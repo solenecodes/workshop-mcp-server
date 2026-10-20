@@ -524,8 +524,8 @@ to demonstrate a backend weakness or does not invoke the expected tool.
 | **10:15–10:45** | **30 min** | [2 · MCP in enterprise and Azure architectures, with APIM](sessions/02-architecture/README.md) |
 | 10:45–11:00 | 15 min | Break |
 | **11:00–11:15** | **15 min** | [3 · Security and governance for MCP](sessions/03-security/README.md) |
-| 11:15–12:00 | 45 min | Agent 365: governance and security overview |
-| **12:00–12:30** | **30 min** | **Engineering REX – MCP Servers in the Real World · Fethi Dilmi** |
+| 11:15–12:00 | 45 min | Agent 365: governance and security overview · Younes K. |
+| **12:00–12:30** | **30 min** | **Engineering REX – MCP Servers in the Real World · Fethi D.** |
 
 **12:30–14:00 — Lunch**
 

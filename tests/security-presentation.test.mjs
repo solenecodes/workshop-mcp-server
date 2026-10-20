@@ -89,5 +89,6 @@ test('the original timetable, session-one lab and browser-only-public boundary r
   assert.match(script, /callMcp\(endpoint, parseCommandRequest/);
   assert.doesNotMatch(script, /callMcp\([^)]*protectedEndpoint|\.innerHTML|localStorage|sessionStorage/);
   assert.match(html, /id="day-engineering-rex"/);
-  assert.match(html, /<strong>Fethi Dilmi<\/strong>/);
+  assert.match(html, /<strong>Fethi D\.<\/strong>/);
+  assert.match(html, /<strong>Younes K\.<\/strong>/);
 });

@@ -90,3 +90,15 @@ test('both agendas place the morning break after Session 2 without shifting late
   assert.match(panel('day-session-2'), /10:15–10:45 · 30 min/);
   assert.match(panel('day-session-2'), /Up next at 10:45:[^<]*Break/);
 });
+
+test('both agendas show the abbreviated presenter names in their rows and Now labels', () => {
+  for (const session of ['01-mcp-fondamentaux', '02-architecture']) {
+    const html = readFileSync(new URL(`../sessions/${session}/presentation.html`, import.meta.url), 'utf8');
+    for (const [key, name] of [['session-4', 'Younes K.'], ['engineering-rex', 'Fethi D.']]) {
+      const entry = html.match(new RegExp(`<li data-key="${key}"[\\s\\S]*?</li>`))[0];
+      assert.ok(entry.match(/data-short="([^"]+)"/)[1].includes(name));
+      assert.ok(entry.match(/<small>([^<]+)<\/small>/)[1].includes(name));
+    }
+    assert.doesNotMatch(html, /Fethi Dilmi/);
+  }
+});

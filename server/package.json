@@ -1,0 +1,12 @@
+{
+  "name": "workshop-snippets-local-tools",
+  "private": true,
+  "scripts": {
+    "storage": "azurite --location .azurite --blobHost 127.0.0.1 --queueHost 127.0.0.1 --tableHost 127.0.0.1",
+    "start": "func start --port 7071"
+  },
+  "devDependencies": {
+    "azure-functions-core-tools": "4.16.0",
+    "azurite": "3.37.0"
+  }
+}
