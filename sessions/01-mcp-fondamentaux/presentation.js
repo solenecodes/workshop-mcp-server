@@ -1,8 +1,8 @@
-import { defaultEndpoint, defaultProtectedEndpoint, labCommand, labSteps, parseCommandRequest, shareUrl, validateEndpoint } from './presentation-lab.mjs?v=parking-lot-2';
-import { callMcp, jsonTokens } from './mcp-console.mjs?v=parking-lot-2';
-import { securityAliases, securityChapters } from './presentation-security.mjs?v=parking-lot-2';
+import { defaultEndpoint, defaultProtectedEndpoint, labCommand, labSteps, parseCommandRequest, shareUrl, validateEndpoint } from './presentation-lab.mjs?v=parking-lot-3';
+import { callMcp, jsonTokens } from './mcp-console.mjs?v=parking-lot-3';
+import { securityAliases, securityChapters } from './presentation-security.mjs?v=parking-lot-3';
 import { initializeAgenda } from './presentation-agenda.mjs?v=agenda-collapse-1';
-import { initializeParkingLot } from './parking-lot.mjs?v=parking-lot-2';
+import { initializeParkingLot } from './parking-lot.mjs?v=parking-lot-3';
 
 initializeParkingLot();
 

@@ -515,16 +515,17 @@ a.day-chip.is-now:hover { background:var(--blue-dark); }
 .parking-toolbar input[type="checkbox"] { flex:0 0 auto; width:16px; height:16px; min-height:0; margin:0; padding:0; accent-color:var(--blue); }
 #parking-status { font-size:.8rem; margin:8px 0 20px; }
 #parking-status[data-error="true"] { color:var(--red); }
-.parking-notes { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(240px,100%),1fr)); gap:16px; }
-.parking-note { position:relative; display:flex; flex-direction:column; min-height:180px; padding:42px 16px 12px; border-radius:4px 4px 18px 4px; box-shadow:var(--shadow-md); background:var(--note-color); }
+.parking-notes { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(200px,100%),1fr)); gap:12px; align-items:start; }
+.parking-note { position:relative; display:flex; flex-direction:column; min-width:0; min-height:140px; padding:36px 12px 8px; border-radius:4px 4px 14px 4px; box-shadow:var(--shadow-sm); background:var(--note-color); }
 .parking-dialog [data-color="yellow"] { --note-color:#fff2b2; --swatch-color:#e5bd35; }
 .parking-dialog [data-color="pink"] { --note-color:#fbd8e6; --swatch-color:#d974a0; }
 .parking-dialog [data-color="blue"] { --note-color:#d5eaff; --swatch-color:#559ada; }
 .parking-dialog [data-color="green"] { --note-color:#ddf0cb; --swatch-color:#70a946; }
 .parking-dialog [data-color="purple"] { --note-color:#e8dcfb; --swatch-color:#a07ace; }
-.parking-note>p { color:var(--text); overflow-wrap:anywhere; white-space:pre-wrap; }
+.parking-note>p { margin:0 0 8px; color:var(--text); font-size:.875rem; line-height:1.45; overflow-wrap:anywhere; white-space:pre-wrap; }
 .parking-delete { position:absolute; top:4px; right:4px; min-height:32px; padding:0 10px; background:transparent; border:0; box-shadow:none; font-size:1.3rem; }
-.parking-note-actions { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px; margin-top:auto; }
+.parking-note-actions { display:flex; align-items:center; justify-content:space-between; gap:4px; margin-top:auto; }
+.parking-note-time { color:var(--muted); font-size:.72rem; font-variant-numeric:tabular-nums; white-space:nowrap; }
 .parking-note-actions>.button { padding:4px 8px; border:0; background:transparent; box-shadow:none; color:var(--text); font-weight:500; }
 .parking-color-picker { position:relative; margin:0; padding:0; border:0; background:transparent; }
 .parking-color-picker>summary,.parking-swatch { display:flex; align-items:center; justify-content:center; width:44px; height:44px; padding:0; border:0; border-radius:50%; background:transparent; list-style:none; }

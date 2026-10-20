@@ -62,7 +62,9 @@ note. Everyone can delete notes (with confirmation), archive or restore them,
 and select one of five colors using the small dot at the bottom of each note.
 Click the dot to open the color palette; Escape or a click outside closes it.
 The archived view is separate from active
-questions. The board refreshes every three seconds while open.
+questions. Compact notes show their original posting time in Paris time; hover
+over the time to see the full date. The board refreshes every three seconds
+while open, without replacing unchanged notes or interrupting their color palette.
 It is anonymous and collaborative, not a private or moderated inbox:
 do not enter personal information or secrets.
 
