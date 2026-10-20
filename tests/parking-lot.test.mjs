@@ -16,6 +16,7 @@ test('parking lot renders untrusted questions as text, not HTML, in an accessibl
   assert.match(source, /credentials: 'omit'/);
   assert.match(html, /<dialog id="parking-lot"[^>]+aria-labelledby="parking-title"/);
   assert.match(html, /id="parking-question"[^>]+maxlength="500" required/);
+  assert.match(html, /id="parking-count" aria-label="Loading active questions">\.\.\.<\/span>/);
 });
 
 test('note colors use an accessible dot palette and the archive checkbox has inline alignment', () => {
@@ -77,10 +78,12 @@ function boardFixture(t) {
     querySelector(selector) { return this.querySelectorAll(selector)[0] ?? null; }
     focus() { document.activeElement = this; }
     showModal() { this.open = true; }
+    close() { this.open = false; this.dispatchEvent(new Event('close')); }
   }
   const ids = ['parking-lot', 'parking-open', 'parking-form', 'parking-question', 'parking-notes',
     'parking-status', 'parking-archived', 'parking-refresh', 'parking-close', 'parking-count'];
   const elements = Object.fromEntries(ids.map((id) => [id, new Element('div')]));
+  elements['parking-count'].textContent = '...';
   const submit = new Element('button');
   elements['parking-form'].append(submit);
   const root = new EventTarget();
@@ -104,13 +107,70 @@ function boardFixture(t) {
     }) });
   }));
   let poll;
-  t.mock.method(globalThis, 'setInterval', (callback) => { poll = callback; return 1; });
+  const interval = t.mock.method(globalThis, 'setInterval', (callback) => { poll = callback; return 1; });
   initializeParkingLot();
-  return { elements, submit, requests, root, poll: () => poll(), flush: () => new Promise(setImmediate) };
+  return { elements, submit, requests, root, interval, poll: () => poll(), flush: () => new Promise(setImmediate) };
 }
 
 const firstNote = { id: 'first', question: 'A shared question', color: 'yellow',
   archived: false, createdAt: '2026-10-20T23:10:00.000Z' };
+
+test('the active count loads before opening the board and keeps updating after it closes', async (t) => {
+  const { elements, requests, root, interval, poll, flush } = boardFixture(t);
+  const count = elements['parking-count'];
+  const dialog = elements['parking-lot'];
+  assert.equal(dialog.open, false);
+  assert.equal(count.textContent, '...');
+  assert.equal(requests.length, 1, 'Page initialization requests shared state immediately');
+  const archived = { ...firstNote, id: 'archived', archived: true };
+  requests[0].reply([firstNote, archived]);
+  await flush();
+  assert.equal(count.textContent, '1');
+  assert.equal(count.getAttribute('aria-label'), '1 active question');
+  poll();
+  const second = { ...firstNote, id: 'second' };
+  requests[1].reply([firstNote, second, archived]);
+  await flush();
+  assert.equal(count.textContent, '2', 'Remote additions update a closed board counter');
+  elements['parking-open'].dispatchEvent(new Event('click'));
+  requests[2].reply([firstNote, second, archived]);
+  await flush();
+  dialog.close();
+  poll();
+  requests[3].reply([firstNote, archived]);
+  await flush();
+  assert.equal(count.textContent, '1', 'Closing the dialog does not stop polling');
+  assert.equal(interval.mock.calls.length, 1, 'Opening the board does not start another timer');
+  root.hidden = true;
+  poll();
+  assert.equal(requests.length, 4, 'Hidden tabs do not poll');
+  root.hidden = false;
+  root.dispatchEvent(new Event('visibilitychange'));
+  requests[4].reply([archived]);
+  await flush();
+  assert.equal(count.textContent, '0', 'Zero is shown only for a confirmed board with no active notes');
+  assert.equal(dialog.open, false);
+});
+
+test('failed count refreshes show an explicit error and recover even if the board is unchanged', async (t) => {
+  const { elements, requests, poll, flush } = boardFixture(t);
+  const count = elements['parking-count'];
+  requests[0].reply([firstNote]);
+  await flush();
+  assert.equal(count.textContent, '1');
+  poll();
+  requests[1].reply([], 500);
+  await flush();
+  assert.equal(count.textContent, '?');
+  assert.match(count.title, /Write failed/);
+  assert.equal(count.getAttribute('aria-label'), 'Question count unavailable');
+  poll();
+  requests[2].reply([firstNote]);
+  await flush();
+  assert.equal(count.textContent, '1');
+  assert.equal(count.getAttribute('aria-label'), '1 active question');
+  assert.equal(elements['parking-status'].dataset.error, 'false');
+});
 
 test('background sync preserves controls, card identity, focus and open palettes when other notes change', async (t) => {
   const { elements, submit, requests, root, poll, flush } = boardFixture(t);

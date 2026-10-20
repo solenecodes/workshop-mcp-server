@@ -1,4 +1,4 @@
-import { defaultEndpoint, validateEndpoint } from './presentation-lab.mjs?v=parking-lot-3';
+import { defaultEndpoint, validateEndpoint } from './presentation-lab.mjs?v=parking-lot-4';
 
 const timeFormatter = new Intl.DateTimeFormat('en-GB', {
   timeZone: 'Europe/Paris', hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
@@ -20,6 +20,7 @@ export function parkingLotEndpoint(pageUrl) {
 export function initializeParkingLot() {
   const dialog = document.querySelector('#parking-lot');
   const opener = document.querySelector('#parking-open');
+  const count = document.querySelector('#parking-count');
   const form = document.querySelector('#parking-form');
   const input = document.querySelector('#parking-question');
   const list = document.querySelector('#parking-notes');
@@ -31,7 +32,6 @@ export function initializeParkingLot() {
   let busy = false;
   let loading = false;
   let revision = 0;
-  let timer;
   const colors = ['yellow', 'pink', 'blue', 'green', 'purple'];
   const message = (text, error = false) => {
     if (status.textContent !== text) status.textContent = text;
@@ -48,11 +48,15 @@ export function initializeParkingLot() {
     element.addEventListener('click', action);
     return element;
   }
-  function render() {
-    const visible = notes.filter((note) => note.archived === archived.checked);
-    const count = document.querySelector('#parking-count');
+  function updateCount() {
     const total = String(notes.filter((note) => !note.archived).length);
     if (count.textContent !== total) count.textContent = total;
+    const label = `${total} active question${total === '1' ? '' : 's'}`;
+    if (count.getAttribute('aria-label') !== label) count.setAttribute('aria-label', label);
+    if (count.title !== 'Active questions') count.title = 'Active questions';
+  }
+  function render() {
+    const visible = notes.filter((note) => note.archived === archived.checked);
     if (!visible.length) {
       const empty = list.querySelector('.parking-empty') ?? document.createElement('p');
       empty.className = 'parking-empty';
@@ -169,12 +173,19 @@ export function initializeParkingLot() {
       }
       const changed = JSON.stringify(notes) !== JSON.stringify(data.notes);
       notes = data.notes;
+      updateCount();
       if (method === 'POST') input.value = '';
       if (changed || !list.childNodes.length) render();
       message('Shared with everyone · refreshes every 3 seconds. Anyone can archive, recolor or delete notes. No sensitive information.');
     } catch (error) {
       if (!writing && requestRevision !== revision) return;
-      message(`Unable to sync the parking lot. ${error instanceof Error ? error.message : 'Unknown error.'} Your question has not been cleared. Check the server and retry.`, true);
+      const detail = error instanceof Error ? error.message : 'Unknown error.';
+      if (!writing) {
+        count.textContent = '?';
+        count.setAttribute('aria-label', 'Question count unavailable');
+        count.title = `Unable to sync the question count. ${detail}`;
+      }
+      message(`Unable to sync the parking lot. ${detail} Your question has not been cleared. Check the server and retry.`, true);
     } finally {
       if (writing) {
         busy = false;
@@ -187,12 +198,11 @@ export function initializeParkingLot() {
   opener.addEventListener('click', () => {
     dialog.showModal();
     void request();
-    timer = setInterval(() => { if (!document.hidden) void request(); }, 3000);
   });
   document.querySelector('#parking-close').addEventListener('click', () => dialog.close());
-  dialog.addEventListener('close', () => { clearInterval(timer); opener.focus(); });
+  dialog.addEventListener('close', () => opener.focus());
   document.addEventListener('visibilitychange', () => {
-    if (dialog.open && !document.hidden) void request();
+    if (!document.hidden) void request();
   });
   dialog.addEventListener('click', (event) => {
     list.querySelectorAll('.parking-color-picker[open]').forEach((picker) => {
@@ -216,4 +226,6 @@ export function initializeParkingLot() {
   input.addEventListener('input', () => input.setCustomValidity(''));
   archived.addEventListener('change', render);
   refresh.addEventListener('click', () => void request());
+  setInterval(() => { if (!document.hidden) void request(); }, 3000);
+  if (!document.hidden) void request();
 }

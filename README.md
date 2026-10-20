@@ -63,8 +63,10 @@ and select one of five colors using the small dot at the bottom of each note.
 Click the dot to open the color palette; Escape or a click outside closes it.
 The archived view is separate from active
 questions. Compact notes show their original posting time in Paris time; hover
-over the time to see the full date. The board refreshes every three seconds
-while open, without replacing unchanged notes or interrupting their color palette.
+over the time to see the full date. The board and active-question count refresh
+every three seconds while the page is visible, even with the dialog closed,
+without replacing unchanged notes or interrupting their color palette. The count
+is fetched on page load: `...` means loading and `?` means sync failed, not zero.
 It is anonymous and collaborative, not a private or moderated inbox:
 do not enter personal information or secrets.
 

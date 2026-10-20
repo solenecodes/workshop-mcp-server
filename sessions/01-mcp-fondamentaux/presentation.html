@@ -7,8 +7,8 @@
   <meta name="color-scheme" content="light">
   <title>MCP, from idea to first call</title>
   <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="presentation.css?v=parking-lot-3">
-  <script type="module" src="presentation.js?v=parking-lot-3"></script>
+  <link rel="stylesheet" href="presentation.css?v=parking-lot-4">
+  <script type="module" src="presentation.js?v=parking-lot-4"></script>
 </head>
 <body>
   <svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -40,7 +40,7 @@
   <header class="topbar">
     <a class="brand" href="#why"><svg class="icon"><use href="#i-plug"/></svg><span>MCP <span class="muted">workshop</span></span></a>
     <div class="day-strip" id="day-strip" aria-label="Where the day should be now (Paris time)"></div>
-    <button class="button parking-open" id="parking-open" type="button" aria-haspopup="dialog"><span aria-hidden="true">📝</span> Parking lot <span id="parking-count">0</span></button>
+    <button class="button parking-open" id="parking-open" type="button" aria-haspopup="dialog"><span aria-hidden="true">📝</span> Parking lot <span id="parking-count" aria-label="Loading active questions">...</span></button>
   </header>
 
   <dialog id="parking-lot" class="parking-dialog" aria-labelledby="parking-title" aria-describedby="parking-help">
