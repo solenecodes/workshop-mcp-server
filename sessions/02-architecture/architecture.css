@@ -44,6 +44,19 @@
 .door-legend i.no { background:var(--red); margin-left:8px; }
 .flow-explanation .plain { font-size:1.08rem; font-weight:600; margin:0 0 8px; max-width:840px; }
 .flow-explanation .detail { color:var(--muted); font-size:.86rem; }
+.flow-explanation .fields { display:block; margin:10px 0 0; padding:8px 12px; border-radius:6px; background:#0d1117; color:#e6edf3; font-size:.78rem; max-width:840px; overflow-wrap:anywhere; }
+.flow-explanation .fields[hidden] { display:none; }
+.token-diagram { grid-template-columns:repeat(4,minmax(0,1fr)); grid-template-areas:
+  "alice gateway server api"
+  "entra . identity ."; }
+.token-diagram article[data-node="alice"] { grid-area:alice; }
+.token-diagram article[data-node="entra"] { grid-area:entra; }
+.token-diagram article[data-node="gateway"] { grid-area:gateway; }
+.token-diagram article[data-node="server"] { grid-area:server; }
+.token-diagram article[data-node="identity"] { grid-area:identity; }
+.token-diagram article[data-node="api"] { grid-area:api; }
+.learn-links { display:flex; align-items:flex-start; gap:8px; margin:18px 0 0; font-size:.8rem; color:var(--muted); }
+.learn-links .icon { width:18px; height:18px; color:var(--blue); }
 html:not(.enhanced) .door .flow-lines { display:none; }
 
 .same-controls { margin-top:22px; }
@@ -72,10 +85,12 @@ details.question>summary { color:var(--blue-dark); }
     "public protected"
     "restmcp api"
     "registry registry"; }
+  .token-diagram { grid-template-areas: "alice entra" "gateway server" "identity api"; }
 }
 @media(max-width:600px) {
   .decision-grid, .door-diagram, .host-grid { grid-template-columns:1fr; }
   .door-diagram { grid-template-areas: "client" "entra" "gateway" "public" "protected" "restmcp" "api" "registry"; }
+  .token-diagram { grid-template-areas: "alice" "entra" "gateway" "server" "identity" "api"; }
   .demo-steps>li { padding-left:0; }
   .demo-steps>li::before { position:static; margin-bottom:8px; }
 }

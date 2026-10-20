@@ -8,8 +8,8 @@
   <title>MCP in enterprise and Azure architectures</title>
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="../01-mcp-fondamentaux/presentation.css?v=day-strip-2">
-  <link rel="stylesheet" href="architecture.css?v=session-2-1">
-  <script type="module" src="architecture.js?v=session-2-1"></script>
+  <link rel="stylesheet" href="architecture.css?v=session-2-2">
+  <script type="module" src="architecture.js?v=session-2-2"></script>
 </head>
 <body>
   <svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -68,8 +68,9 @@
           <a href="#decisions"><span class="chapter-icon"><svg class="icon"><use href="#i-layers"/></svg></span><span><small>Lesson 1</small> Four decisions</span></a>
           <a href="#hosting"><span class="chapter-icon"><svg class="icon"><use href="#i-server"/></svg></span><span><small>Lesson 2</small> Where it runs</span></a>
           <a href="#front-door"><span class="chapter-icon"><svg class="icon"><use href="#i-door"/></svg></span><span><small>Lesson 3</small> One front door</span></a>
-          <a href="#patterns"><span class="chapter-icon"><svg class="icon"><use href="#i-tool"/></svg></span><span><small>Lesson 4</small> Two ways to expose</span></a>
-          <a href="#discover"><span class="chapter-icon"><svg class="icon"><use href="#i-search"/></svg></span><span><small>Lesson 5</small> Find it, then use it</span></a>
+          <a href="#token"><span class="chapter-icon"><svg class="icon"><use href="#i-key"/></svg></span><span><small>Lesson 4</small> Follow the badge</span></a>
+          <a href="#patterns"><span class="chapter-icon"><svg class="icon"><use href="#i-tool"/></svg></span><span><small>Lesson 5</small> Two ways to expose</span></a>
+          <a href="#discover"><span class="chapter-icon"><svg class="icon"><use href="#i-search"/></svg></span><span><small>Lesson 6</small> Find it, then use it</span></a>
         </div>
         <div class="chapter-group practice-group">
           <p class="nav-group-label"><svg class="icon"><use href="#i-practice"/></svg>Demo</p>
@@ -90,7 +91,7 @@
         <a class="agenda-row" href="../01-mcp-fondamentaux/presentation.html#day-parking-review"><time>14:00</time><span><b class="agenda-emoji" aria-hidden="true">🅿️</b> Parking lot review – MCP ecosystem &amp; priorities<small>30 min</small></span></a>
       </li>
       <li data-key="hands-on" data-short="Hands-on workshop" data-start="14:30" data-end="16:00">
-        <a class="agenda-row" href="../01-mcp-fondamentaux/presentation.html#day-hands-on"><time>14:30</time><span><b class="agenda-emoji" aria-hidden="true">🛠️</b> Hands-on workshop: from an open MCP server to an enterprise-ready architecture<small>1 h 30</small></span></a>
+        <a class="agenda-row" href="https://web-mcp-host01-f80ce789cb05568a-portal.azurewebsites.net/?lang=en#/start"><time>14:30</time><span><b class="agenda-emoji" aria-hidden="true">🛠️</b> Hands-on workshop: from an open MCP server to an enterprise-ready architecture<small>1 h 30</small></span></a>
       </li>
       <li data-key="use-cases" data-short="Use cases &amp; next steps" data-start="16:00" data-end="16:30">
         <a class="agenda-row" href="../01-mcp-fondamentaux/presentation.html#day-use-cases"><time>16:00</time><span><b class="agenda-emoji" aria-hidden="true">🚀</b> Use cases, next steps &amp; open discussion<small>30 min</small></span></a>
@@ -101,7 +102,7 @@
 
     <main id="main">
       <section id="decisions" class="chapter" aria-labelledby="decisions-title">
-        <p class="eyebrow"><svg class="icon"><use href="#i-course"/></svg>Course · Lesson 1 of 5</p>
+        <p class="eyebrow"><svg class="icon"><use href="#i-course"/></svg>Course · Lesson 1 of 6</p>
         <h1 id="decisions-title" tabindex="-1">Four decisions for every MCP server</h1>
                 <p class="intro">This morning, you called one Contoso Tickets server. Before a second team uses it, each of four questions needs an owner.</p>
         <div class="decision-grid">
@@ -110,12 +111,13 @@
           <article><span class="decision-step">3</span><svg class="icon"><use href="#i-search"/></svg><h3>Discover</h3><p>How do other teams find it instead of building a copy?</p><span class="tag">Here: Azure API Center · Preview</span></article>
           <article><span class="decision-step">4</span><svg class="icon"><use href="#i-user"/></svg><h3>Consume</h3><p>Which clients call it, with which identity?</p><span class="tag">Here: VS Code, agents, Mcp.Read</span></article>
         </div>
+        <p class="learn-links"><svg class="icon"><use href="#i-course"/></svg><span>Microsoft Learn: <a href="https://learn.microsoft.com/azure/api-management/mcp-server-overview">MCP servers in API Management</a> · <a href="https://learn.microsoft.com/azure/container-apps/mcp-choosing-azure-service">Choose an Azure service for MCP</a></span></p>
         <p class="one-liner"><svg class="icon"><use href="#i-check"/></svg> The team owns the code and where it runs. The platform owns the front door, the identity and the inventory.</p>
         <details><summary>Why these four?</summary><p>An MCP server is a new way into business data. Each question maps to one Azure service in this workshop, and each one still applies whatever language or host the team chooses.</p><p>The same server keeps its two read-only tools all day: <code>list_tickets</code> and <code>get_ticket</code>, on synthetic tickets only.</p></details>
       </section>
 
       <section id="hosting" class="chapter" aria-labelledby="hosting-title">
-        <p class="eyebrow"><svg class="icon"><use href="#i-course"/></svg>Course · Lesson 2 of 5</p>
+        <p class="eyebrow"><svg class="icon"><use href="#i-course"/></svg>Course · Lesson 2 of 6</p>
         <h2 id="hosting-title" tabindex="-1">Where can an MCP server run?</h2>
         <p class="intro">Keep the platform the team already runs. What must be the same everywhere is the governance around it.</p>
         <div class="morning-stack" aria-label="This morning's deployment on Azure Container Apps">
@@ -134,14 +136,15 @@
           <article><h3>Azure Kubernetes Service</h3><p>For teams that already operate Kubernetes. Highest operating effort.</p><span class="tag">Existing clusters</span></article>
           <article><h3>Container Apps dynamic sessions</h3><p>Sandboxed code execution with platform tools, isolated per session.</p><span class="tag">No custom tools</span></article>
         </div>
+        <p class="learn-links"><svg class="icon"><use href="#i-course"/></svg><span>Microsoft Learn: <a href="https://learn.microsoft.com/azure/container-apps/mcp-choosing-azure-service">Choose an Azure service for MCP</a> · <a href="https://learn.microsoft.com/azure/container-apps/authentication-entra">Container Apps authentication with Entra</a> · <a href="https://learn.microsoft.com/azure/container-apps/managed-identity">Container Apps managed identities</a></span></p>
         <details class="question"><summary>Question for the room: your team runs its APIs on App Service. Should it move them to add MCP?</summary><p>No. Keep the platform. Ask for the same four things everywhere: a Microsoft Entra token for the server's own audience, one gateway in front, logs with metadata only, and an inventory entry.</p></details>
       </section>
 
       <section id="front-door" class="chapter" aria-labelledby="front-door-title">
-        <p class="eyebrow"><svg class="icon"><use href="#i-course"/></svg>Course · Lesson 3 of 5</p>
+        <p class="eyebrow"><svg class="icon"><use href="#i-course"/></svg>Course · Lesson 3 of 6</p>
         <h2 id="front-door-title" tabindex="-1">One front door<br><span>for every MCP server</span></h2>
         <p class="intro">Follow the same tickets from this morning's open server to a governed front door. Use Play, the arrows or a numbered step.</p>
-        <div class="flow door" data-door>
+        <div class="flow door" data-door="front">
           <div class="flow-top"><span class="tag">Illustration · no live calls</span><span class="door-legend"><i class="ok"></i> call allowed <i class="no"></i> call refused</span></div>
           <div class="flow-diagram door-diagram">
             <svg class="flow-lines" aria-hidden="true"><g data-paths></g><path data-active-path/><circle data-packet r="5" visibility="hidden"/></svg>
@@ -169,15 +172,50 @@
           <li><strong>Too many calls.</strong> Each person has a call budget. A burst gets 429 and a retry time.</li>
           <li><strong>Let other teams find it.</strong> The door’s address goes in the inventory; the server’s address never does.</li>
         </ol></details>
+        <p class="learn-links"><svg class="icon"><use href="#i-course"/></svg><span>Microsoft Learn: <a href="https://learn.microsoft.com/azure/api-management/secure-mcp-servers">Secure access to MCP servers</a> · <a href="https://learn.microsoft.com/azure/api-management/validate-azure-ad-token-policy">validate-azure-ad-token</a> · <a href="https://learn.microsoft.com/azure/api-management/rate-limit-by-key-policy">rate-limit-by-key</a></span></p>
         <p class="one-liner"><svg class="icon"><use href="#i-check"/></svg> One address. One badge per API. The servers stay behind the door.</p>
       </section>
 
+      <section id="token" class="chapter" aria-labelledby="token-title">
+        <p class="eyebrow"><svg class="icon"><use href="#i-course"/></svg>Course · Lesson 4 of 6</p>
+        <h2 id="token-title" tabindex="-1">Follow the badge<br><span>one token per hop</span></h2>
+        <p class="intro">The same call as the demo, with pattern A and the protected server. Watch which badge each hop carries. Session 3 goes deeper.</p>
+        <div class="flow door" data-door="token">
+          <div class="flow-top"><span class="tag">Illustration · placeholder values, never a real token</span><span class="door-legend"><i class="ok"></i> badge accepted</span></div>
+          <div class="flow-diagram door-diagram token-diagram">
+            <svg class="flow-lines" aria-hidden="true"><g data-paths></g><path data-active-path/><circle data-packet r="5" visibility="hidden"/></svg>
+            <article data-node="alice"><svg class="icon"><use href="#i-user"/></svg><h3>Alice in VS Code</h3><span>Signed in as a workshop user</span></article>
+            <article data-node="entra"><svg class="icon"><use href="#i-key"/></svg><h3>Microsoft Entra ID</h3><span>Signs tokens for one API</span></article>
+            <article data-node="gateway"><svg class="icon"><use href="#i-door"/></svg><h3>API Management</h3><span>Checks the badge first</span></article>
+            <article data-node="server"><svg class="icon"><use href="#i-shield"/></svg><h3>Protected MCP server</h3><span>Container Apps · checks it again</span></article>
+            <article data-node="identity"><svg class="icon"><use href="#i-key"/></svg><h3>Managed identity</h3><span>The server’s own badge</span></article>
+            <article data-node="api"><svg class="icon"><use href="#i-database"/></svg><h3>Contoso Tickets API</h3><span>Accepts Mcp.Backend.Read only</span></article>
+          </div>
+          <div class="flow-controls"><button class="button primary" data-play aria-pressed="false" type="button"><svg class="icon"><use href="#i-play"/></svg><span>Play</span></button><button class="button icon-button" data-prev type="button" aria-label="Previous animation step">←</button><button class="button icon-button" data-next type="button" aria-label="Next animation step">→</button><button class="text-button" data-reset type="button">Restart</button><span class="flow-count"></span></div>
+          <div class="flow-explanation" aria-live="polite"><h3 data-step-title>1. Ask for a badge</h3><p class="plain" data-step-plain>Alice signs in once. Microsoft Entra ID gives her a badge for one API only.</p><p class="detail" data-step-detail></p><code class="fields" data-step-fields></code></div>
+          <div class="flow-dots" role="group" aria-label="Animation steps"></div>
+          <p class="motion-note" hidden>Reduced motion: use the arrows or numbered steps.</p>
+        </div>
+        <details class="flow-fallback" open><summary>Read the sequence</summary><ol>
+          <li><strong>Ask for a badge.</strong> Alice signs in once. Microsoft Entra ID gives her a badge for one API only.</li>
+          <li><strong>Show the badge at the door.</strong> Every call carries the badge in a header, never in the address.</li>
+          <li><strong>Is the badge real, and for this door?</strong> The door checks who signed it, which API it is for and when it expires. Otherwise: 401.</li>
+          <li><strong>Is Alice allowed to read tickets?</strong> The badge must grant Mcp.Read. Otherwise: 403.</li>
+          <li><strong>The server checks again.</strong> The door forwards the same request; the server validates the same badge.</li>
+          <li><strong>The server gets its own badge.</strong> Its managed identity holds Mcp.Backend.Read.</li>
+          <li><strong>One badge per hop.</strong> The ticket API sees the server’s badge only. Alice’s badge stops at the server.</li>
+          <li><strong>The answer comes back.</strong> Alice gets CT-1002. The logs keep who asked and what happened, never the badge.</li>
+        </ol></details>
+        <p class="learn-links"><svg class="icon"><use href="#i-course"/></svg><span>Microsoft Learn: <a href="https://learn.microsoft.com/entra/identity-platform/access-token-claims-reference">Access token reference</a> · <a href="https://learn.microsoft.com/entra/identity-platform/scopes-oidc">Scopes and permissions</a> · <a href="https://learn.microsoft.com/azure/container-apps/managed-identity">Container Apps managed identities</a> · <a href="https://learn.microsoft.com/azure/api-management/secure-mcp-servers">Secure access to MCP servers</a></span></p>
+        <p class="one-liner"><svg class="icon"><use href="#i-check"/></svg> Each hop has its own badge, for its own audience. Nobody passes a badge along.</p>
+      </section>
+
       <section id="patterns" class="chapter" aria-labelledby="patterns-title">
-        <p class="eyebrow"><svg class="icon"><use href="#i-course"/></svg>Course · Lesson 4 of 5</p>
+        <p class="eyebrow"><svg class="icon"><use href="#i-course"/></svg>Course · Lesson 5 of 6</p>
         <h2 id="patterns-title" tabindex="-1">Two ways to expose MCP<br><span>with API Management</span></h2>
         <p class="intro">Both give clients the same tickets with the same badge. They differ in who writes the MCP code.</p>
         <div class="comparison">
-          <article><div class="card-label"><svg class="icon"><use href="#i-server"/></svg> Pattern A · existing MCP server</div><h3>Put the server you run behind the door</h3><p>The protected Container App keeps its code and checks the token again. It exposes tools, plus resources or prompts if the server offers them.</p><span class="tag">Choose it when tools need their own logic</span></article>
+          <article><div class="card-label"><svg class="icon"><use href="#i-server"/></svg> Pattern A · existing MCP server</div><h3>Put the server you run behind the door</h3><p>The protected Container App keeps its code and checks the token again. API Management passes its tools and resources; MCP prompts are not supported yet.</p><span class="tag">Choose it when tools need their own logic</span></article>
           <article class="accent"><div class="card-label"><svg class="icon"><use href="#i-tool"/></svg> Pattern B · REST API as MCP</div><h3>Turn API operations into tools</h3><p>Nobody writes MCP code: <code>list_tickets</code> → <code>GET /tickets</code>, <code>get_ticket</code> → <code>GET /tickets/{ticketId}</code>. Tools only, one operation per tool.</p><span class="tag">Preview · choose it for a stable REST API</span></article>
         </div>
         <div class="same-controls">
@@ -189,11 +227,12 @@
             <li><strong>No subscription key.</strong> Access depends on the token, never on a shared key.</li>
           </ul>
         </div>
-        <details><summary>Good to know before you build</summary><p>MCP servers work on the Developer, Basic, Standard and Premium tiers, and on Basic v2, Standard v2 and Premium v2. They are not available in API Management workspaces.</p><p>Infrastructure as code uses API version <code>2025-09-01-preview</code> (Preview). Policies on an MCP server must never read the response body: it would break streaming.</p><p>In pattern A, the server stays reachable at its own address unless its network accepts only the gateway. Close that door before you promise “gateway only”.</p></details>
+        <p class="learn-links"><svg class="icon"><use href="#i-course"/></svg><span>Microsoft Learn: <a href="https://learn.microsoft.com/azure/api-management/expose-existing-mcp-server">Expose an existing MCP server</a> · <a href="https://learn.microsoft.com/azure/api-management/export-rest-mcp-server">Expose a REST API as an MCP server</a> · <a href="https://learn.microsoft.com/azure/api-management/manage-mcp-servers-rest-api">Manage MCP servers with Bicep</a></span></p>
+        <details><summary>Good to know before you build</summary><p>MCP servers work on the Developer, Basic, Standard and Premium tiers, and on Basic v2, Standard v2 and Premium v2. They are not available in API Management workspaces.</p><p>An existing server must support MCP version 2025-06-18 or later, over Streamable HTTP or SSE. If you turn on logging for all APIs, log 0 bytes of the front-end response body, or MCP streaming breaks.</p><p>Infrastructure as code uses API version <code>2025-09-01-preview</code> (Preview). Policies on an MCP server must never read the response body: it would break streaming.</p><p>In pattern A, the server stays reachable at its own address unless its network accepts only the gateway. Close that door before you promise “gateway only”.</p></details>
       </section>
 
       <section id="discover" class="chapter" aria-labelledby="discover-title">
-        <p class="eyebrow"><svg class="icon"><use href="#i-course"/></svg>Course · Lesson 5 of 5</p>
+        <p class="eyebrow"><svg class="icon"><use href="#i-course"/></svg>Course · Lesson 6 of 6</p>
         <h2 id="discover-title" tabindex="-1">Find it, then use it</h2>
         <p class="intro">A server that nobody can find gets rebuilt. A server that everybody can call needs the same rules for people and agents.</p>
         <div class="comparison">
@@ -201,6 +240,7 @@
           <article class="accent"><div class="card-label"><svg class="icon"><use href="#i-user"/></svg> Consume</div><h3>Same door, different clients</h3><p>GitHub Copilot in VS Code, Foundry Agent Service and Copilot Studio call the same gateway URL. Only the identity changes: the user’s, or the agent’s own.</p><span class="tag">Badge per caller</span></article>
         </div>
         <details class="question"><summary>Five checks before a business unit connects agents</summary><ol class="checks"><li><strong>Consent.</strong> Who may grant consent to applications and agents?</li><li><strong>Who may add MCP servers.</strong> Prefer the private catalog over free-form URLs.</li><li><strong>Agent identities.</strong> Inventory them like applications, with an owner and an expiry.</li><li><strong>Data leaving the tenant.</strong> Approve each third-party MCP server like a SaaS application.</li><li><strong>Logs and cost.</strong> Tool name, caller, status and latency only. Tag owners and expiry dates.</li></ol></details>
+        <p class="learn-links"><svg class="icon"><use href="#i-course"/></svg><span>Microsoft Learn: <a href="https://learn.microsoft.com/azure/api-center/register-discover-mcp-server">Register MCP servers in API Center</a> · <a href="https://learn.microsoft.com/azure/foundry/agents/how-to/private-tool-catalog">Foundry private tool catalog</a> · <a href="https://learn.microsoft.com/azure/api-management/monitor-mcp-servers">Monitor MCP server traffic</a></span></p>
         <p class="one-liner"><svg class="icon"><use href="#i-check"/></svg> Next: who carries the rights on each call. One token per hop.</p>
       </section>
 
@@ -218,6 +258,7 @@
           <li><h3>In the Azure portal</h3><p>API Management → <strong>MCP Servers</strong> → <code>contoso-tickets-mcp</code> → <strong>Tools</strong>: two tools, each mapped to one REST operation. Then <strong>Policies</strong>: token check, Mcp.Read, call budget. No subscription key.</p></li>
         </ol>
         <p class="legend"><svg class="icon" aria-hidden="true"><use href="#i-shield"/></svg><span>Replace the placeholders with the deployed values. This page never runs these commands and never asks for a token.</span></p>
+        <p class="learn-links"><svg class="icon"><use href="#i-course"/></svg><span>Microsoft Learn: <a href="https://learn.microsoft.com/azure/api-management/manage-mcp-servers-rest-api">Manage MCP servers programmatically</a> · <a href="https://learn.microsoft.com/azure/api-management/secure-mcp-servers">Secure access to MCP servers</a></span></p>
         <details><summary>Fallback if the gateway is not deployed</summary><p>Show the 401, 403 and authorized flow of the Session 3 preview on the Session 1 page, then the animation of Lesson 3. Say clearly that the gateway was not called.</p></details>
       </section>
 

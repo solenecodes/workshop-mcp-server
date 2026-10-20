@@ -9,12 +9,13 @@ Contoso Tickets server of [session 1](../01-mcp-fondamentaux/README.md) and ends
 
 | Duration | Topic | Page chapter |
 | --- | --- | --- |
-| 4 min | Four decisions per MCP server: host, expose, discover, consume | [Lesson 1](presentation.html#decisions) |
-| 5 min | Where it runs: this morning's Container Apps, and the other Azure hosts | [Lesson 2](presentation.html#hosting) |
-| 7 min | One front door: from the open server to a governed gateway (animation) | [Lesson 3](presentation.html#front-door) |
-| 4 min | Two ways to expose with APIM: an existing server, or a REST API as MCP | [Lesson 4](presentation.html#patterns) |
-| 4 min | Find it, then use it: API Center, Foundry catalog, five checks | [Lesson 5](presentation.html#discover) |
-| 6 min | Demo: the session 1 terminal client, through the gateway | [Demo](presentation.html#demo) |
+| 3 min | Four decisions per MCP server: host, expose, discover, consume | [Lesson 1](presentation.html#decisions) |
+| 4 min | Where it runs: this morning's Container Apps, and the other Azure hosts | [Lesson 2](presentation.html#hosting) |
+| 6 min | One front door: from the open server to a governed gateway (animation) | [Lesson 3](presentation.html#front-door) |
+| 5 min | Follow the badge: one token per hop, from sign-in to the ticket (animation) | [Lesson 4](presentation.html#token) |
+| 4 min | Two ways to expose with APIM: an existing server, or a REST API as MCP | [Lesson 5](presentation.html#patterns) |
+| 3 min | Find it, then use it: API Center, Foundry catalog, five checks | [Lesson 6](presentation.html#discover) |
+| 5 min | Demo: the session 1 terminal client, through the gateway | [Demo](presentation.html#demo) |
 
 ## The message
 
@@ -24,6 +25,58 @@ code and where it runs. The platform owns the front door, the identity and the i
 
 Each lesson opens with one plain sentence for the room, then gives the presenter the
 technical detail. Read the plain sentence first; open the detail only if asked.
+
+## Present it yourself
+
+Lessons 1 to 6 need nothing deployed: open the page, use the arrow keys, and read the plain
+sentence of each step out loud. The two animations are where the room understands the
+architecture: one shows **where** a call goes, the other shows **which badge** each hop carries.
+
+| Part | What you need | What to say, in one sentence |
+| --- | --- | --- |
+| Lessons 1 and 2 | The page only | "Same tickets as this morning; four questions decide who owns what." |
+| Lesson 3 animation | The page only; press **Play** or the numbered steps | "One address, one badge per API, the servers stay behind the door." |
+| Lesson 4 animation | The page only | "Each hop has its own badge, for its own audience. Nobody passes a badge along." |
+| Lessons 5 and 6 | The page only | "Write MCP code only when tools need logic; register the gateway, never the backend." |
+| Demo | The gateway deployed and rehearsed (below) | "Same client as this morning: without a badge 401, with a badge CT-1002." |
+
+If the gateway is not deployed, skip the demo and replay the Lesson 3 and 4 animations: they
+show the same 401, 403 and authorized calls, labeled as illustrations.
+
+## Who deploys what
+
+| Component | Deployed by | How | Needed for |
+| --- | --- | --- | --- |
+| Container Apps environment, registry, public MCP, protected MCP, internal ticket API | Workshop owner (Solene) | [infra/main.bicep](../../infra/main.bicep), then the image build and redeploy | Sessions 1, 3, 6; pattern A |
+| Entra API registration: `Mcp.Read` scope and role, `Mcp.Backend.Read`, Azure CLI pre-authorized | Workshop owner | [infra/prepare-identity.mjs](../../infra/prepare-identity.mjs), then assign `Mcp.Backend.Read` to the MCP apps' identities | Every protected call; the demo token |
+| API Management gateway, both MCP servers, metadata | Session 2 presenter | [infra/gateway/main.bicep](../../infra/gateway/main.bicep) with `entraClientId` = the API client ID above and `protectedMcpOrigin` = `https://<protectedAppFqdn>` (output of `infra/main.bicep`) | The demo; session 6 |
+| API Center entry | Session 2 presenter, optional | Azure portal, manual (Preview) | Lesson 6, session 6 |
+| Presenter pages | Nobody | GitHub Pages serves `sessions/` | All sessions |
+| Hands-on resources at 14:30 | Each participant, in their own non-production subscription | The [self-paced guide](https://web-mcp-host01-f80ce789cb05568a-portal.azurewebsites.net/?lang=en#/start), modules 00 to 07, then 99 | The hands-on workshop |
+
+The presenter needs Contributor on the resource group for the gateway, and a user in the
+workshop tenant for the demo token. The hands-on guide asks participants to clone
+[olivMertens/workshop-mcp](https://github.com/olivMertens/workshop-mcp): make sure they can
+access it before 14:30.
+
+## Checked against Microsoft Learn (2026-10-20)
+
+| Statement on the page | Learn page |
+| --- | --- |
+| MCP servers: Developer, Basic, Standard, Premium and the v2 tiers; not in workspaces | [MCP servers in API Management](https://learn.microsoft.com/azure/api-management/mcp-server-overview) |
+| Existing server: tools and resources, no prompts; MCP 2025-06-18 or later; Streamable HTTP or SSE | [Expose an existing MCP server](https://learn.microsoft.com/azure/api-management/expose-existing-mcp-server) |
+| REST API as MCP: tools only, one operation per tool | [Expose a REST API as an MCP server](https://learn.microsoft.com/azure/api-management/export-rest-mcp-server) |
+| Never read `context.Response.Body`; log 0 front-end response bytes | Both pages above |
+| `validate-azure-ad-token` in all tiers; `rate-limit-by-key` in Basic v2 | [validate-azure-ad-token](https://learn.microsoft.com/azure/api-management/validate-azure-ad-token-policy), [rate-limit-by-key](https://learn.microsoft.com/azure/api-management/rate-limit-by-key-policy) |
+| Inbound Entra token, headers forwarded to the backend | [Secure access to MCP servers](https://learn.microsoft.com/azure/api-management/secure-mcp-servers) |
+| `aud`, `scp`, `roles`, v2 issuer | [Access token reference](https://learn.microsoft.com/entra/identity-platform/access-token-claims-reference), [Scopes and permissions](https://learn.microsoft.com/entra/identity-platform/scopes-oidc) |
+| The server's own badge for the ticket API | [Container Apps managed identities](https://learn.microsoft.com/azure/container-apps/managed-identity) |
+| Bicep shapes, API version `2025-09-01-preview` | [Manage MCP servers programmatically](https://learn.microsoft.com/azure/api-management/manage-mcp-servers-rest-api) |
+| Registry and catalog (Preview) | [API Center](https://learn.microsoft.com/azure/api-center/register-discover-mcp-server), [Foundry private tool catalog](https://learn.microsoft.com/azure/foundry/agents/how-to/private-tool-catalog) |
+
+The passthrough forwarding the same `Authorization` header to a backend that validates it again
+was also verified live in [olivMertens/workshop-mcp](https://github.com/olivMertens/workshop-mcp)
+module 04 (2026-10-20).
 
 ## What stays the same all day
 
@@ -41,7 +94,8 @@ Session 2 changes the address, never the business contract:
 
 - **Pattern A, existing MCP server.** API Management forwards calls to the protected
   Container App (passthrough). The server keeps its code and checks the same token
-  again. Choose it when tools need their own logic, several calls or a managed identity.
+  again. API Management passes tools and resources, not prompts. Choose it when tools
+  need their own logic, several calls or a managed identity.
 - **Pattern B, REST API as MCP (Preview).** API Management builds the MCP server from the
   API operations: nobody writes MCP code. Tools only, one operation per tool. The gateway
   answers from the same synthetic tickets as `src/data/contosoTickets.ts`, so the demo
@@ -95,12 +149,12 @@ live call.
 | Valid token without `Mcp.Read` | 403 `MISSING_MCP_READ_PERMISSION` | Authored |
 | Burst above `rateLimitCalls` per period | 429 with `Retry-After` | Authored |
 | Pattern B `get_ticket` CT-1002 / CT-9999 / malformed | Ticket CT-1002 / 404 / 400 | Authored |
-| Direct call to the protected Container App | **Not blocked yet**: it still answers with a valid token | Gap |
-| Gateway logs in Application Insights | Not configured by this template | Gap |
+| Direct call to the protected Container App | **Not blocked yet**: it still answers with a valid token. Close it with [ingress IP restrictions](https://learn.microsoft.com/azure/container-apps/ip-restrictions) | Gap |
+| Gateway logs in Application Insights | Not configured by this template. Log 0 front-end response bytes ([monitor MCP traffic](https://learn.microsoft.com/azure/api-management/monitor-mcp-servers)) | Gap |
 | API Center registration | Manual, Preview; register the gateway URL only | Manual |
 
 "Authored" means built and tested offline (Bicep build and lint, `tests/gateway.test.ts`),
-not yet verified on a deployed gateway. Close the two gaps before session 6 claims
+not yet verified on a deployed gateway. Close the two gaps before session 6 promises
 "gateway only": restrict the Container App ingress to the gateway, and add an Application
 Insights logger with metadata only (no request or response bodies).
 

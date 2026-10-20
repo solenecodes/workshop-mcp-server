@@ -1,4 +1,4 @@
-import { demoCommands, doorEdges, doorSteps } from './architecture-steps.mjs?v=session-2-1';
+import { demoCommands, doorEdges, doorSteps, tokenEdges, tokenSteps } from './architecture-steps.mjs?v=session-2-2';
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -6,8 +6,10 @@ const motion = matchMedia('(prefers-reduced-motion: reduce)');
 const svgNS = 'http://www.w3.org/2000/svg';
 const controllers = [];
 
-// Front-door walk-through: one step at a time, Play advances on its own, never starts by itself.
+// Reveal walk-throughs (front door, token): one step at a time, Play advances on its own, never starts by itself.
+const walkthroughs = { front: { steps: doorSteps, edges: doorEdges }, token: { steps: tokenSteps, edges: tokenEdges } };
 function createDoor(root) {
+  const { steps: doorSteps, edges: doorEdges } = walkthroughs[root.dataset.door];
   const diagram = $('.door-diagram', root);
   const svg = $('.flow-lines', root);
   const base = $('[data-paths]', svg);
@@ -63,12 +65,14 @@ function createDoor(root) {
     Object.entries(nodes).forEach(([name, node]) => {
       node.classList.toggle('active', step.nodes.includes(name));
       node.classList.toggle('dim', !step.nodes.includes(name));
-      node.classList.toggle('blocked', Boolean(step.blocked) && name === 'gateway');
+      node.classList.toggle('blocked', Boolean(step.blocked) && name === step.path.at(-1));
     });
     active.classList.toggle('blocked', Boolean(step.blocked));
     $('[data-step-title]', root).textContent = `${index + 1}. ${step.title}`;
     $('[data-step-plain]', root).textContent = step.plain;
     $('[data-step-detail]', root).textContent = step.detail;
+    const fields = $('[data-step-fields]', root);
+    if (fields) { fields.textContent = step.fields ?? ''; fields.hidden = !step.fields; }
     $('.flow-count', root).textContent = `${index + 1} / ${doorSteps.length}`;
     $$('button', dots).forEach((dot, position) => dot.setAttribute('aria-pressed', String(position === index)));
     $('[data-prev]', root).disabled = index === 0;
