@@ -51,6 +51,16 @@ test('the script resolves the relative deck folder against the page URL', async 
   assert.equal(badge.textContent, 'S3', 'Session 3 chapters show S3 on the button');
 });
 
+test('the parking lot button stays in the top bar of the Session 1 (and 3) and Session 2 pages', () => {
+  for (const [path, html] of Object.entries(pages)) {
+    const topbar = html.match(/<header class="topbar">[\s\S]*?<\/header>/)?.[0] ?? '';
+    assert.match(topbar, /<button class="button parking-open" id="parking-open"/, `${path}: Parking lot button in the top bar`);
+    assert.match(html, /<dialog id="parking-lot"/, `${path}: Parking lot dialog`);
+  }
+  assert.match(pages['sessions/02-architecture/presentation.html'], /<script type="module" src="parking\.js\?v=parking-lot-\d+"><\/script>/);
+  assert.match(read('sessions/02-architecture/parking.js'), /import \{ initializeParkingLot \} from '\.\.\/01-mcp-fondamentaux\/parking-lot\.mjs\?v=parking-lot-\d+';\s+initializeParkingLot\(\);/);
+});
+
 test('every slide has a unique id and links back to an existing chapter of its page', () => {
   for (const [deck, html] of Object.entries(decks)) {
     const ids = slideIds(deck);
