@@ -95,20 +95,20 @@
 
 <!-- 4 · Hosting options -->
 <section id="hosting" data-chapter="hosting">
-  <div class="eyebrow">Lesson 2 · Choose where it runs</div>
-  <h2>Keep the platform <span>your team runs</span></h2>
-  <div class="grid g3">
-    <div class="card accent"><h3>Azure Container Apps</h3><p>Any language in a container, scale to zero, with Microsoft Entra authentication.</p><p class="small muted">This workshop</p></div>
-    <div class="card"><h3>Azure Functions</h3><p>Stateless tools, billed per call, with the MCP extension.</p><p class="small muted">Event-driven tools</p></div>
-    <div class="card"><h3>App Service</h3><p>Add MCP to a web app you already run, or turn an OpenAPI-described API into tools.</p><p class="small muted">Built-in MCP: Preview</p></div>
-    <div class="card"><h3>Azure Kubernetes Service</h3><p>Run MCP on a cluster your team already operates.</p><p class="small muted">Highest operating effort</p></div>
-    <div class="card"><h3>Container Apps dynamic sessions</h3><p>Run sandboxed code with platform tools, isolated per session.</p><p class="small muted">No custom tools</p></div>
-    <div class="card"><h3>API Management</h3><p>Not a host: it creates MCP tools from a managed REST API or fronts a server you run.</p><p class="small muted">Gateway, not compute</p></div>
+  <div class="eyebrow">Lesson 2 · Where it runs</div>
+  <h2>Keep your platform, <span>govern it the same way</span></h2>
+  <div class="grid g3 hosting">
+    <div class="card accent fragment fade-up"><h3>Azure Container Apps</h3><p>Any language in a container, scale to zero, built-in Entra authentication.</p><span class="pill ok">This workshop</span></div>
+    <div class="card fragment fade-up"><h3>Azure Functions</h3><p>Stateless tools billed per call, with the MCP extension.</p><span class="pill">Event-driven tools</span></div>
+    <div class="card fragment fade-up"><h3>App Service</h3><p>Add MCP to a web app you already run, or turn an OpenAPI API into tools.</p><span class="pill warn">Built-in MCP: Preview</span></div>
+    <div class="card fragment fade-up"><h3>Azure Kubernetes Service</h3><p>For teams that already run Kubernetes. Highest operating effort.</p><span class="pill">Existing clusters</span></div>
+    <div class="card fragment fade-up"><h3>Container Apps dynamic sessions</h3><p>Sandboxed code execution with platform tools, isolated per session.</p><span class="pill">No custom tools</span></div>
+    <div class="card gateway fragment fade-up"><h3>Azure API Management</h3><p>Not a host: builds an MCP server from a REST API it already manages, or fronts yours.</p><span class="pill">No MCP code · Lesson 5</span></div>
   </div>
-  <p class="fragment fade-in muted small" style="margin-top:20px">Keep the platform; apply the same governance everywhere: identity, one front door, metadata-only logs and an inventory entry.</p>
-  <div class="footer"><span>MCP workshop · Session 2</span><span>Lesson 2</span></div>
+  <p class="fragment fade-in muted small" style="margin-top:22px">Same four things everywhere: an Entra token for the server's own audience, one gateway, metadata-only logs, an inventory entry.</p>
+  <div class="footer"><span>MCP workshop · Session 2</span><span>Microsoft Learn · Choose an Azure service for MCP</span></div>
   <aside class="notes">
-    The point is not to move every team to one host. Keep the platform they already operate, and make identity, gateway, logging and inventory consistent. API Management is the front door, not a host for custom code.
+    This morning: public and protected MCP on Container Apps, the Tickets API on internal ingress only, reached with a managed identity. One card per click. Question for the room: "your APIs run on App Service, should you move them to add MCP?" No: keep the platform, ask for the same four things. API Management is dashed because it hosts no code. 3 minutes.
   </aside>
 </section>
 

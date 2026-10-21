@@ -11,9 +11,13 @@
     'day-session-2': ['session-2', ''],
   };
   const base = new URL(link.dataset.base, document.baseURI);
+  const badge = link.querySelector('.slides-deck');
   const update = () => {
     const [deck, slide] = routes[location.hash.slice(1)] ?? [link.dataset.deck, ''];
     link.href = new URL(`${deck}.html${slide ? `#/${slide}` : ''}`, base).href;
+    const n = deck.slice(-1);
+    if (badge) badge.textContent = `S${n}`;
+    link.title = `Open the Session ${n} slides at this chapter (new tab)`;
   };
   update();
   addEventListener('hashchange', update);

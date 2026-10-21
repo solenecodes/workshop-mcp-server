@@ -155,6 +155,11 @@
 .risk b { font-size:21px; } .risk span { font-size:19px; color:var(--muted); }
 .agentid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; }
 .agentid .card { border-top:6px solid #8661c5; }
+.hosting .card { padding:18px 20px; display:flex; flex-direction:column; gap:10px; }
+.hosting .card h3 { margin:0; font-size:23px; }
+.hosting .card p { font-size:18px; flex:1; }
+.hosting .card .pill { align-self:flex-start; font-size:13px; }
+.hosting .card.gateway { border:2px dashed var(--blue); box-shadow:none; }
 
 /* "← Page" link back to the session page (deck.js) */
 .back-to-page { position:fixed; top:14px; left:16px; z-index:30; font-family:var(--font); font-size:14px; font-weight:600; color:var(--blue-dark); background:var(--surface); border:1px solid var(--border); border-radius:999px; padding:5px 12px; text-decoration:none; box-shadow:0 1px 4px rgb(0 0 0 / 8%); }
