@@ -107,3 +107,10 @@ details.question>summary { color:var(--blue-dark); }
 .architecture-figure figure { margin:10px 0 0; }
 .architecture-figure img { display:block; width:100%; height:auto; border:1px solid var(--line, #ddd); background:#fff; }
 .architecture-figure figcaption { font-size:.85em; margin-top:6px; }
+.shell-switch { display:inline-flex; gap:4px; }
+.shell-switch button { font:inherit; font-size:.72rem; line-height:1.2; padding:3px 10px; border-radius:999px; border:1px solid rgb(255 255 255 / 28%); background:transparent; color:inherit; cursor:pointer; }
+.shell-switch button[aria-pressed="true"] { background:#fff; color:#1b1f2e; border-color:#fff; font-weight:600; }
+.shell-switch button:focus-visible { outline:2px solid #9ea2f0; outline-offset:2px; }
+.shell-hint { font-size:.72rem; opacity:.75; margin-left:8px; }
+.shell-note { display:flex; gap:10px; align-items:flex-start; font-size:.85rem; color:var(--muted); background:var(--blue-soft); border-radius:var(--radius); padding:10px 14px; margin:0 0 18px; }
+.shell-note .icon { flex:none; margin-top:2px; }

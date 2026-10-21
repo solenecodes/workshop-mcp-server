@@ -8,8 +8,8 @@
   <title>MCP in enterprise and Azure architectures</title>
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="../01-mcp-fondamentaux/presentation.css?v=security-three-slides-1">
-  <link rel="stylesheet" href="architecture.css?v=session-2-main-7">
-  <script type="module" src="architecture.js?v=session-2-main-7"></script>
+  <link rel="stylesheet" href="architecture.css?v=session-2-main-8">
+  <script type="module" src="architecture.js?v=session-2-main-8"></script>
 </head>
 <body>
   <svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -252,13 +252,14 @@
         <p class="eyebrow practice-label"><svg class="icon"><use href="#i-practice"/></svg>Demo · Presenter · 6 minutes</p>
         <h2 id="demo-title" tabindex="-1">Call the same tickets<br><span>through the gateway</span></h2>
         <p class="intro">The same terminal client as in the Session 1 lab. First only the address changes, then a badge is added.</p>
+        <p class="shell-note"><svg class="icon" aria-hidden="true"><use href="#i-practice"/></svg><span>Run every command <strong>from the repository folder</strong> (<code>cd workshop-mcp-server</code>, after <code>npm ci</code>): <code>npm run workshop</code> is a script of its <code>package.json</code>. Pick <strong>Bash</strong> (macOS, Linux, Git Bash, WSL) or <strong>PowerShell</strong> (Windows PowerShell 5.1 or PowerShell 7); tool arguments use <code>ticketId=CT-1002</code>, which needs no quotes in either.</span></p>
         <ol class="demo-steps">
           <li><h3>Without a badge</h3><p>The gateway refuses the call before any server runs: <strong>HTTP 401</strong>.</p>
-            <div class="copy-panel dark"><div><span>Bash</span><button class="text-button" type="button" data-copy="demo-anonymous"><svg class="icon"><use href="#i-copy"/></svg>Copy</button></div><pre><code id="demo-anonymous"></code></pre></div></li>
+            <div class="copy-panel dark"><div><span class="shell-switch" role="group" aria-label="Command shell"><button type="button" data-shell="bash" aria-pressed="true">Bash</button><button type="button" data-shell="powershell" aria-pressed="false">PowerShell</button></span><button class="text-button" type="button" data-copy="demo-anonymous"><svg class="icon"><use href="#i-copy"/></svg>Copy</button></div><pre><code id="demo-anonymous"></code></pre></div></li>
           <li><h3>Where to sign in</h3><p>The 401 response points to this metadata: the tenant and the <code>Mcp.Read</code> scope.</p>
-            <div class="copy-panel dark"><div><span>Bash</span><button class="text-button" type="button" data-copy="demo-metadata"><svg class="icon"><use href="#i-copy"/></svg>Copy</button></div><pre><code id="demo-metadata"></code></pre></div></li>
+            <div class="copy-panel dark"><div><span class="shell-switch" role="group" aria-label="Command shell"><button type="button" data-shell="bash" aria-pressed="true">Bash</button><button type="button" data-shell="powershell" aria-pressed="false">PowerShell</button></span><button class="text-button" type="button" data-copy="demo-metadata"><svg class="icon"><use href="#i-copy"/></svg>Copy</button></div><pre><code id="demo-metadata"></code></pre></div></li>
           <li><h3>With a badge</h3><p>The token goes straight into a variable and is never shown. <code>CT-1002</code> returns <code>CT-1002</code>: the gateway answers the ticket that was asked for.</p>
-            <div class="copy-panel dark"><div><span>Bash · after az login</span><button class="text-button" type="button" data-copy="demo-signed-in"><svg class="icon"><use href="#i-copy"/></svg>Copy</button></div><pre><code id="demo-signed-in"></code></pre></div></li>
+            <div class="copy-panel dark"><div><span class="shell-switch" role="group" aria-label="Command shell"><button type="button" data-shell="bash" aria-pressed="true">Bash</button><button type="button" data-shell="powershell" aria-pressed="false">PowerShell</button></span><span class="shell-hint">after az login</span><button class="text-button" type="button" data-copy="demo-signed-in"><svg class="icon"><use href="#i-copy"/></svg>Copy</button></div><pre><code id="demo-signed-in"></code></pre></div></li>
           <li><h3>In the Azure portal</h3><p>API Management → <strong>MCP Servers</strong> → <code>contoso-tickets-mcp</code> → <strong>Tools</strong>: two tools, each mapped to one REST operation. Then <strong>Policies</strong>: token check, Mcp.Read, call budget. No subscription key.</p></li>
         </ol>
         <p class="legend"><svg class="icon" aria-hidden="true"><use href="#i-shield"/></svg><span>The commands target the workshop gateway. For another deployment, open this page with <code>?gateway=&lt;apim-name&gt;.azure-api.net&amp;clientId=&lt;api-client-id&gt;</code> (<code>deploy-all.ps1</code> prints this link). This page never runs these commands and never asks for a token.</span></p>

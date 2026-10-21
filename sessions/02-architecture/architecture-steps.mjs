@@ -162,15 +162,30 @@ export const defaultClientId = '9b10d3e8-744b-4def-bf59-7477e7f60957';
 
 export function demoCommands(gatewayHost = defaultGateway, clientId = defaultClientId) {
   const url = `https://${gatewayHost}/${gatewayPath}/mcp`;
-  return {
+  const metadataUrl = `https://${gatewayHost}/.well-known/oauth-protected-resource/${gatewayPath}/mcp`;
+  const scope = `api://${clientId}/Mcp.Read`;
+  // name=value arguments need no JSON quotes: identical in Bash, Windows PowerShell 5.1 and PowerShell 7.
+  const bash = {
     anonymous: `npm run workshop -- --url '${url}' --anonymous tools`,
-    metadata: `curl -s 'https://${gatewayHost}/.well-known/oauth-protected-resource/${gatewayPath}/mcp'`,
+    metadata: `curl -s '${metadataUrl}'`,
     signedIn: [
       `export MCP_URL='${url}'`,
-      `export MCP_TOKEN="$(az account get-access-token --scope 'api://${clientId}/Mcp.Read' --query accessToken -o tsv)"`,
+      `export MCP_TOKEN="$(az account get-access-token --scope '${scope}' --query accessToken -o tsv)"`,
       'npm run workshop -- tools',
-      `npm run workshop -- get_ticket '{"ticketId":"CT-1002"}'`,
-      'unset MCP_TOKEN',
+      'npm run workshop -- get_ticket ticketId=CT-1002',
+      'unset MCP_TOKEN MCP_URL',
     ].join('\n'),
   };
+  const powershell = {
+    anonymous: bash.anonymous,
+    metadata: `Invoke-RestMethod '${metadataUrl}' | ConvertTo-Json`,
+    signedIn: [
+      `$env:MCP_URL = '${url}'`,
+      `$env:MCP_TOKEN = az account get-access-token --scope '${scope}' --query accessToken -o tsv`,
+      'npm run workshop -- tools',
+      'npm run workshop -- get_ticket ticketId=CT-1002',
+      'Remove-Item Env:MCP_TOKEN, Env:MCP_URL',
+    ].join('\n'),
+  };
+  return { ...bash, bash, powershell };
 }

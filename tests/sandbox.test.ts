@@ -234,5 +234,11 @@ test('the actual terminal command calls the sandbox; anonymous mode drops an exi
       assert.match(String(error.stderr), /valid JSON/);
       return true;
     });
+    const pairs = await run(process.execPath, [...cli, 'get_ticket', 'ticketId=CT-1002'], { timeout: 15_000 });
+    assert.match(pairs.stdout, /Shared drive close to its quota/, 'name=value needs no quotes in any shell');
+    await assert.rejects(run(process.execPath, [...cli, 'get_ticket', 'CT-1002'], { timeout: 15_000 }), (error: unknown) => {
+      assert.match(String((error as { stderr?: string }).stderr), /name=value pairs/);
+      return true;
+    });
   } finally { await f.close(); }
 });

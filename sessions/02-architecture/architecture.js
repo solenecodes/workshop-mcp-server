@@ -1,4 +1,4 @@
-import { demoCommands, demoSettings, doorEdges, doorSteps, tokenEdges, tokenSteps } from './architecture-steps.mjs?v=session-2-main-7';
+import { demoCommands, demoSettings, doorEdges, doorSteps, tokenEdges, tokenSteps } from './architecture-steps.mjs?v=session-2-main-8';
 import { initializeAgenda } from '../01-mcp-fondamentaux/presentation-agenda.mjs?v=agenda-collapse-1';
 
 const $ = (selector, root = document) => root.querySelector(selector);
@@ -128,9 +128,20 @@ $$('[data-door]').forEach((root) => controllers.push(createDoor(root)));
 $$('.flow-fallback').forEach((element) => { element.open = false; });
 
 const commands = demoCommands(...demoSettings(location.search));
-$('#demo-anonymous').textContent = commands.anonymous;
-$('#demo-metadata').textContent = commands.metadata;
-$('#demo-signed-in').textContent = commands.signedIn;
+function showShell(shell) {
+  const chosen = commands[shell] ?? commands.bash;
+  $('#demo-anonymous').textContent = chosen.anonymous;
+  $('#demo-metadata').textContent = chosen.metadata;
+  $('#demo-signed-in').textContent = chosen.signedIn;
+  $$('[data-shell]').forEach((button) => button.setAttribute('aria-pressed', String(button.dataset.shell === shell)));
+}
+let savedShell = 'bash';
+try { savedShell = localStorage.getItem('mcp-workshop-shell') === 'powershell' ? 'powershell' : 'bash'; } catch { /* storage unavailable */ }
+showShell(savedShell);
+$$('[data-shell]').forEach((button) => button.addEventListener('click', () => {
+  showShell(button.dataset.shell);
+  try { localStorage.setItem('mcp-workshop-shell', button.dataset.shell); } catch { /* storage unavailable */ }
+}));
 
 const chapters = $$('.chapter:not(.agenda-panel)');
 const navigation = $$('.chapters a:not(.agenda-row)');

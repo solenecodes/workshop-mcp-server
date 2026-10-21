@@ -70,9 +70,27 @@ test('the demo reuses the Session 1 client against the deployed gateway path, wi
   assert.equal(commands.metadata, `curl -s 'https://gw.example.org/.well-known/oauth-protected-resource/${gatewayPath}/mcp'`);
   const lines = commands.signedIn.split('\n');
   assert.equal(lines[1], `export MCP_TOKEN="$(az account get-access-token --scope 'api://11111111-1111-4111-8111-111111111111/Mcp.Read' --query accessToken -o tsv)"`);
-  assert.match(lines.at(-2), /get_ticket '\{"ticketId":"CT-1002"\}'$/);
-  assert.equal(lines.at(-1), 'unset MCP_TOKEN');
+  assert.equal(lines.at(-2), 'npm run workshop -- get_ticket ticketId=CT-1002');
+  assert.equal(lines.at(-1), 'unset MCP_TOKEN MCP_URL');
   assert.doesNotMatch(commands.signedIn, /--anonymous|echo|printf/);
+  assert.deepEqual(commands.bash, { anonymous: commands.anonymous, metadata: commands.metadata, signedIn: commands.signedIn });
+});
+
+test('every demo step has a PowerShell version that works in Windows PowerShell 5.1 and PowerShell 7', () => {
+  const { powershell } = demoCommands('gw.example.org', '11111111-1111-4111-8111-111111111111');
+  assert.equal(powershell.anonymous, `npm run workshop -- --url 'https://gw.example.org/${gatewayPath}/mcp' --anonymous tools`);
+  assert.equal(powershell.metadata, `Invoke-RestMethod 'https://gw.example.org/.well-known/oauth-protected-resource/${gatewayPath}/mcp' | ConvertTo-Json`);
+  assert.deepEqual(powershell.signedIn.split('\n'), [
+    `$env:MCP_URL = 'https://gw.example.org/${gatewayPath}/mcp'`,
+    "$env:MCP_TOKEN = az account get-access-token --scope 'api://11111111-1111-4111-8111-111111111111/Mcp.Read' --query accessToken -o tsv",
+    'npm run workshop -- tools',
+    'npm run workshop -- get_ticket ticketId=CT-1002',
+    'Remove-Item Env:MCP_TOKEN, Env:MCP_URL',
+  ]);
+  assert.doesNotMatch(powershell.signedIn, /export |unset |\{"|Write-(Host|Output)/, 'no Bash syntax, no JSON quoting, token never printed');
+  const demo = html.slice(html.indexOf('<section id="demo"'), html.indexOf('</section>', html.indexOf('<section id="demo"')));
+  assert.equal([...demo.matchAll(/class="shell-switch"/g)].length, 3, 'a Bash/PowerShell switch on each command block');
+  assert.match(demo, /from the repository folder/);
 });
 
 test('the presenter link fills the demo with a real gateway and client ID, and rejects anything else', () => {
