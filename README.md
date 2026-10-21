@@ -11,6 +11,10 @@ The 15-minute sequence keeps explanations in the
 duplicate lab. The real browser calls remain in Session 1; protected requests
 stay in a terminal.
 
+**Presenter decks:** animated reveal.js versions of sessions 1, 2 and 3, offline, with speaker
+notes and architecture diagrams, in [decks/](decks/README.md)
+([online](https://solenecodes.github.io/workshop-mcp-server/decks/)).
+
 **All tickets are invented.** The read-only MCP server wraps a small *Contoso
 Tickets API* with two operations. No real system is connected and no data leaves
 the server.

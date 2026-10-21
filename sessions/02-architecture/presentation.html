@@ -7,7 +7,7 @@
   <meta name="color-scheme" content="light">
   <title>MCP in enterprise and Azure architectures</title>
   <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="../01-mcp-fondamentaux/presentation.css?v=session3-four-slides-1">
+  <link rel="stylesheet" href="../01-mcp-fondamentaux/presentation.css?v=security-three-slides-1">
   <link rel="stylesheet" href="architecture.css?v=session-2-main-6">
   <script type="module" src="architecture.js?v=session-2-main-6"></script>
 </head>
@@ -269,7 +269,7 @@
           <li><strong>An unknown or malformed ticket is not a tool error here.</strong> CT-9999 and a malformed identifier come back as a 404 or 400 problem written in the text, with <code>isError: false</code>: the gateway passes the REST answer to the model. Through pattern A, the same calls return <code>isError: true</code>, as in Session 1.</li>
           <li><strong>No 403 live.</strong> Azure CLI always delivers <code>Mcp.Read</code>, so <code>MISSING_MCP_READ_PERMISSION</code> stays an illustration (Lesson 4).</li>
           <li><strong>Portal.</strong> Under <em>Tools</em>, the resource names may read <code>list-tickets-…</code> and <code>get-ticket-…</code>; clients see the display names <code>list_tickets</code> and <code>get_ticket</code>. Check it during the rehearsal.</li>
-          <li><strong>Logs.</strong> “The logs keep who asked” is an illustration: Application Insights is not configured on the gateway yet.</li>
+          <li><strong>Logs.</strong> Application Insights records each tool call (tool name, duration, status) and who asked (<code>caller.oid</code>, from the validated token), never a body or a token. Allow 2 to 3 minutes before showing it.</li>
         </ul></details>
         <details class="architecture-figure"><summary>Deployed architecture (diagram)</summary><figure><a href="diagrams/deployed-architecture.png"><img src="diagrams/deployed-architecture.svg" alt="Workshop clients call the public Container App directly, or API Management with an Entra token: pattern B answers from synthetic tickets, pattern A forwards to the protected Container App, which calls the internal ticket API with its managed identity." loading="lazy"></a><figcaption>Source: <code>diagrams/deployed-architecture.drawio</code>. Names come from Bicep: <code>&lt;token&gt;</code> is a <code>uniqueString</code> per environment.</figcaption></figure></details>
       </section>

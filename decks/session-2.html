@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Session 2 · MCP in enterprise and Azure architectures</title>
+  <link rel="stylesheet" href="vendor/reveal/reset.css">
+  <link rel="stylesheet" href="vendor/reveal/reveal.css">
+  <link rel="stylesheet" href="vendor/reveal/plugin/highlight/monokai.css">
+  <link rel="stylesheet" href="assets/deck.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></symbol>
+  <symbol id="i-key" viewBox="0 0 24 24"><path d="M2.586 13.314A4.172 4.172 0 0 0 2 15.673v2.03a1 1 0 0 0 1 1h1"/><path d="M16 6a4 4 0 1 1-8 0 4 4 0 0 1 8 0z"/><circle cx="12" cy="10" r="2"/></symbol>
+  <symbol id="i-server" viewBox="0 0 24 24"><rect width="20" height="8" x="2" y="2" rx="2"/><rect width="20" height="8" x="2" y="14" rx="2"/><line x1="6" x2="6" y1="6" y2="18"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></symbol>
+  <symbol id="i-bot" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 11a2 2 0 1 0 4 0 2 2 0 0 0-4 0"/><circle cx="12" cy="19" r="2"/></symbol>
+  <symbol id="i-history" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="m15 9 2 2 4-4"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><line x1="18" x2="6" y1="6" y2="18"/><line x1="6" x2="18" y1="6" y2="18"/></symbol>
+</svg>
+
+<div class="reveal">
+<div class="slides">
+
+<!-- 1 · Title -->
+<section class="title-slide" data-transition="fade">
+  <div class="eyebrow">MCP workshop · Session 2 · 10:30–11:00</div>
+  <h1>MCP in enterprise<br><span>and Azure architectures</span></h1>
+  <p class="lede" style="margin-top:22px">Same Contoso tickets as this morning. Now: who runs the server, who opens the door, who finds it and who uses it.</p>
+  <div class="chips">
+    <span class="pill"><svg class="icon" style="width:18px;height:18px"><use href="#i-server"/></svg>Container Apps</span>
+    <span class="pill"><svg class="icon" style="width:18px;height:18px"><use href="#i-shield"/></svg>API Management</span>
+    <span class="pill"><svg class="icon" style="width:18px;height:18px"><use href="#i-key"/></svg>Microsoft Entra ID</span>
+    <span class="pill"><svg class="icon" style="width:18px;height:18px"><use href="#i-history"/></svg>Application Insights</span>
+  </div>
+  <aside class="notes">
+    Welcome back. In Session 1 we called an MCP server that anyone could reach. In 30 minutes we answer the enterprise question: how do you put the same server in front of real users, safely, without rewriting it?
+    Timing: 30 s on this slide.
+  </aside>
+</section>
+
+<!-- 2 · Shift -->
+<section>
+  <div class="eyebrow">Why it matters</div>
+  <h2>An MCP server is a <span>new way into your data</span></h2>
+  <div class="shift">
+    <div class="card fragment fade-right" data-fragment-index="1">
+      <h3><svg class="icon" style="color:var(--red)"><use href="#i-alert"/></svg>This morning: an open door</h3>
+      <ul>
+        <li>Anyone with the URL can call it</li>
+        <li>The URL ends up in config files: it is not a secret</li>
+        <li>Fine for synthetic tickets, not for real data</li>
+      </ul>
+    </div>
+    <div class="arrow fragment fade-in" data-fragment-index="2"><svg class="icon"><use href="#i-arrow"/></svg></div>
+    <div class="card accent fragment fade-left" data-fragment-index="2">
+      <h3><svg class="icon"><use href="#i-shield"/></svg>The enterprise answer: one front door</h3>
+      <ul>
+        <li>An Entra token for <em>this</em> API, with <code>Mcp.Read</code></li>
+        <li>A call budget per person</li>
+        <li>One address in the inventory, never the backend</li>
+      </ul>
+    </div>
+  </div>
+  <p class="big-statement fragment fade-up" data-fragment-index="3" style="margin-top:30px;font-size:30px">Agents call tools fast and at scale. You secure the <span style="color:var(--blue)">door</span>, once, not every server.</p>
+  <div class="footer"><span>MCP workshop · Session 2</span><span>Synthetic data only</span></div>
+  <aside class="notes">
+    Click 1: the open door from Session 1. Stress that a URL is not a secret.
+    Click 2: the enterprise answer, three rules.
+    Click 3: the one sentence to remember. About 2 minutes.
+  </aside>
+</section>
+
+<!-- 3 · Four decisions -->
+<section>
+  <div class="eyebrow">Lesson 1 · Four decisions per MCP server</div>
+  <h2>Every MCP server asks <span>four questions</span></h2>
+  <div class="grid g4">
+    <div class="card fragment fade-up"><svg class="icon"><use href="#i-server"/></svg><h3>Host</h3><p>Where does it run? Container Apps here; Functions, App Service or AKS elsewhere.</p></div>
+    <div class="card fragment fade-up"><svg class="icon"><use href="#i-shield"/></svg><h3>Expose</h3><p>How do clients reach it? Through one gateway that checks identity.</p></div>
+    <div class="card fragment fade-up"><svg class="icon"><use href="#i-search"/></svg><h3>Discover</h3><p>How do teams find it? API Center or the Foundry private tool catalog.</p></div>
+    <div class="card fragment fade-up"><svg class="icon"><use href="#i-bot"/></svg><h3>Consume</h3><p>Who uses it, with whose rights? VS Code, agents, apps.</p></div>
+  </div>
+  <p class="fragment fade-in muted small" style="margin-top:28px">The team owns the code and where it runs. The platform owns the door, the identity and the inventory.</p>
+  <div class="footer"><span>MCP workshop · Session 2</span><span>Lesson 1</span></div>
+  <aside class="notes">
+    One card per click. These four questions apply whatever the language or host. End with the ownership split: team versus platform. 3 minutes.
+  </aside>
+</section>
+
+<!-- 4 · Open door (auto-animate start) -->
+<section data-auto-animate data-auto-animate-duration="0.9">
+  <div class="eyebrow">Lesson 3 · One front door</div>
+  <h2>Before: every server is <span>its own door</span></h2>
+  <div class="stage">
+    <svg class="wires" viewBox="0 0 1152 430" aria-hidden="true">
+      <defs><marker id="m-red" viewBox="0 0 10 10" markerWidth="4" markerHeight="4" refX="9" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#b10e1c"/></marker></defs>
+      <path d="M260 208 H570 V88 H866" class="w-open" marker-end="url(#m-red)"/>
+      <path d="M260 208 H570 V328 H866" class="w-open" marker-end="url(#m-red)"/>
+    </svg>
+    <div class="node client" data-id="client" style="left:0;top:170px"><img src="assets/icons/console.svg" alt=""><div>Client<small>VS Code, agent, terminal</small></div></div>
+    <div class="node srv" data-id="s1" style="left:880px;top:50px"><img src="assets/icons/cae.svg" alt=""><div>MCP server A<small>its own auth, its own limits</small></div></div>
+    <div class="node srv" data-id="s2" style="left:880px;top:290px"><img src="assets/icons/cae.svg" alt=""><div>MCP server B<small>maybe none</small></div></div>
+    <div class="warn-note" style="left:0;top:370px"><span class="pill no">Each server: its own auth, limits and logs. Some will forget.</span></div>
+  </div>
+  <div class="footer"><span>MCP workshop · Session 2</span><span>Illustration · no live calls</span></div>
+  <aside class="notes">
+    Each server would have to implement authentication, limits and logging itself. Some will forget. Next slide: the same picture with a gateway.
+  </aside>
+</section>
+
+<!-- 5 · Front door (auto-animate end + steps) -->
+<section data-auto-animate data-auto-animate-duration="0.9">
+  <div class="eyebrow">Lesson 3 · One front door</div>
+  <h2>After: <span>one door</span>, the servers stay behind</h2>
+  <div class="stage">
+    <svg class="wires" viewBox="0 0 1152 430" aria-hidden="true">
+      <defs><marker id="m-az" viewBox="0 0 10 10" markerWidth="4" markerHeight="4" refX="9" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#0063b1"/></marker></defs>
+      <path d="M260 208 H416" class="w-ok" marker-end="url(#m-az)"/>
+      <path d="M730 196 H805 V88 H866" class="w-ok" marker-end="url(#m-az)"/>
+      <path d="M730 220 H805 V328 H866" class="w-ok" marker-end="url(#m-az)"/>
+    </svg>
+    <div class="node client" data-id="client" style="left:0;top:170px"><img src="assets/icons/console.svg" alt=""><div>Client<small>VS Code, agent, terminal</small></div></div>
+    <div class="node gw" data-id="gw" style="left:430px;top:160px"><img src="assets/icons/apim.svg" alt=""><div>API Management<small>token · Mcp.Read · quota · logs</small></div></div>
+    <div class="node srv" data-id="s1" style="left:880px;top:50px"><img src="assets/icons/cae.svg" alt=""><div>MCP server<small>pattern A, passthrough</small></div></div>
+    <div class="node srv" data-id="s2" style="left:880px;top:290px"><img src="assets/icons/cae.svg" alt=""><div>REST API as MCP<small>pattern B, no MCP code</small></div></div>
+    <div class="callouts">
+      <span class="pill no fragment fade-up">1 · No token → 401, before any server runs</span>
+      <span class="pill fragment fade-up">2 · The 401 names the metadata: tenant + scope</span>
+      <span class="pill ok fragment fade-up">3 · Entra token for this API + Mcp.Read → tools</span>
+      <span class="pill warn fragment fade-up">4 · Burst above 30 calls/min per caller → 429</span>
+    </div>
+  </div>
+  <div class="footer"><span>MCP workshop · Session 2</span><span>Illustration · the live demo shows steps 1–3</span></div>
+  <aside class="notes">
+    The client and the servers stay in place; the gateway appears in the middle.
+    Click through 1 to 4. One sentence each:
+    1. Deny by default, checked once at the door.
+    2. Clients such as VS Code discover where to sign in on their own (RFC 9728).
+    3. Audience plus permission: a token for another API is refused.
+    4. A looping agent is slowed down without hurting others.
+    About 4 minutes.
+  </aside>
+</section>
+<!-- 6 · One token per hop -->
+<section>
+  <div class="eyebrow">Lesson 4 · Follow the token</div>
+  <h2>One token <span>per hop</span>, never passed along</h2>
+  <div class="hops">
+    <div class="actor"><div class="bubble"><svg class="icon"><use href="#i-user"/></svg></div>Alice<small>signs in once</small></div>
+    <div class="hop fragment fade-right" data-fragment-index="1">
+      <div class="line"></div>
+      <div class="token"><b>Alice's token</b>aud&nbsp; = MCP API<br>scp&nbsp; = Mcp.Read<br>oid&nbsp; = Alice</div>
+    </div>
+    <div class="actor fragment fade-in" data-fragment-index="1"><div class="bubble" style="border-color:var(--azure);background:var(--azure-soft)"><img src="assets/icons/apim.svg" alt=""></div>Gateway + MCP server<small>checks it, then stops</small></div>
+    <div class="hop two fragment fade-right" data-fragment-index="2">
+      <div class="line"></div>
+      <div class="token app"><b>The server's own token</b>aud&nbsp;&nbsp; = ticket API<br>roles = Mcp.Backend.Read<br>from&nbsp; managed identity</div>
+    </div>
+    <div class="actor fragment fade-in" data-fragment-index="2"><div class="bubble" style="border-color:var(--green);background:var(--green-soft)"><img src="assets/icons/cae.svg" alt=""></div>Ticket API<small>internal only</small></div>
+  </div>
+  <div class="forbidden fragment fade-up" data-fragment-index="3">
+    <svg class="icon"><use href="#i-x"/></svg>
+    <div><span class="fragment strike" data-fragment-index="4">Reuse Alice's token to call the ticket API</span>
+      <span class="muted small" style="display:block">Token passthrough is forbidden by the MCP spec: the server would become a "confused deputy" and the logs could no longer tell who acted.</span></div>
+  </div>
+  <div class="footer"><span>MCP workshop · Session 2</span><span>Placeholder values · never a real token</span></div>
+  <aside class="notes">
+    Plain words: a token is the proof of identity the client attaches to each call.
+    Click 1: Alice's token is valid only for the MCP API, with Mcp.Read.
+    Click 2: the server asks for its own token, with its managed identity, for the ticket API.
+    Click 3 and 4: the forbidden shortcut, struck out. Why: any API that accepts Alice's token would become reachable through the server, and traceability is lost.
+    About 4 minutes.
+  </aside>
+</section>
+
+<!-- 7 · Patterns -->
+<section>
+  <div class="eyebrow">Lesson 5 · Two ways to expose with API Management</div>
+  <h2>Write MCP code <span>only when tools need logic</span></h2>
+  <div class="grid g2">
+    <div class="card pattern fragment fade-right" data-fragment-index="1">
+      <h3>Pattern B · REST API as MCP</h3>
+      <ul>
+        <li>The gateway turns each operation into one tool</li>
+        <li>No MCP code to write or host</li>
+        <li>Tools only, one operation per tool (Preview)</li>
+      </ul>
+      <p class="when">Choose it when the API exists and tools are simple reads.</p>
+    </div>
+    <div class="card pattern fragment fade-left" data-fragment-index="2" style="border-top-color:var(--green)">
+      <h3>Pattern A · existing MCP server</h3>
+      <ul>
+        <li>Forwarded as is; the server checks the same token again</li>
+        <li>Tools and resources, not prompts</li>
+        <li>Keeps its own logic and identity</li>
+      </ul>
+      <p class="when">Choose it when tools orchestrate several calls or need an identity.</p>
+    </div>
+  </div>
+  <p class="fragment fade-up small" data-fragment-index="3" style="margin-top:24px"><strong>Either way:</strong> register the gateway address in the inventory, never the backend.</p>
+  <div class="footer"><span>MCP workshop · Session 2</span><span>Microsoft Learn · MCP servers in API Management</span></div>
+  <aside class="notes">
+    Both run on the same gateway today: contoso-tickets-mcp (B) and contoso-tickets-existing (A).
+    Note for questions: in our demo, pattern B answers from synthetic tickets in the gateway policy, it never reaches the Container Apps. 4 minutes.
+  </aside>
+</section>
+
+<!-- 7b · Virtual MCP from an existing API -->
+<section>
+  <div class="eyebrow">Lesson 5 · Pattern B up close</div>
+  <h2>A <span>virtual MCP server</span> from an API you already have</h2>
+  <div class="facade">
+    <span class="step fragment" data-fragment-index="1">Existing REST API in API Management<small>any HTTP-compatible API, incl. APIs imported from Azure resources</small></span>
+    <span class="arr fragment" data-fragment-index="2">pick<br>operations →</span>
+    <span class="step mcp fragment" data-fragment-index="2">MCP server on the gateway<small>one operation = one tool · no MCP code</small></span>
+    <span class="arr fragment" data-fragment-index="3">tools/list →</span>
+    <span class="step fragment" data-fragment-index="3">VS Code, Copilot Studio, agents<small>discover and call the tools</small></span>
+  </div>
+  <div class="grid g3" style="margin-top:22px">
+    <div class="card fragment fade-up" data-fragment-index="4"><h3><svg class="icon" style="width:22px;height:22px;margin:0 6px -4px 0"><use href="#i-check"/></svg>What you get</h3><p>A façade: the API stays as is. Policies on the MCP server apply to every tool: token, quota, logs. Change the exposed operations later in the Tools blade.</p></div>
+    <div class="card fragment fade-up" data-fragment-index="5" style="border-color:#f0dcb6;background:var(--amber-soft)"><h3><svg class="icon" style="width:22px;height:22px;margin:0 6px -4px 0;color:var(--amber)"><use href="#i-alert"/></svg>Limits</h3><p>Tools only, no resources or prompts. HTTP-compatible APIs only. Not in workspaces. Never read the response body; log 0 bytes of it.</p></div>
+    <div class="card accent fragment fade-up" data-fragment-index="6"><h3><svg class="icon" style="width:22px;height:22px;margin:0 6px -4px 0"><use href="#i-shield"/></svg>In our workshop</h3><p><code>contoso-tickets-mcp</code> is built from <code>contoso-tickets</code>. That API is answered by a gateway policy: a façade over synthetic data, no backend at all.</p></div>
+  </div>
+  <div class="footer"><span>MCP workshop · Session 2</span><span>Microsoft Learn · Expose a REST API as an MCP server</span></div>
+  <aside class="notes">
+    Message: API Management can turn an API you already manage into an MCP server without writing MCP code. A "virtual" or façade MCP server.
+    From Microsoft Learn (Expose REST API in API Management as an MCP server): any HTTP-compatible API managed in API Management, including APIs imported from Azure resources; select one or more operations as tools; tiers include Basic v2. Limits: tools only (no resources or prompts), not available in workspaces, do not access context.Response.Body in MCP policies, set frontend response payload logging to 0 bytes at the All APIs scope.
+    In production the REST API points to the real backend. If the backend needs credentials, attach them in a gateway policy, never in the client (Learn troubleshooting: the Authorization header is not forwarded automatically).
+    In our workshop, the REST API is answered by a return-response policy with the three synthetic tickets: proof that the MCP server is purely a façade. 3 minutes.
+  </aside>
+</section>
+
+<!-- 8 · Live demo -->
+<section>
+  <div class="eyebrow">Demo · the Session 1 client, through the gateway</div>
+  <h2>Same client, <span>new address</span></h2>
+  <pre><code class="language-bash" data-trim data-line-numbers="1|2|4|5-7|8">
+npm run workshop -- --url "$GATEWAY/contoso-tickets-mcp/mcp" --anonymous tools      # → HTTP 401
+curl -s "$GATEWAY/.well-known/oauth-protected-resource/contoso-tickets-mcp/mcp"   # → tenant + Mcp.Read
+
+export MCP_URL="$GATEWAY/contoso-tickets-mcp/mcp"
+export MCP_TOKEN="$(az account get-access-token --scope "api://$CLIENT_ID/Mcp.Read" --query accessToken -o tsv)"
+npm run workshop -- tools                                     # → list_tickets, get_ticket
+npm run workshop -- get_ticket '{"ticketId":"CT-1002"}'       # → CT-1002
+unset MCP_TOKEN
+  </code></pre>
+  <p class="small muted" style="margin-top:16px">The token goes straight into a variable and is never shown. Exact commands with the deployed values: the Session 2 page, chapter Demo.</p>
+  <div class="footer"><span>MCP workshop · Session 2</span><span>Live · Git Bash</span></div>
+  <aside class="notes">
+    Switch to Git Bash and run the commands from the Session 2 page (they already contain the deployed gateway and client ID).
+    Expected: 401; metadata with the tenant and Mcp.Read; two tools; CT-1002.
+    What the room will see: the ticket as plain JSON text, no structuredContent, because pattern B answers from the gateway.
+    Fallback if the network fails: replay slide 5 and say the gateway was not called. 5 minutes.
+  </aside>
+</section>
+
+<!-- 9 · Observability -->
+<section>
+  <div class="eyebrow">Proof · Application Insights</div>
+  <h2>Every tool call leaves a trace, <span>never a body</span></h2>
+  <div class="grid" style="grid-template-columns:1.55fr 1fr;align-items:start">
+    <pre class="fragment fade-in" data-fragment-index="1"><code class="language-sql" data-trim data-line-numbers="1-2|3-4|5-7">
+AppRequests
+| where Properties["gen_ai.operation.name"] == "tools/call"
+| join kind=leftouter (AppTraces
+    | project OperationId, caller = tostring(Properties["caller.oid"])) on OperationId
+| project TimeGenerated, server = tostring(split(Name, "/")[1]),
+    tool = tostring(Properties["gen_ai.tool.name"]),
+    caller, DurationMs, ResultCode
+    </code></pre>
+    <div>
+      <div class="card fragment fade-left" data-fragment-index="2">
+        <h3><svg class="icon" style="width:22px;height:22px;margin:0 6px -4px 0"><use href="#i-check"/></svg>Logged</h3>
+        <div class="kv"><span>Which tool</span><code>gen_ai.tool.name</code><span>Who asked</span><code>caller.oid</code> <span>Duration, status</span><code>DurationMs · ResultCode</code></div>
+      </div>
+      <div class="card fragment fade-left" data-fragment-index="3" style="margin-top:16px;border-color:#f3cdd1">
+        <h3><svg class="icon" style="width:22px;height:22px;margin:0 6px -4px 0;color:var(--red)"><use href="#i-x"/></svg>Never logged</h3>
+        <p>Tokens, tool arguments, results, request or response bodies (0 bytes: reading the body would break MCP streaming).</p>
+      </div>
+    </div>
+  </div>
+  <p class="fragment fade-up small muted" data-fragment-index="4" style="margin-top:18px">The gateway sends telemetry with its own managed identity: no instrumentation key, local auth disabled.</p>
+  <div class="footer"><span>MCP workshop · Session 2</span><span>Microsoft Learn · Monitor MCP server traffic in API Management</span></div>
+  <aside class="notes">
+    API Management writes one requests row per MCP call with gen_ai dimensions (OpenTelemetry semantic conventions for generative AI). Our policy adds a trace with the caller object ID, taken only from the validated token; the join uses OperationId.
+    Verified live on 2026-10-21: get_ticket on contoso-tickets-mcp about 60 ms, on contoso-tickets-existing about 3 s (cold start of the protected app). Note: api.type reads mcp-backend (pattern B) or pass-through-mcp (pattern A), not "Mcp" as in the Learn sample, so filter on gen_ai.operation.name.
+    Optional live: Azure portal, Application Insights, Logs, run the query. Allow 2 to 3 minutes of ingestion delay.
+  </aside>
+</section>
+
+<!-- 10 · Deployed architecture -->
+<section>
+  <div class="eyebrow">What is deployed today</div>
+  <h2 style="margin-bottom:14px">The workshop, <span>end to end</span></h2>
+  <div class="diagram"><img src="../sessions/02-architecture/diagrams/deployed-architecture.svg" alt="Clients call the public Container App or API Management with an Entra token; pattern B answers from synthetic tickets, pattern A forwards to the protected Container App, which calls the internal ticket API with its managed identity."></div>
+  <aside class="notes">
+    Alt+click to zoom. Names come from Bicep: token equals uniqueString of subscription, environment and region. Use this slide to answer "where does it run" questions.
+  </aside>
+</section>
+
+<!-- 11 · Honest gaps + checks -->
+<section>
+  <div class="eyebrow">Lesson 6 · Before a business unit connects agents</div>
+  <h2>Five checks, and <span>two gaps we know</span></h2>
+  <div class="grid g2" style="align-items:start">
+    <div class="card">
+      <h3>Five checks</h3>
+      <ol class="small" style="margin:8px 0 0 22px;padding:0;line-height:1.6">
+        <li class="fragment fade-in-then-semi-out">Who may grant consent to apps and agents?</li>
+        <li class="fragment fade-in-then-semi-out">Who may add MCP servers? Prefer the private catalog.</li>
+        <li class="fragment fade-in-then-semi-out">Agent identities: an owner and an expiry, like apps.</li>
+        <li class="fragment fade-in-then-semi-out">Data leaving the tenant: approve each third-party server.</li>
+        <li class="fragment fade-in-then-semi-out">Logs and cost: metadata only, tagged owners.</li>
+      </ol>
+    </div>
+    <div class="card fragment fade-left" style="border-color:#f0dcb6;background:var(--amber-soft)">
+      <h3><svg class="icon" style="width:22px;height:22px;margin:0 6px -4px 0;color:var(--amber)"><use href="#i-alert"/></svg>Not closed yet</h3>
+      <ul class="small" style="margin:8px 0 0 22px;padding:0;line-height:1.6">
+        <li>The protected Container App still answers a valid token directly. Restrict its ingress to the gateway.</li>
+        <li>No live 403 in the demo: Azure CLI always gets <code>Mcp.Read</code>.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer"><span>MCP workshop · Session 2</span><span>Session 6 closes these gaps</span></div>
+  <aside class="notes">
+    Naming the gaps makes the rest credible. Session 6 observes these controls and closes the direct-access gap. 3 minutes.
+  </aside>
+</section>
+
+<!-- 12 · Next -->
+<section data-transition="fade">
+  <div class="eyebrow">Next · Session 3</div>
+  <h2>The door knows <em>who</em>. <span>Next: whose rights?</span></h2>
+  <div class="grid g3" style="margin-top:10px">
+    <div class="card"><svg class="icon"><use href="#i-user"/></svg><h3>Delegated</h3><p>The agent acts as Alice, with her consent and her limits.</p></div>
+    <div class="card"><svg class="icon"><use href="#i-bot"/></svg><h3>Application</h3><p>The agent acts as itself, with an app role an admin grants.</p></div>
+    <div class="card"><svg class="icon"><use href="#i-key"/></svg><h3>Least privilege</h3><p>Mcp.Read for people, Mcp.Backend.Read for servers. Never both.</p></div>
+  </div>
+  <p class="small muted" style="margin-top:28px">Microsoft Learn: MCP servers in API Management · Secure access to MCP servers · Monitor MCP server traffic · Register MCP servers in API Center</p>
+  <aside class="notes">
+    Bridge to Session 3. The gateway answered "is this caller allowed?". Session 3 asks "with whose rights does the agent act?". 1 minute.
+  </aside>
+</section>
+
+</div>
+</div>
+
+<script src="vendor/reveal/reveal.js"></script>
+<script src="vendor/reveal/plugin/notes/notes.js"></script>
+<script src="vendor/reveal/plugin/highlight/highlight.js"></script>
+<script src="vendor/reveal/plugin/zoom/zoom.js"></script>
+<script src="assets/deck.js"></script>
+</body>
+</html>
