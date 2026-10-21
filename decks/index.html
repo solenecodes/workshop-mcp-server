@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MCP workshop · presenter decks</title>
+  <link rel="stylesheet" href="assets/deck.css">
+  <style>
+    body { font-family:var(--font); background:var(--bg); color:var(--text); margin:0; padding:56px 64px; }
+    h1 { font-size:40px; margin:0 0 8px; } p { color:var(--muted); font-size:18px; }
+    .decks { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; margin-top:28px; max-width:1200px; }
+    a.card { text-decoration:none; color:inherit; display:block; }
+    a.card:hover, a.card:focus-visible { border-color:var(--blue); outline:none; }
+    .card h2 { font-size:22px; margin:6px 0; } .card .when { font-family:var(--mono); font-size:14px; color:var(--blue); }
+    kbd { font-family:var(--mono); background:#fff; border:1px solid var(--border); border-radius:4px; padding:1px 6px; }
+  </style>
+</head>
+<body>
+  <h1>MCP workshop · presenter decks</h1>
+  <p>Offline reveal.js decks; the session pages remain authoritative. Keys: <kbd>→</kbd>/<kbd>Space</kbd> next · <kbd>S</kbd> speaker view · <kbd>F</kbd> full screen · <kbd>Esc</kbd> overview · <kbd>Alt</kbd>+click zoom.</p>
+  <div class="decks">
+    <a class="card" href="session-1.html"><div class="when">09:45–10:15 · 30 min</div><h2>Session 1 · MCP fundamentals</h2><p>N × M → N + M, host/client/server, primitives, timeline, function calling, then the live lab.</p></a>
+    <a class="card" href="session-2.html"><div class="when">10:30–11:00 · 30 min</div><h2>Session 2 · MCP in enterprise and Azure</h2><p>One front door, one token per hop, patterns A/B, virtual MCP, live demo, Application Insights.</p></a>
+    <a class="card" href="session-3.html"><div class="when">11:00–11:15 · 15 min</div><h2>Session 3 · Identity and control</h2><p>Whose rights, MCP risks, Entra Agent ID, then questions; backup slides for “Alice or the service?”. Notes in French.</p></a>
+  </div>
+</body>
+</html>

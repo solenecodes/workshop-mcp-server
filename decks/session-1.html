@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Session 1 · MCP fundamentals</title>
+  <link rel="stylesheet" href="vendor/reveal/reset.css">
+  <link rel="stylesheet" href="vendor/reveal/reveal.css">
+  <link rel="stylesheet" href="vendor/reveal/plugin/highlight/monokai.css">
+  <link rel="stylesheet" href="assets/deck.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></symbol>
+  <symbol id="i-server" viewBox="0 0 24 24"><rect width="20" height="8" x="2" y="2" rx="2"/><rect width="20" height="8" x="2" y="14" rx="2"/><line x1="6" x2="6" y1="6" y2="18"/></symbol>
+  <symbol id="i-bot" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 11a2 2 0 1 0 4 0 2 2 0 0 0-4 0"/><circle cx="12" cy="19" r="2"/></symbol>
+  <symbol id="i-db" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></symbol>
+  <symbol id="i-plug" viewBox="0 0 24 24"><path d="M12 22v-5"/><path d="M9 8V2"/><path d="M15 8V2"/><path d="M18 8v5a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8Z"/></symbol>
+  <symbol id="i-msg" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></symbol>
+</svg>
+
+<div class="reveal">
+<div class="slides">
+
+<!-- 1 · Title -->
+<section class="title-slide" data-transition="fade">
+  <div class="eyebrow">MCP workshop · Session 1 · 09:45–10:15</div>
+  <h1>MCP fundamentals,<br><span>from idea to first call</span></h1>
+  <p class="lede" style="margin-top:22px">Fifteen minutes of foundations, then fifteen minutes calling a real MCP server on fictional Contoso tickets.</p>
+  <div class="chips">
+    <span class="pill">Host · client · server</span>
+    <span class="pill">Tools · resources · prompts</span>
+    <span class="pill ok">Live lab: list_tickets · get_ticket</span>
+  </div>
+  <aside class="notes">
+    Welcome. Goal for the next 30 minutes: everyone understands what MCP is and is not, then calls a real server themselves. All tickets are invented; nothing here touches real data. 30 seconds.
+  </aside>
+</section>
+
+<!-- 2 · N x M (auto-animate start) -->
+<section data-auto-animate>
+  <div class="eyebrow">Lesson 1 · What is MCP?</div>
+  <h2>Without a standard, <span>every pair needs its own connector</span></h2>
+  <div class="nm">
+    <svg aria-hidden="true"><g class="lines custom">
+      <path d="M220 89 L932 89"/><path d="M220 89 L932 209"/><path d="M220 89 L932 329"/>
+      <path d="M220 209 L932 89"/><path d="M220 209 L932 209"/><path d="M220 209 L932 329"/>
+      <path d="M220 329 L932 89"/><path d="M220 329 L932 209"/><path d="M220 329 L932 329"/>
+    </g></svg>
+    <div class="chip app" data-id="a1" style="left:0;top:60px"><svg class="icon"><use href="#i-bot"/></svg>VS Code + Copilot</div>
+    <div class="chip app" data-id="a2" style="left:0;top:180px"><svg class="icon"><use href="#i-bot"/></svg>Copilot Studio</div>
+    <div class="chip app" data-id="a3" style="left:0;top:300px"><svg class="icon"><use href="#i-bot"/></svg>Your own agent</div>
+    <div class="chip sys" data-id="s1" style="left:932px;top:60px"><svg class="icon"><use href="#i-db"/></svg>Tickets API</div>
+    <div class="chip sys" data-id="s2" style="left:932px;top:180px"><svg class="icon"><use href="#i-server"/></svg>GitHub</div>
+    <div class="chip sys" data-id="s3" style="left:932px;top:300px"><svg class="icon"><use href="#i-db"/></svg>PostgreSQL</div>
+    <div class="count bad" data-id="count">3 × 3 = 9 custom connectors</div>
+  </div>
+  <div class="footer"><span>MCP workshop · Session 1</span><span>N × M</span></div>
+  <aside class="notes">
+    N applications times M systems: every pair needs its own integration. With 3 and 3 it is already 9; with 10 and 50 it is 500. Next slide: the same picture with MCP.
+  </aside>
+</section>
+
+<!-- 3 · N + M (auto-animate end) -->
+<section data-auto-animate>
+  <div class="eyebrow">Lesson 1 · What is MCP?</div>
+  <h2>With MCP: <span>N + M</span>, one shared protocol</h2>
+  <div class="nm">
+    <svg aria-hidden="true"><g class="lines std">
+      <path d="M220 89 L466 210"/><path d="M220 209 L466 210"/><path d="M220 329 L466 210"/>
+      <path d="M686 210 L932 89"/><path d="M686 210 L932 209"/><path d="M686 210 L932 329"/>
+    </g></svg>
+    <div class="chip app" data-id="a1" style="left:0;top:60px"><svg class="icon"><use href="#i-bot"/></svg>MCP client</div>
+    <div class="chip app" data-id="a2" style="left:0;top:180px"><svg class="icon"><use href="#i-bot"/></svg>MCP client</div>
+    <div class="chip app" data-id="a3" style="left:0;top:300px"><svg class="icon"><use href="#i-bot"/></svg>MCP client</div>
+    <div class="hub" data-id="hub">MCP</div>
+    <div class="chip sys" data-id="s1" style="left:932px;top:60px"><svg class="icon"><use href="#i-server"/></svg>MCP server</div>
+    <div class="chip sys" data-id="s2" style="left:932px;top:180px"><svg class="icon"><use href="#i-server"/></svg>MCP server</div>
+    <div class="chip sys" data-id="s3" style="left:932px;top:300px"><svg class="icon"><use href="#i-server"/></svg>MCP server</div>
+    <div class="count good" data-id="count">3 + 3 = 6 standard connections</div>
+  </div>
+  <p class="small muted fragment fade-up">MCP is a protocol: not a model, not a database, not a permission grant. Each client still checks features, configuration and access.</p>
+  <div class="footer"><span>MCP workshop · Session 1</span><span>N + M</span></div>
+  <aside class="notes">
+    Each system exposes one MCP server, each application implements one MCP client. Reuse across compatible applications such as VS Code with GitHub Copilot or Copilot Studio. Click: the three things MCP is not. 2 minutes for both slides.
+  </aside>
+</section>
+
+<!-- 4 · USB-C analogy -->
+<section>
+  <div class="eyebrow">Lesson 2 · The USB-C analogy</div>
+  <h2>One connector, <span>still subject to what each side supports</span></h2>
+  <div class="analogy">
+    <div class="card before fragment fade-right" data-fragment-index="1"><h3>Before USB-C</h3><p>Each device had its own cable: micro-USB, Lightning, proprietary.</p></div>
+    <div class="card after fragment fade-left" data-fragment-index="1"><h3><svg class="icon" style="width:22px;height:22px;margin:0 6px -4px 0"><use href="#i-plug"/></svg>With USB-C</h3><p>One connector for chargers, displays, accessories. The device and cable must still support the feature.</p></div>
+    <div class="card before fragment fade-right" data-fragment-index="2"><h3>Before MCP</h3><p>Each AI application had its own custom integrations, rebuilt for every assistant.</p></div>
+    <div class="card after fragment fade-left" data-fragment-index="2"><h3><svg class="icon" style="width:22px;height:22px;margin:0 6px -4px 0"><use href="#i-plug"/></svg>With MCP</h3><p>One server, reused by compatible clients, subject to their features and authentication requirements.</p></div>
+  </div>
+  <div class="footer"><span>MCP workshop · Session 1</span><span>Lesson 2</span></div>
+  <aside class="notes">
+    Click 1: hardware. Click 2: software. Insist on the limit: a USB-C cable does not make every device support every feature, and an MCP server does not make every client support every capability. 2 minutes.
+  </aside>
+</section>
+
+<!-- 5 · Architecture -->
+<section>
+  <div class="eyebrow">Lesson 3 · Host, client and server</div>
+  <h2>Three participants, <span>one request</span></h2>
+  <table class="tbl">
+    <tr><th>Component</th><th>Role</th><th>Examples</th></tr>
+    <tr><td>Host</td><td>The AI application you use</td><td>VS Code, Claude Desktop, Cursor</td></tr>
+    <tr><td>MCP client</td><td>The module inside the host that speaks MCP, one per server connection</td><td>Built into the host, usually invisible</td></tr>
+    <tr><td>MCP server</td><td>The connector to a tool or data source</td><td>GitHub, PostgreSQL, our Tickets server</td></tr>
+  </table>
+  <div class="flow">
+    <span class="seg fragment" data-fragment-index="1"><span class="step">“What is CT-1001 about?”</span></span>
+    <span class="seg fragment" data-fragment-index="2"><span class="arr">→</span><span class="step notmcp">Host ↔ model API: proposal <small>(not MCP)</small></span></span>
+    <span class="seg fragment" data-fragment-index="3"><span class="arr">→</span><span class="step mcp">MCP client → server: JSON-RPC 2.0</span></span>
+    <span class="seg fragment" data-fragment-index="4"><span class="arr">→</span><span class="step">Server checks access, calls the API</span></span>
+  </div>
+  <p class="small muted fragment" data-fragment-index="5" style="margin-top:16px">Transport: stdio for local servers, Streamable HTTP (March 2025) for remote ones. HTTP+SSE was replaced.</p>
+  <div class="footer"><span>MCP workshop · Session 1</span><span>Lesson 3</span></div>
+  <aside class="notes">
+    Read the table, then walk the request one click at a time. The key point is click 2: the host uses the model API, not MCP, to get a tool proposal. MCP starts when the client talks to the server. 3 minutes.
+  </aside>
+</section>
+
+<!-- 6 · Primitives -->
+<section>
+  <div class="eyebrow">Lesson 4 · Three primitives</div>
+  <h2>Tools, resources, prompts: <span>our server has tools only</span></h2>
+  <table class="tbl">
+    <tr><th>Primitive</th><th>What it is</th><th>Example</th><th>Methods</th></tr>
+    <tr class="fragment hl-on" data-fragment-index="1"><td>Tools</td><td>Actions the model can request, under application and server controls</td><td><code>list_tickets</code>, <code>get_ticket</code></td><td><code>tools/list → tools/call</code></td></tr>
+    <tr class="fragment" data-fragment-index="2"><td>Resources</td><td>Data the application reads and gives as context</td><td>File contents, a database schema</td><td><code>resources/list → read</code></td></tr>
+    <tr class="fragment" data-fragment-index="2"><td>Prompts</td><td>Instruction templates the user selects</td><td>“Summarize this pull request”</td><td><code>prompts/list → get</code></td></tr>
+  </table>
+  <p class="small muted fragment" data-fragment-index="3" style="margin-top:16px">A server does not have to implement all three. The resource and prompt examples are illustrative, not demo endpoints.</p>
+  <div class="footer"><span>MCP workshop · Session 1</span><span>Lesson 4</span></div>
+  <aside class="notes">
+    Click 1: tools, the focus of today, with our two real tools. Click 2: resources and prompts, illustrative only. 3 minutes.
+  </aside>
+</section>
+
+<!-- 7 · Timeline -->
+<section>
+  <div class="eyebrow">Lesson 5 · Timeline</div>
+  <h2>From launch <span>to October 2026</span></h2>
+  <div class="timeline">
+    <div class="ev fragment fade-up"><b>Nov 2024</b>Anthropic announces MCP as an open standard, with TypeScript and Python SDKs.</div>
+    <div class="ev ms fragment fade-up"><b>19 Mar 2025</b>Microsoft introduces MCP support in Copilot Studio.</div>
+    <div class="ev fragment fade-up"><b>26 Mar 2025</b>Streamable HTTP replaces HTTP+SSE; an HTTP authorization framework arrives.</div>
+    <div class="ev ms fragment fade-up"><b>Summer 2025</b>MCP support generally available in VS Code 1.102.</div>
+    <div class="ev fragment fade-up"><b>Nov 2025</b>Experimental tasks for durable requests, plus authorization improvements.</div>
+    <div class="ev fragment fade-up"><b>Dec 2025</b>MCP contributed to the Agentic AI Foundation (Linux Foundation).</div>
+    <div class="ev fragment fade-up"><b>Feb 2026</b>97 million monthly SDK downloads. 1,200+ public MCP servers.</div>
+    <div class="ev ms fragment fade-up"><b>Sep 2026</b>Foundry catalog (checked 20 Oct 2026): 1,000+ connectors.</div>
+  </div>
+  <div class="footer"><span>MCP workshop · Session 1</span><span>Lesson 5</span></div>
+  <aside class="notes">
+    Blue-top cards are the Microsoft milestones. Feb 2026 figures are presenter-provided, not an independently verified measurement. The Foundry figure counts connectors, not validated MCP servers. 2 minutes.
+  </aside>
+</section>
+
+<!-- 8 · MCP vs function calling -->
+<section>
+  <div class="eyebrow">Lesson 6 · MCP and function calling</div>
+  <h2>They complement each other: <span>the model proposes, the server executes</span></h2>
+  <table class="tbl" style="font-size:17px">
+    <tr><th>Criterion</th><th>Function calling</th><th>MCP</th></tr>
+    <tr class="fragment"><td>Standard</td><td>Model-provider interfaces</td><td>Open client-server protocol</td></tr>
+    <tr class="fragment"><td>Portability</td><td>Tools adapted to each model interface</td><td>One server, many compatible clients</td></tr>
+    <tr class="fragment"><td>Discovery</td><td>The application supplies the definitions</td><td>The client discovers the server's tools</td></tr>
+    <tr class="fragment"><td>Execution</td><td>The developer runs it in the application</td><td>The server validates and executes</td></tr>
+    <tr class="fragment"><td>Scalability</td><td>The application manages its catalog</td><td>Connect or disconnect servers</td></tr>
+    <tr class="fragment"><td>Best for</td><td>Model-driven tool use, prototype to production</td><td>Reusable integrations across apps</td></tr>
+  </table>
+  <p class="small fragment" style="margin-top:14px"><strong>No LLM is required to speak MCP:</strong> the terminal client in the lab proves it.</p>
+  <div class="footer"><span>MCP workshop · Session 1</span><span>Lesson 6</span></div>
+  <aside class="notes">
+    One row per click; do not read everything. The conclusion: the model proposes, the host checks, the server executes. 3 minutes. Then straight to the lab.
+  </aside>
+</section>
+
+<!-- 9 · What you will call -->
+<section>
+  <div class="eyebrow">Your turn · what you will call</div>
+  <h2 style="margin-bottom:12px">One MCP call, <span>end to end</span></h2>
+  <div class="diagram"><img src="assets/diagrams/session-1-mcp-call.svg" alt="The host asks its model API for a proposal, then its MCP client calls the MCP server on Container Apps; the browser lab and the terminal client call the same server without a model; the server calls the internal Tickets REST API, which reads SQLite."></div>
+  <aside class="notes">
+    Alt+click to zoom. Steps 3 and 4 are what participants will do now: the page lab and the terminal client, both without a model. Step 5: each tool maps to one REST operation, called with the server's own identity.
+  </aside>
+</section>
+
+<!-- 10 · Lab -->
+<section>
+  <div class="eyebrow">Your turn · 15 minutes</div>
+  <h2>Call the server <span>yourself</span></h2>
+  <pre><code class="language-bash" data-trim data-line-numbers="1|2|3|4">
+npm run workshop -- --url "$MCP_URL" --anonymous tools                                # two tools, no ticket read
+npm run workshop -- --url "$MCP_URL" --anonymous list_tickets                         # CT-1001, CT-1002, CT-1003
+npm run workshop -- --url "$MCP_URL" --anonymous get_ticket '{"ticketId":"CT-1001"}'  # VPN gateway, high
+npm run workshop -- --url "$MCP_URL" --anonymous get_ticket '{"ticketId":"CT-1002"}'  # same tool, other ticket
+  </code></pre>
+  <div class="grid g3" style="margin-top:18px">
+    <div class="card fragment"><h3>No install</h3><p>The page lab runs each step from the browser, or copy the curl command.</p></div>
+    <div class="card fragment"><h3>Look for</h3><p><code>structuredContent</code> and the source: the private Contoso Tickets REST API.</p></div>
+    <div class="card fragment"><h3>Try</h3><p>A malformed ID: strict validation rejects it before the API is reached.</p></div>
+  </div>
+  <div class="footer"><span>MCP workshop · Session 1</span><span>Page: chapter “Call the server”</span></div>
+  <aside class="notes">
+    Share the page link with the hosted public URL. Participants use the page lab; terminal users set MCP_URL from the page. Expected: two tools; three tickets; CT-1001 is the VPN gateway, severity high; CT-1002 is a different ticket from the same tool.
+    If the network fails: run locally with npm run start:sandbox and MCP_URL=http://127.0.0.1:3201/mcp.
+  </aside>
+</section>
+
+<!-- 11 · Debrief -->
+<section data-transition="fade">
+  <div class="eyebrow">Debrief · next: Session 2</div>
+  <h2>What you just proved</h2>
+  <div class="grid g3">
+    <div class="card fragment fade-up"><svg class="icon"><use href="#i-check"/></svg><h3>The terminal is an MCP client</h3><p>Same protocol calls as an agent, no model needed.</p></div>
+    <div class="card fragment fade-up"><svg class="icon"><use href="#i-server"/></svg><h3>The server is an adapter</h3><p>Each tool maps to one REST operation. No LLM inside, no write.</p></div>
+    <div class="card fragment fade-up"><svg class="icon"><use href="#i-alert"/></svg><h3>Anyone could call it</h3><p>Fine for fictional tickets. Session 2: put one front door in front of it.</p></div>
+  </div>
+  <aside class="notes">
+    Close on the open door: anyone with the URL could call this server. That is the bridge to Session 2 (enterprise architecture and API Management) and Session 3 (whose rights the agent uses). 1 minute.
+  </aside>
+</section>
+
+</div>
+</div>
+
+<script src="vendor/reveal/reveal.js"></script>
+<script src="vendor/reveal/plugin/notes/notes.js"></script>
+<script src="vendor/reveal/plugin/highlight/highlight.js"></script>
+<script src="vendor/reveal/plugin/zoom/zoom.js"></script>
+<script src="assets/deck.js"></script>
+</body>
+</html>
