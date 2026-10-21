@@ -188,6 +188,13 @@ The copy panels use the workshop gateway by default (`defaultGateway` and `defau
 (`deploy-all.ps1` prints this link). Only an `*.azure-api.net` host and a UUID are accepted.
 After redeploying the gateway under a new name, update the two defaults.
 
+Each copy panel has a **Bash / PowerShell** switch (remembered in the browser). Run the commands from
+the repository folder: `npm run workshop` is a script of its `package.json`, so from any other folder npm
+fails with `ENOENT … package.json`. Tool arguments are written `ticketId=CT-1002`. The client also accepts
+JSON, but Windows PowerShell 5.1 strips the quotes inside a JSON argument and PowerShell 7 keeps them, so no
+single JSON spelling works in both. All three variants (Git Bash, Windows PowerShell 5.1, PowerShell 7) were
+run against the deployed gateway on 2026-10-21.
+
 1. `--anonymous tools` through the gateway: `HTTP 401`.
 2. The metadata URL: the gateway URL as resource, the tenant, the `Mcp.Read` scope.
 3. With a token: two tools, then `get_ticket` CT-1002 returns CT-1002.
@@ -242,7 +249,8 @@ Allow 2 to 3 minutes of ingestion delay. Set `enableAppInsights=false` to deploy
   404 or 400 as text inside a normal tool result (`isError: false`). The problem body stays
   readable (`status`, `title`, `detail`), so the model can explain it.
 - The page never calls the gateway and never asks for a token. The demo token goes
-  straight into an environment variable and is removed with `unset MCP_TOKEN`.
+  straight into an environment variable and is removed with `unset MCP_TOKEN MCP_URL`
+  (Bash) or `Remove-Item Env:MCP_TOKEN, Env:MCP_URL` (PowerShell).
 - Resource shapes follow Microsoft Learn ([Manage MCP servers programmatically](https://learn.microsoft.com/azure/api-management/manage-mcp-servers-rest-api))
   except where the live service disagrees. Re-checked on Basic v2 on 2026-10-20:
   - `mcpProperties.endpoints` is a **map** (`{ message: { uriTemplate: '/mcp' } }`). The array

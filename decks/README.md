@@ -7,7 +7,7 @@ with no network request: reveal.js 5.2.1 and its notes, highlight and zoom plugi
 | Deck | Slot | Content |
 | --- | --- | --- |
 | [session-1.html](session-1.html) | 09:45–10:15 | N × M → N + M, USB-C, host/client/server, primitives, timeline, function calling, then the lab |
-| [session-2.html](session-2.html) | 10:30–11:00 | One front door, one token per hop, patterns A/B, a virtual MCP server from an existing API, demo, Application Insights |
+| [session-2.html](session-2.html) | 10:30–11:00 | One front door, one token per hop, patterns A/B, a virtual MCP server from an existing API, demo in Bash and PowerShell, Application Insights |
 | [session-3.html](session-3.html) | 11:00–11:15 | Whose rights, MCP risks, Entra Agent ID, questions; backup slides for "Alice or the service?" |
 
 Open [index.html](index.html). Keys: arrows or Space, **S** speaker view (notes and timer), **F** full screen,

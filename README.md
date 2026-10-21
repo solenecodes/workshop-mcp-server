@@ -52,6 +52,11 @@ npm run workshop -- --url 'http://127.0.0.1:3201/mcp' --anonymous list_tickets
 npm run workshop -- --url 'http://127.0.0.1:3201/mcp' --anonymous get_ticket '{"ticketId":"CT-1001"}'
 ```
 
+Tool arguments can also be written `name=value`, for example `get_ticket ticketId=CT-1001`. This form
+needs no quotes, so the same command works in Bash, Windows PowerShell 5.1 and PowerShell 7. A JSON
+argument does not: Windows PowerShell 5.1 strips its inner quotes. Run `npm run workshop` from the
+repository folder.
+
 The presentation's lab sends one stateless JSON-RPC request per step to the
 configured anonymous MCP endpoint, either from a copied `curl` command or
 directly from the page. Its collapsed presenter panel generates a shareable

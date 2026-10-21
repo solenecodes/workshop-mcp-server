@@ -23,10 +23,22 @@ async function main() {
       (endpoint.protocol !== 'https:' && !(local && endpoint.protocol === 'http:'))) {
     throw new UsageError('MCP_URL must be HTTPS (or local HTTP), without credentials, query or fragment.');
   }
-  const [tool, raw = '{}'] = inputs;
-  if (!tool || inputs.length > 2) throw new UsageError('Usage: npm run workshop -- [--url URL] [--anonymous] tools | TOOL_NAME \'{"argument":"value"}\'');
-  let args: unknown;
-  try { args = JSON.parse(raw); } catch { throw new UsageError('Tool arguments must be valid JSON.'); }
+  const [tool, ...rest] = inputs;
+  if (!tool) throw new UsageError('Usage: npm run workshop -- [--url URL] [--anonymous] tools | TOOL_NAME name=value | TOOL_NAME \'{"name":"value"}\'');
+  let args: unknown = {};
+  if (rest.length === 1 && rest[0]!.trimStart().startsWith('{')) {
+    try { args = JSON.parse(rest[0]!); } catch { throw new UsageError('Tool arguments must be valid JSON.'); }
+  } else {
+    // name=value pairs need no quotes, so the same command works in Bash and in every PowerShell version.
+    const pairs: Record<string, string> = {};
+    for (const pair of rest) {
+      const match = /^([A-Za-z_][\w-]*)=(.*)$/s.exec(pair);
+      if (!match) throw new UsageError('Tool arguments must be name=value pairs (for example ticketId=CT-1001) or one JSON object.');
+      if (Object.hasOwn(pairs, match[1]!)) throw new UsageError(`Argument ${match[1]} is given twice.`);
+      pairs[match[1]!] = match[2]!;
+    }
+    args = pairs;
+  }
   if (args === null || Array.isArray(args) || typeof args !== 'object') throw new UsageError('Tool arguments must be a JSON object.');
   const token = anonymous ? undefined : process.env.MCP_TOKEN;
   const client = new Client({ name: 'workshop-participant-cli', version: '1.0.0' });

@@ -237,29 +237,49 @@
 </section>
 
 <!-- 8 · Live demo -->
-<section>
-  <div class="eyebrow">Demo · the Session 1 client, through the gateway</div>
-  <h2>Same client, <span>new address</span></h2>
-  <pre><code class="language-bash" data-trim data-line-numbers="1|2|4|5-7|8">
+<section data-auto-animate>
+  <div class="eyebrow">Demo · the Session 1 client, through the gateway · Bash</div>
+  <h2 data-id="demo-title">Same client, <span>new address</span></h2>
+  <pre data-id="demo-code"><code class="language-bash" data-trim data-line-numbers="1|2|4|5-7|8">
 npm run workshop -- --url "$GATEWAY/contoso-tickets-mcp/mcp" --anonymous tools      # → HTTP 401
 curl -s "$GATEWAY/.well-known/oauth-protected-resource/contoso-tickets-mcp/mcp"   # → tenant + Mcp.Read
 
 export MCP_URL="$GATEWAY/contoso-tickets-mcp/mcp"
 export MCP_TOKEN="$(az account get-access-token --scope "api://$CLIENT_ID/Mcp.Read" --query accessToken -o tsv)"
-npm run workshop -- tools                                     # → list_tickets, get_ticket
-npm run workshop -- get_ticket '{"ticketId":"CT-1002"}'       # → CT-1002
-unset MCP_TOKEN
+npm run workshop -- tools                              # → list_tickets, get_ticket
+npm run workshop -- get_ticket ticketId=CT-1002        # → CT-1002
+unset MCP_TOKEN MCP_URL
   </code></pre>
-  <p class="small muted" style="margin-top:16px">The token goes straight into a variable and is never shown. Exact commands with the deployed values: the Session 2 page, chapter Demo.</p>
-  <div class="footer"><span>MCP workshop · Session 2</span><span>Live · Git Bash</span></div>
+  <p class="small muted" style="margin-top:16px">From the repository folder. The token goes straight into a variable and is never shown. Exact commands with the deployed values: the Session 2 page, chapter Demo (Bash / PowerShell switch).</p>
+  <div class="footer"><span>MCP workshop · Session 2</span><span>Live · Git Bash, macOS, Linux, WSL</span></div>
   <aside class="notes">
-    Switch to Git Bash and run the commands from the Session 2 page (they already contain the deployed gateway and client ID).
+    Run the commands from the Session 2 page, from the repository folder (cd workshop-mcp-server): npm run workshop is a script of its package.json, elsewhere npm fails with ENOENT.
     Expected: 401; metadata with the tenant and Mcp.Read; two tools; CT-1002.
     What the room will see: the ticket as plain JSON text, no structuredContent, because pattern B answers from the gateway.
     Fallback if the network fails: replay slide 5 and say the gateway was not called. 5 minutes.
   </aside>
 </section>
 
+<section data-auto-animate>
+  <div class="eyebrow">Demo · the Session 1 client, through the gateway · PowerShell</div>
+  <h2 data-id="demo-title">Same client, <span>from PowerShell</span></h2>
+  <pre data-id="demo-code"><code class="language-powershell" data-trim data-line-numbers="1|2|4|5-7|8">
+npm run workshop -- --url "$GATEWAY/contoso-tickets-mcp/mcp" --anonymous tools                 # → HTTP 401
+Invoke-RestMethod "$GATEWAY/.well-known/oauth-protected-resource/contoso-tickets-mcp/mcp" | ConvertTo-Json
+
+$env:MCP_URL = "$GATEWAY/contoso-tickets-mcp/mcp"
+$env:MCP_TOKEN = az account get-access-token --scope "api://$CLIENT_ID/Mcp.Read" --query accessToken -o tsv
+npm run workshop -- tools                              # → list_tickets, get_ticket
+npm run workshop -- get_ticket ticketId=CT-1002        # → CT-1002
+Remove-Item Env:MCP_TOKEN, Env:MCP_URL
+  </code></pre>
+  <p class="small muted" style="margin-top:16px"><code>ticketId=CT-1002</code> needs no JSON quotes: the same line works in Windows PowerShell 5.1 and PowerShell 7. <code>export</code> and <code>unset</code> do not exist in PowerShell.</p>
+  <div class="footer"><span>MCP workshop · Session 2</span><span>Live · Windows PowerShell 5.1 or PowerShell 7</span></div>
+  <aside class="notes">
+    Same four steps for Windows users. Three traps, all checked on 2026-10-21: run from the repository folder; use $env:VAR and Remove-Item instead of export and unset; prefer ticketId=CT-1002, because Windows PowerShell 5.1 strips the quotes inside a JSON argument and PowerShell 7 keeps them.
+    In the room, $GATEWAY and $CLIENT_ID are already replaced on the Session 2 page: copy from there.
+  </aside>
+</section>
 <!-- 9 · Observability -->
 <section>
   <div class="eyebrow">Proof · Application Insights</div>
