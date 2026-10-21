@@ -56,6 +56,14 @@
     </choose>
     <!-- One counter per caller object ID: a burst gets HTTP 429 with Retry-After. -->
     <rate-limit-by-key calls="__RATE_LIMIT_CALLS__" renewal-period="__RATE_LIMIT_PERIOD__" counter-key="@("__MCP_PATH__-" + (string)context.Variables["mcp-caller-oid"])" />
+    <!-- Who asked, from the validated token only: an Application Insights trace correlated with the requests row
+         (same operation_Id). Object ID and caller type only; never the token, the arguments or a body. -->
+    <trace source="mcp-gateway" severity="information">
+      <message>@("MCP call authorized on __MCP_PATH__")</message>
+      <metadata name="mcp.server" value="__MCP_PATH__" />
+      <metadata name="caller.oid" value="@((string)context.Variables["mcp-caller-oid"])" />
+      <metadata name="caller.type" value="@(((Jwt)context.Variables["mcp-jwt"]).Claims.ContainsKey("scp") ? "delegated" : "application")" />
+    </trace>
   </inbound>
   <backend>
     <base />

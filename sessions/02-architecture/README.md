@@ -209,14 +209,28 @@ live call.
 | Pattern B `get_ticket` CT-1002 / CT-9999 / malformed | Ticket CT-1002 / a problem with `status: 404` / a problem with `status: 400` | Verified live. The 404 and 400 arrive as text inside a normal tool result (`isError: false`), not as HTTP errors: API Management passes the REST answer back to the model |
 | Pattern A (pass-through) `get_ticket` CT-1002 | Ticket CT-1002 | Verified live |
 | Direct call to the protected Container App | **Not blocked yet**: it still answers with a valid token. Close it with [ingress IP restrictions](https://learn.microsoft.com/azure/container-apps/ip-restrictions) | Gap |
-| Gateway logs in Application Insights | Not configured by this template. Log 0 front-end response bytes ([monitor MCP traffic](https://learn.microsoft.com/azure/api-management/monitor-mcp-servers)) | Gap |
+| Gateway logs in Application Insights | One `AppRequests` row per MCP request (`gen_ai.operation.name`, `gen_ai.tool.name`, duration, status), plus an `AppTraces` row with `caller.oid` and `caller.type` joined by `OperationId`. 0 bytes of any body, no client IP, MCP payload logging off ([monitor MCP traffic](https://learn.microsoft.com/azure/api-management/monitor-mcp-servers)) | Verified live (2026-10-21). `api.type` reads `mcp-backend` (pattern B) or `pass-through-mcp` (pattern A), not `Mcp` as in the Learn samples: filter on `gen_ai.operation.name` |
 | API Center registration | Manual, Preview; register the gateway URL only | Manual |
 
 "Authored" means built and tested offline (Bicep build and lint, `tests/gateway.test.ts`).
 "Verified live" means observed on 2026-10-20 on a gateway deployed by
-[infra/deploy-all.ps1](../../infra/deploy-all.ps1). Close the two gaps before session 6 promises
-"gateway only": restrict the Container App ingress to the gateway, and add an Application
-Insights logger with metadata only (no request or response bodies).
+[infra/deploy-all.ps1](../../infra/deploy-all.ps1). Close the remaining gap before session 6 promises
+"gateway only": restrict the Container App ingress to the gateway.
+
+The gateway sends its telemetry with its own managed identity (Monitoring Metrics Publisher on
+Application Insights, local authentication disabled): no instrumentation key exists. Tool calls
+with who asked, from the Log Analytics workspace `log-mcp-<token>`:
+
+```kusto
+AppRequests
+| where Properties["gen_ai.operation.name"] == "tools/call"
+| join kind=leftouter (AppTraces
+    | project OperationId, caller = tostring(Properties["caller.oid"])) on OperationId
+| project TimeGenerated, server = tostring(split(Name, "/")[1]),
+    tool = tostring(Properties["gen_ai.tool.name"]), caller, DurationMs, ResultCode
+```
+
+Allow 2 to 3 minutes of ingestion delay. Set `enableAppInsights=false` to deploy the gateway without telemetry.
 
 ## Boundaries
 

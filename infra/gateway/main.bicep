@@ -33,6 +33,8 @@ param tags object = {}
 @description('Bump only when MCP tool creation is stuck on HTTP 502: the tools are then created under new resource names. Clients still see list_tickets and get_ticket.')
 @minValue(1)
 param toolRevision int = 1
+@description('Send gateway telemetry to Application Insights: one requests row per MCP call (tool name, duration, status) and the caller object ID. Never request or response bodies.')
+param enableAppInsights bool = true
 
 var gatewayUrl = 'https://${apimName}.azure-api.net'
 var issuer = '${environment().authentication.loginEndpoint}${entraTenantId}/v2.0'
@@ -79,9 +81,83 @@ resource apim 'Microsoft.ApiManagement/service@2024-05-01' = {
   location: location
   tags: tags
   sku: { name: skuName, capacity: 1 }
+  // The gateway's own identity sends telemetry to Application Insights: no instrumentation key is used.
+  identity: { type: 'SystemAssigned' }
   properties: {
     publisherEmail: publisherEmail
     publisherName: publisherName
+  }
+}
+
+// Observability (Microsoft Learn: "Monitor MCP server traffic in Azure API Management").
+// API Management writes one Application Insights requests row per MCP request with gen_ai.* dimensions
+// (gen_ai.operation.name, gen_ai.tool.name, duration, success). Bodies are never logged: 0 bytes everywhere,
+// and MCP payload logging (tool arguments and results) stays off.
+var telemetryToken = uniqueString(resourceGroup().id)
+var monitoringMetricsPublisher = '3913510d-42f4-4e42-8a64-420c390055eb'
+
+resource logs 'Microsoft.OperationalInsights/workspaces@2023-09-01' = if (enableAppInsights) {
+  name: 'log-mcp-${telemetryToken}'
+  location: location
+  tags: tags
+  properties: {
+    sku: { name: 'PerGB2018' }
+    retentionInDays: 30
+  }
+}
+
+resource appInsights 'Microsoft.Insights/components@2020-02-02' = if (enableAppInsights) {
+  name: 'appi-mcp-${telemetryToken}'
+  location: location
+  tags: tags
+  kind: 'web'
+  properties: {
+    Application_Type: 'web'
+    WorkspaceResourceId: logs.id
+    // Only Microsoft Entra-authenticated senders (here, the gateway identity) may ingest telemetry.
+    DisableLocalAuth: true
+  }
+}
+
+resource telemetryPublisher 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (enableAppInsights) {
+  name: guid(appInsights.id, apim.id, monitoringMetricsPublisher)
+  scope: appInsights
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', monitoringMetricsPublisher)
+    principalId: apim.identity.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
+resource telemetryLogger 'Microsoft.ApiManagement/service/loggers@2024-05-01' = if (enableAppInsights) {
+  parent: apim
+  name: 'appinsights'
+  properties: {
+    loggerType: 'applicationInsights'
+    description: 'Gateway telemetry, sent with the gateway managed identity.'
+    resourceId: appInsights.id
+    credentials: {
+      connectionString: appInsights!.properties.ConnectionString
+      identityClientId: 'SystemAssigned'
+    }
+  }
+  dependsOn: [telemetryPublisher]
+}
+
+var noBody = { headers: [], body: { bytes: 0 } }
+
+resource telemetry 'Microsoft.ApiManagement/service/diagnostics@2024-05-01' = if (enableAppInsights) {
+  parent: apim
+  name: 'applicationinsights'
+  properties: {
+    loggerId: telemetryLogger.id
+    alwaysLog: 'allErrors'
+    httpCorrelationProtocol: 'W3C'
+    verbosity: 'information'
+    logClientIp: false
+    sampling: { samplingType: 'fixed', percentage: 100 }
+    frontend: { request: noBody, response: noBody }
+    backend: { request: noBody, response: noBody }
   }
 }
 
@@ -243,6 +319,7 @@ resource prmPolicies 'Microsoft.ApiManagement/service/apis/operations/policies@2
 }]
 
 output apimName string = apim.name
+output appInsightsName string = enableAppInsights ? appInsights.name : ''
 output gatewayUrl string = gatewayUrl
 output restMcpUrl string = '${gatewayUrl}/${servers.rest.path}/mcp'
 output existingMcpUrl string = patternA ? '${gatewayUrl}/${servers.existing.path}/mcp' : ''

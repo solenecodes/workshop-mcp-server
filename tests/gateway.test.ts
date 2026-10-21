@@ -80,3 +80,18 @@ test('policies never read message bodies and every placeholder is replaced by th
   assert.match(bicep, /loadTextContent\('policies\/protected-resource-metadata\.xml'\)/);
   assert.match(bicep, /'Microsoft\.ApiManagement\/service\/apis@2025-09-01-preview'/);
 });
+
+test('gateway telemetry goes to Application Insights with the gateway identity, never bodies or tokens', () => {
+  assert.match(bicep, /identity: \{ type: 'SystemAssigned' \}/);
+  assert.match(bicep, /DisableLocalAuth: true/);
+  assert.match(bicep, /identityClientId: 'SystemAssigned'/);
+  assert.match(bicep, /'3913510d-42f4-4e42-8a64-420c390055eb'/, 'Monitoring Metrics Publisher for the gateway identity');
+  assert.match(bicep, /var noBody = \{ headers: \[\], body: \{ bytes: 0 \} \}/);
+  assert.match(bicep, /frontend: \{ request: noBody, response: noBody \}\n\s+backend: \{ request: noBody, response: noBody \}/);
+  assert.match(bicep, /logClientIp: false/);
+  assert.doesNotMatch(bicep, /InstrumentationKey|instrumentationKey/);
+  const trace = mcpServer.match(/<trace [\s\S]*?<\/trace>/)?.[0] ?? '';
+  assert.match(trace, /name="caller\.oid" value="@\(\(string\)context\.Variables\["mcp-caller-oid"\]\)"/);
+  assert.doesNotMatch(trace, /Authorization|Body|Arguments/i);
+  assert.ok(mcpServer.indexOf('<trace ') > mcpServer.indexOf('<validate-azure-ad-token'), 'the caller is traced only after token validation');
+});
