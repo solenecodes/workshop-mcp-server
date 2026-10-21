@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="vendor/reveal/plugin/highlight/monokai.css">
   <link rel="stylesheet" href="assets/deck.css">
 </head>
-<body>
+<body data-page="../sessions/02-architecture/presentation.html">
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></symbol>
   <symbol id="i-key" viewBox="0 0 24 24"><path d="M2.586 13.314A4.172 4.172 0 0 0 2 15.673v2.03a1 1 0 0 0 1 1h1"/><path d="M16 6a4 4 0 1 1-8 0 4 4 0 0 1 8 0z"/><circle cx="12" cy="10" r="2"/></symbol>
@@ -28,7 +28,7 @@
 <div class="slides">
 
 <!-- 1 · Title -->
-<section class="title-slide" data-transition="fade">
+<section id="title" data-chapter="decisions" class="title-slide" data-transition="fade">
   <div class="eyebrow">MCP workshop · Session 2 · 10:30–11:00</div>
   <h1>MCP in enterprise<br><span>and Azure architectures</span></h1>
   <p class="lede" style="margin-top:22px">Same Contoso tickets as this morning. Now: who runs the server, who opens the door, who finds it and who uses it.</p>
@@ -45,7 +45,7 @@
 </section>
 
 <!-- 2 · Shift -->
-<section>
+<section id="shift" data-chapter="decisions">
   <div class="eyebrow">Why it matters</div>
   <h2>An MCP server is a <span>new way into your data</span></h2>
   <div class="shift">
@@ -77,7 +77,7 @@
 </section>
 
 <!-- 3 · Four decisions -->
-<section>
+<section id="decisions" data-chapter="decisions">
   <div class="eyebrow">Lesson 1 · Four decisions per MCP server</div>
   <h2>Every MCP server asks <span>four questions</span></h2>
   <div class="grid g4">
@@ -94,7 +94,7 @@
 </section>
 
 <!-- 4 · Open door (auto-animate start) -->
-<section data-auto-animate data-auto-animate-duration="0.9">
+<section id="front-door" data-chapter="front-door" data-auto-animate data-auto-animate-duration="0.9">
   <div class="eyebrow">Lesson 3 · One front door</div>
   <h2>Before: every server is <span>its own door</span></h2>
   <div class="stage">
@@ -115,7 +115,7 @@
 </section>
 
 <!-- 5 · Front door (auto-animate end + steps) -->
-<section data-auto-animate data-auto-animate-duration="0.9">
+<section id="front-door-after" data-chapter="front-door" data-auto-animate data-auto-animate-duration="0.9">
   <div class="eyebrow">Lesson 3 · One front door</div>
   <h2>After: <span>one door</span>, the servers stay behind</h2>
   <div class="stage">
@@ -148,7 +148,7 @@
   </aside>
 </section>
 <!-- 6 · One token per hop -->
-<section>
+<section id="token" data-chapter="token">
   <div class="eyebrow">Lesson 4 · Follow the token</div>
   <h2>One token <span>per hop</span>, never passed along</h2>
   <div class="hops">
@@ -180,7 +180,7 @@
 </section>
 
 <!-- 7 · Patterns -->
-<section>
+<section id="patterns" data-chapter="patterns">
   <div class="eyebrow">Lesson 5 · Two ways to expose with API Management</div>
   <h2>Write MCP code <span>only when tools need logic</span></h2>
   <div class="grid g2">
@@ -212,7 +212,7 @@
 </section>
 
 <!-- 7b · Virtual MCP from an existing API -->
-<section>
+<section id="virtual-mcp" data-chapter="patterns">
   <div class="eyebrow">Lesson 5 · Pattern B up close</div>
   <h2>A <span>virtual MCP server</span> from an API you already have</h2>
   <div class="facade">
@@ -237,7 +237,7 @@
 </section>
 
 <!-- 8 · Live demo -->
-<section data-auto-animate>
+<section id="demo" data-chapter="demo" data-auto-animate>
   <div class="eyebrow">Demo · the Session 1 client, through the gateway · Bash</div>
   <h2 data-id="demo-title">Same client, <span>new address</span></h2>
   <pre data-id="demo-code"><code class="language-bash" data-trim data-line-numbers="1|2|4|5-7|8">
@@ -260,7 +260,7 @@ unset MCP_TOKEN MCP_URL
   </aside>
 </section>
 
-<section data-auto-animate>
+<section id="demo-powershell" data-chapter="demo" data-auto-animate>
   <div class="eyebrow">Demo · the Session 1 client, through the gateway · PowerShell</div>
   <h2 data-id="demo-title">Same client, <span>from PowerShell</span></h2>
   <pre data-id="demo-code"><code class="language-powershell" data-trim data-line-numbers="1|2|4|5-7|8">
@@ -281,7 +281,7 @@ Remove-Item Env:MCP_TOKEN, Env:MCP_URL
   </aside>
 </section>
 <!-- 9 · Observability -->
-<section>
+<section id="observability" data-chapter="demo">
   <div class="eyebrow">Proof · Application Insights</div>
   <h2>Every tool call leaves a trace, <span>never a body</span></h2>
   <div class="grid" style="grid-template-columns:1.55fr 1fr;align-items:start">
@@ -315,7 +315,7 @@ AppRequests
 </section>
 
 <!-- 10 · Deployed architecture -->
-<section>
+<section id="architecture" data-chapter="demo">
   <div class="eyebrow">What is deployed today</div>
   <h2 style="margin-bottom:14px">The workshop, <span>end to end</span></h2>
   <div class="diagram"><img src="../sessions/02-architecture/diagrams/deployed-architecture.svg" alt="Clients call the public Container App or API Management with an Entra token; pattern B answers from synthetic tickets, pattern A forwards to the protected Container App, which calls the internal ticket API with its managed identity."></div>
@@ -325,7 +325,7 @@ AppRequests
 </section>
 
 <!-- 11 · Honest gaps + checks -->
-<section>
+<section id="discover" data-chapter="discover">
   <div class="eyebrow">Lesson 6 · Before a business unit connects agents</div>
   <h2>Five checks, and <span>two gaps we know</span></h2>
   <div class="grid g2" style="align-items:start">
@@ -354,7 +354,7 @@ AppRequests
 </section>
 
 <!-- 12 · Next -->
-<section data-transition="fade">
+<section id="next" data-chapter="discover" data-transition="fade">
   <div class="eyebrow">Next · Session 3</div>
   <h2>The door knows <em>who</em>. <span>Next: whose rights?</span></h2>
   <div class="grid g3" style="margin-top:10px">

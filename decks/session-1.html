@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="vendor/reveal/plugin/highlight/monokai.css">
   <link rel="stylesheet" href="assets/deck.css">
 </head>
-<body>
+<body data-page="../sessions/01-mcp-fondamentaux/presentation.html">
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></symbol>
   <symbol id="i-server" viewBox="0 0 24 24"><rect width="20" height="8" x="2" y="2" rx="2"/><rect width="20" height="8" x="2" y="14" rx="2"/><line x1="6" x2="6" y1="6" y2="18"/></symbol>
@@ -25,7 +25,7 @@
 <div class="slides">
 
 <!-- 1 · Title -->
-<section class="title-slide" data-transition="fade">
+<section id="title" data-chapter="why" class="title-slide" data-transition="fade">
   <div class="eyebrow">MCP workshop · Session 1 · 09:45–10:15</div>
   <h1>MCP fundamentals,<br><span>from idea to first call</span></h1>
   <p class="lede" style="margin-top:22px">Fifteen minutes of foundations, then fifteen minutes calling a real MCP server on fictional Contoso tickets.</p>
@@ -40,7 +40,7 @@
 </section>
 
 <!-- 2 · N x M (auto-animate start) -->
-<section data-auto-animate>
+<section id="why" data-chapter="why" data-auto-animate>
   <div class="eyebrow">Lesson 1 · What is MCP?</div>
   <h2>Without a standard, <span>every pair needs its own connector</span></h2>
   <div class="nm">
@@ -64,7 +64,7 @@
 </section>
 
 <!-- 3 · N + M (auto-animate end) -->
-<section data-auto-animate>
+<section id="n-plus-m" data-chapter="why" data-auto-animate>
   <div class="eyebrow">Lesson 1 · What is MCP?</div>
   <h2>With MCP: <span>N + M</span>, one shared protocol</h2>
   <div class="nm">
@@ -89,7 +89,7 @@
 </section>
 
 <!-- 4 · USB-C analogy -->
-<section>
+<section id="connector" data-chapter="connector">
   <div class="eyebrow">Lesson 2 · The USB-C analogy</div>
   <h2>One connector, <span>still subject to what each side supports</span></h2>
   <div class="analogy">
@@ -105,7 +105,7 @@
 </section>
 
 <!-- 5 · Architecture -->
-<section>
+<section id="anatomy" data-chapter="anatomy">
   <div class="eyebrow">Lesson 3 · Host, client and server</div>
   <h2>Three participants, <span>one request</span></h2>
   <table class="tbl">
@@ -128,7 +128,7 @@
 </section>
 
 <!-- 6 · Primitives -->
-<section>
+<section id="mcp" data-chapter="mcp">
   <div class="eyebrow">Lesson 4 · Three primitives</div>
   <h2>Tools, resources, prompts: <span>our server has tools only</span></h2>
   <table class="tbl">
@@ -145,7 +145,7 @@
 </section>
 
 <!-- 7 · Timeline -->
-<section>
+<section id="history" data-chapter="history">
   <div class="eyebrow">Lesson 5 · Timeline</div>
   <h2>From launch <span>to October 2026</span></h2>
   <div class="timeline">
@@ -165,7 +165,7 @@
 </section>
 
 <!-- 8 · MCP vs function calling -->
-<section>
+<section id="api" data-chapter="api">
   <div class="eyebrow">Lesson 6 · MCP and function calling</div>
   <h2>They complement each other: <span>the model proposes, the server executes</span></h2>
   <table class="tbl" style="font-size:17px">
@@ -185,7 +185,7 @@
 </section>
 
 <!-- 9 · What you will call -->
-<section>
+<section id="call" data-chapter="lab">
   <div class="eyebrow">Your turn · what you will call</div>
   <h2 style="margin-bottom:12px">One MCP call, <span>end to end</span></h2>
   <div class="diagram"><img src="assets/diagrams/session-1-mcp-call.svg" alt="The host asks its model API for a proposal, then its MCP client calls the MCP server on Container Apps; the browser lab and the terminal client call the same server without a model; the server calls the internal Tickets REST API, which reads SQLite."></div>
@@ -195,7 +195,7 @@
 </section>
 
 <!-- 10 · Lab -->
-<section>
+<section id="lab" data-chapter="lab">
   <div class="eyebrow">Your turn · 15 minutes</div>
   <h2>Call the server <span>yourself</span></h2>
   <pre><code class="language-bash" data-trim data-line-numbers="1|2|3|4">
@@ -217,7 +217,7 @@ npm run workshop -- --url "$MCP_URL" --anonymous get_ticket '{"ticketId":"CT-100
 </section>
 
 <!-- 11 · Debrief -->
-<section data-transition="fade">
+<section id="debrief" data-chapter="lab" data-transition="fade">
   <div class="eyebrow">Debrief · next: Session 2</div>
   <h2>What you just proved</h2>
   <div class="grid g3">

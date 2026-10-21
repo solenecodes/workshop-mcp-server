@@ -9,7 +9,9 @@ morning read/write practice is separate and is not counted again here.
 **Two ways through the afternoon.** Participants with their own non-production
 subscription build the same levels themselves with the
 [90-minute afternoon path](https://web-mcp-host01-f80ce789cb05568a-portal.azurewebsites.net/?lang=en#/tracks)
-(modules 01 to 03, 04 as a stretch, always clean up with 99). Everyone else follows
+(modules 01 to 03, 04 as a stretch, always clean up with 99). The
+[workshop overview (French, low-code track)](https://olivmertens.github.io/governed-mcp-workshop/?lang=fr&track=low-code#/overview)
+explains the path before you start. Everyone else follows
 this observation plan on the prepared environment. Both groups use the same levels:
 open, Entra-protected, behind the gateway.
 

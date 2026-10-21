@@ -9,6 +9,8 @@
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="presentation.css?v=security-three-slides-1">
   <script type="module" src="presentation.js?v=security-three-slides-1"></script>
+  <link rel="stylesheet" href="../slides-link.css">
+  <script src="../slides-link.js" defer></script>
 </head>
 <body>
   <svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -40,6 +42,7 @@
   <header class="topbar">
     <a class="brand" href="#why"><svg class="icon"><use href="#i-plug"/></svg><span>MCP <span class="muted">workshop</span></span></a>
     <div class="day-strip" id="day-strip" aria-label="Where the day should be now (Paris time)"></div>
+    <a class="button slides-open" id="slides-open" data-deck="session-1" data-base="../../decks/" href="../../decks/session-1.html" target="_blank" rel="noopener" title="Open the presenter slides for this chapter (new tab)">Slides <span aria-hidden="true">↗</span></a>
     <button class="button parking-open" id="parking-open" type="button" aria-haspopup="dialog"><span aria-hidden="true">📝</span> Parking lot <span id="parking-count" aria-label="Loading active questions">...</span></button>
   </header>
 
@@ -402,7 +405,7 @@
         <p class="intro">Practical workshop to progressively evolve an MCP server into a secure, governed, and monitored enterprise architecture. A break is integrated into the session.</p>
         <p class="agenda-next">Up next at 16:00: 🚀 Use cases, next steps &amp; open discussion</p>
         <p class="agenda-note">Build it yourself in your own non-production subscription: modules 01 to 03 today, 04 as a stretch, the rest self-paced. Prepare module 00 before the day, and clean up with module 99 before you leave.</p>
-        <div class="agenda-actions"><a class="button primary" href="https://web-mcp-host01-f80ce789cb05568a-portal.azurewebsites.net/?lang=en#/tracks">Open the hands-on guide</a><a class="button" href="../02-architecture/presentation.html#decisions">Review Session 2</a></div>
+        <div class="agenda-actions"><a class="button primary" href="https://web-mcp-host01-f80ce789cb05568a-portal.azurewebsites.net/?lang=en#/tracks">Open the hands-on guide</a><a class="button" href="https://olivmertens.github.io/governed-mcp-workshop/?lang=fr&amp;track=low-code#/overview" target="_blank" rel="noopener">Workshop overview (FR · low-code) ↗</a><a class="button" href="../02-architecture/presentation.html#decisions">Review Session 2</a></div>
       </section>
 
       <section id="day-use-cases" class="chapter agenda-panel" hidden aria-labelledby="day-use-cases-title">

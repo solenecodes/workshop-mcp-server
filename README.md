@@ -543,7 +543,7 @@ to demonstrate a backend weakness or does not invoke the expected tool.
 | Time | Duration | Session |
 | --- | ---: | --- |
 | 14:00–14:30 | 30 min | Parking lot review – MCP ecosystem and priorities |
-| **14:30–16:00** | **90 min** | [Hands-on workshop: from an open MCP server to an enterprise-ready architecture](https://web-mcp-host01-f80ce789cb05568a-portal.azurewebsites.net/?lang=en#/tracks) |
+| **14:30–16:00** | **90 min** | [Hands-on workshop: from an open MCP server to an enterprise-ready architecture](https://web-mcp-host01-f80ce789cb05568a-portal.azurewebsites.net/?lang=en#/tracks) · [workshop overview (FR, low-code track)](https://olivmertens.github.io/governed-mcp-workshop/?lang=fr&track=low-code#/overview) |
 | 16:00–16:30 | 30 min | Use cases, next steps and open discussion |
 
 Only sessions with demos/practice have folders. The
