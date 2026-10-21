@@ -93,7 +93,26 @@
   </aside>
 </section>
 
-<!-- 4 · Open door (auto-animate start) -->
+<!-- 4 · Hosting options -->
+<section id="hosting" data-chapter="hosting">
+  <div class="eyebrow">Lesson 2 · Where it runs</div>
+  <h2>Keep your platform, <span>govern it the same way</span></h2>
+  <div class="grid g3 hosting">
+    <div class="card accent fragment fade-up"><h3>Azure Container Apps</h3><p>Any language in a container, scale to zero, built-in Entra authentication.</p><span class="pill ok">This workshop</span></div>
+    <div class="card fragment fade-up"><h3>Azure Functions</h3><p>Stateless tools billed per call, with the MCP extension.</p><span class="pill">Event-driven tools</span></div>
+    <div class="card fragment fade-up"><h3>App Service</h3><p>Add MCP to a web app you already run, or turn an OpenAPI API into tools.</p><span class="pill warn">Built-in MCP: Preview</span></div>
+    <div class="card fragment fade-up"><h3>Azure Kubernetes Service</h3><p>For teams that already run Kubernetes. Highest operating effort.</p><span class="pill">Existing clusters</span></div>
+    <div class="card fragment fade-up"><h3>Container Apps dynamic sessions</h3><p>Sandboxed code execution with platform tools, isolated per session.</p><span class="pill">No custom tools</span></div>
+    <div class="card gateway fragment fade-up"><h3>Azure API Management</h3><p>Not a host: builds an MCP server from a REST API it already manages, or fronts yours.</p><span class="pill">No MCP code · Lesson 5</span></div>
+  </div>
+  <p class="fragment fade-in muted small" style="margin-top:22px">Same four things everywhere: an Entra token for the server's own audience, one gateway, metadata-only logs, an inventory entry.</p>
+  <div class="footer"><span>MCP workshop · Session 2</span><span>Microsoft Learn · Choose an Azure service for MCP</span></div>
+  <aside class="notes">
+    This morning: public and protected MCP on Container Apps, the Tickets API on internal ingress only, reached with a managed identity. One card per click. Question for the room: "your APIs run on App Service, should you move them to add MCP?" No: keep the platform, ask for the same four things. API Management is dashed because it hosts no code. 3 minutes.
+  </aside>
+</section>
+
+<!-- 5 · Open door (auto-animate start) -->
 <section id="front-door" data-chapter="front-door" data-auto-animate data-auto-animate-duration="0.9">
   <div class="eyebrow">Lesson 3 · One front door</div>
   <h2>Before: every server is <span>its own door</span></h2>
@@ -114,7 +133,7 @@
   </aside>
 </section>
 
-<!-- 5 · Front door (auto-animate end + steps) -->
+<!-- 6 · Front door (auto-animate end + steps) -->
 <section id="front-door-after" data-chapter="front-door" data-auto-animate data-auto-animate-duration="0.9">
   <div class="eyebrow">Lesson 3 · One front door</div>
   <h2>After: <span>one door</span>, the servers stay behind</h2>
@@ -147,7 +166,7 @@
     About 4 minutes.
   </aside>
 </section>
-<!-- 6 · One token per hop -->
+<!-- 7 · One token per hop -->
 <section id="token" data-chapter="token">
   <div class="eyebrow">Lesson 4 · Follow the token</div>
   <h2>One token <span>per hop</span>, never passed along</h2>
@@ -179,7 +198,7 @@
   </aside>
 </section>
 
-<!-- 7 · Patterns -->
+<!-- 8 · Patterns -->
 <section id="patterns" data-chapter="patterns">
   <div class="eyebrow">Lesson 5 · Two ways to expose with API Management</div>
   <h2>Write MCP code <span>only when tools need logic</span></h2>
@@ -211,7 +230,7 @@
   </aside>
 </section>
 
-<!-- 7b · Virtual MCP from an existing API -->
+<!-- 8b · Virtual MCP from an existing API -->
 <section id="virtual-mcp" data-chapter="patterns">
   <div class="eyebrow">Lesson 5 · Pattern B up close</div>
   <h2>A <span>virtual MCP server</span> from an API you already have</h2>
@@ -236,7 +255,7 @@
   </aside>
 </section>
 
-<!-- 8 · Live demo -->
+<!-- 9 · Live demo -->
 <section id="demo" data-chapter="demo" data-auto-animate>
   <div class="eyebrow">Demo · the Session 1 client, through the gateway · Bash</div>
   <h2 data-id="demo-title">Same client, <span>new address</span></h2>
@@ -280,7 +299,7 @@ Remove-Item Env:MCP_TOKEN, Env:MCP_URL
     In the room, $GATEWAY and $CLIENT_ID are already replaced on the Session 2 page: copy from there.
   </aside>
 </section>
-<!-- 9 · Observability -->
+<!-- 10 · Observability -->
 <section id="observability" data-chapter="demo">
   <div class="eyebrow">Proof · Application Insights</div>
   <h2>Every tool call leaves a trace, <span>never a body</span></h2>
@@ -314,7 +333,7 @@ AppRequests
   </aside>
 </section>
 
-<!-- 10 · Deployed architecture -->
+<!-- 11 · Deployed architecture -->
 <section id="architecture" data-chapter="demo">
   <div class="eyebrow">What is deployed today</div>
   <h2 style="margin-bottom:14px">The workshop, <span>end to end</span></h2>
@@ -324,7 +343,7 @@ AppRequests
   </aside>
 </section>
 
-<!-- 11 · Honest gaps + checks -->
+<!-- 12 · Honest gaps + checks -->
 <section id="discover" data-chapter="discover">
   <div class="eyebrow">Lesson 6 · Before a business unit connects agents</div>
   <h2>Five checks, and <span>two gaps we know</span></h2>
@@ -353,7 +372,7 @@ AppRequests
   </aside>
 </section>
 
-<!-- 12 · Next -->
+<!-- 13 · Next -->
 <section id="next" data-chapter="discover" data-transition="fade">
   <div class="eyebrow">Next · Session 3</div>
   <h2>The door knows <em>who</em>. <span>Next: whose rights?</span></h2>

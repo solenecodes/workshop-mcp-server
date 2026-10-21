@@ -7,7 +7,7 @@ with no network request: reveal.js 5.2.1 and its notes, highlight and zoom plugi
 | Deck | Slot | Content |
 | --- | --- | --- |
 | [session-1.html](session-1.html) | 09:45–10:15 | N × M → N + M, USB-C, host/client/server, primitives, timeline, function calling, then the lab |
-| [session-2.html](session-2.html) | 10:30–11:00 | One front door, one token per hop, patterns A/B, a virtual MCP server from an existing API, demo in Bash and PowerShell, Application Insights |
+| [session-2.html](session-2.html) | 10:30–11:00 | Four decisions, where it runs (hosting options, API Management as no-code MCP), one front door, one token per hop, patterns A/B, a virtual MCP server from an existing API, demo in Bash and PowerShell, Application Insights |
 | [session-3.html](session-3.html) | 11:00–11:15 | Whose rights, MCP risks, Entra Agent ID, questions; backup slides for "Alice or the service?" |
 
 Open [index.html](index.html). Keys: arrows or Space, **S** speaker view (notes and timer), **F** full screen,
@@ -18,8 +18,9 @@ The decks follow the pages: when a page changes, update its deck. The session pa
 
 ## Going between pages and decks
 
-- On the session 1 and 2 pages, the **Slides ↗** button in the top bar opens the matching deck in a new tab,
-  at the slide of the current chapter. Session 3 chapters (on the session 1 page) open [session-3.html](session-3.html).
+- On the session 1 and 2 pages, the **Slides S1/S2/S3 ↗** button in the top bar opens the matching deck in a new tab,
+  at the slide of the current chapter (every chapter has its own slide with the same `id`). The badge shows which
+  deck opens: Session 3 chapters (on the session 1 page) show **S3** and open [session-3.html](session-3.html).
   The chapter → slide map is in [sessions/slides-link.js](../sessions/slides-link.js).
 - In every deck, **← Page** (top left) goes back to the session page at the chapter of the current slide
   (`data-chapter` on each `<section>`, page set by `data-page` on `<body>`).
