@@ -25,7 +25,7 @@ test('the Session 2 page keeps the day agenda of Session 1 and links back to its
   const sessionTwo = theirs.find(({ key }) => key === 'session-2');
   assert.equal(sessionTwo.href, '../02-architecture/presentation.html#decisions', 'the Session 1 agenda opens this page');
   assert.equal(mine.find(({ key }) => key === 'session-3').href, '../01-mcp-fondamentaux/presentation.html#rights', 'the next session starts with identity choices, not the optional authentication reminder');
-  assert.equal(theirs.find(({ key }) => key === 'hands-on').href, handsOn, 'the Session 1 agenda opens the hands-on guide');
+  assert.equal(theirs.find(({ key }) => key === 'hands-on').href, '#day-hands-on', 'the Session 1 agenda opens the hands-on panel');
   assert.match(sessionOne, new RegExp(`id="day-hands-on"[\\s\\S]*?href="${handsOn.replace(/[?.]/g, '\\$&')}">Open the hands-on guide`));
   assert.match(sessionOne, /id="day-hands-on"[\s\S]*?href="https:\/\/olivmertens\.github\.io\/governed-mcp-workshop\/\?lang=fr&amp;track=low-code#\/overview" target="_blank" rel="noopener">Workshop overview/, 'the 14:30 panel also links the French low-code overview');
 });
