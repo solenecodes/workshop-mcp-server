@@ -33,6 +33,8 @@ test('every lesson chapter opens an existing slide of the right deck', () => {
     }
   }
   assert.equal(routes.rights.deck, 'session-3', 'Session 3 chapters on the Session 1 page open the Session 3 deck');
+  assert.deepEqual(routes.decisions, { deck: 'session-2', slide: 'decisions' });
+  assert.deepEqual(routes.hosting, { deck: 'session-2', slide: 'hosting' });
 });
 
 test('the script resolves the relative deck folder against the page URL', async () => {
