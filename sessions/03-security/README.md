@@ -2,7 +2,7 @@
 
 [Workshop](../../README.md) · **11:00–11:15 · 15 minutes**
 
-[Open the four slides](../01-mcp-fondamentaux/presentation.html#rights).
+[Open the three slides](../01-mcp-fondamentaux/presentation.html#rights).
 The slides are in English; the presenter notes below are in French.
 The website timetable remains authoritative. No APIM or new tenant setup is
 required for this presentation.
@@ -10,11 +10,11 @@ required for this presentation.
 | Time | Duration | Slide |
 | --- | ---: | --- |
 | 11:00–11:03 | 3 min | [Whose rights?](../01-mcp-fondamentaux/presentation.html#rights) |
-| 11:03–11:07 | 4 min | [OBO or service access?](../01-mcp-fondamentaux/presentation.html#token-hops) |
-| 11:07–11:11 | 4 min | [Risks and controls](../01-mcp-fondamentaux/presentation.html#mcp-threats) |
-| 11:11–11:15 | 4 min | [Entra Agent ID](../01-mcp-fondamentaux/presentation.html#agent-identities) |
+| 11:03–11:07 | 4 min | [Risks and controls](../01-mcp-fondamentaux/presentation.html#mcp-threats) |
+| 11:07–11:11 | 4 min | [Entra Agent ID](../01-mcp-fondamentaux/presentation.html#agent-identities) |
+| 11:11–11:15 | 4 min | Questions and discussion |
 
-There are exactly four slides, with at most 115 words per slide and 400 words
+There are exactly three slides, with at most 115 words per slide and 400 words
 across the course. Dense explanations, quizzes, expandable panels, token claims,
 animations and the duplicate security lab have been removed from the page.
 The original Session 1 real browser lab remains unchanged.
@@ -39,31 +39,7 @@ Faire choisir le public : « Le meme agent repond a Alice puis prepare un bilan
 nocturne. Faut-il forcement le meme modele d'acces pour les deux operations ? »
 Reponse : non, le choix depend de l'operation et des droits a respecter.
 
-### 2. Quels droits arrivent jusqu'a l'API ? - 4 minutes
-
-Suivre les deux chemins dessines, sans refaire l'animation OAuth de la session 2.
-
-- Delegation / OBO : lorsque l'API aval doit appliquer les droits d'Alice,
-  l'application obtient un nouveau jeton pour cette API dans son contexte.
-  Les registrations, permissions deleguees, consentements et le code doivent
-  permettre cet echange. OBO ne cree pas de droits supplementaires pour Alice.
-- Service : le serveur MCP utilise sa propre identite pour acceder a un jeu
-  de donnees autorise. Dans notre hebergement, l'API Tickets est appelee avec
-  l'identite managee du service et le role Mcp.Backend.Read.
-
-Le jeton destine a MCP n'est pas automatiquement valable pour une autre API :
-les ressources et audiences doivent correspondre. Un transfert APIM vers MCP
-pour la meme ressource logique n'est pas un echange OBO vers une autre API.
-
-Question : « Alice donne l'identifiant d'un ticket d'une autre equipe. Qui
-verifie son droit sur ce ticket ? » Reponse : le service/API qui applique la
-politique d'acces au record. Un scope de lecture ne suffit pas.
-
-Limite de la demo : les appelants autorises voient les memes tickets fictifs.
-Pas d'OBO, de per-ticket ACLs ou de filtrage propre a Alice. Le sandbox local
-utilise une API loopback synthetique, pas un echange Entra reel.
-
-### 3. Quels risques MCP et quelles reponses ? - 4 minutes
+### 2. Quels risques MCP et quelles reponses ? - 4 minutes
 
 Presenter une seule situation par ligne :
 
@@ -89,7 +65,7 @@ correlation et reference d'approbation si applicable. Jamais de jetons, secrets,
 prompts ou resultats bruts. Notre serveur journalise userId, methode, outil et
 decision ; pas une piste complete Agent ID/blueprint/approval.
 
-### 4. Qu'apporte Entra Agent ID ? - 4 minutes
+### 3. Qu'apporte Entra Agent ID ? - 4 minutes
 
 Utiliser Tickets helper comme exemple de blueprint, tickets-helper-network
 comme instance et le responsable reseau comme sponsor. Ce sont des exemples
@@ -115,8 +91,14 @@ droits ? » Prevoir un processus de revue et de retrait. Des issued tokens
 peuvent rester valides : verifier la revocation effective. Desactiver un
 blueprint partage peut affecter toutes ses instances.
 
-Transition : « Nous avons choisi l'identite, limite l'action et identifie un
-responsable. Agent 365 passe a la gouvernance a l'echelle du tenant. »
+Transition : « Agent ID permet d'identifier l'agent et de lui associer un
+responsable. Mais avec des dizaines ou des centaines d'agents, comment savoir
+lesquels existent, suivre leur activite et appliquer les regles de
+l'organisation ? C'est le lien avec Agent 365 : observer, gouverner et securiser
+les agents a l'echelle du tenant, en s'appuyant notamment sur Entra pour
+l'identite et les acces, Purview pour les donnees et la conformite, et Defender
+pour les menaces. Ces controles ne remplacent pas l'autorisation dans l'API
+metier. Younes va maintenant presenter cette gouvernance d'ensemble. »
 
 ## Delivery boundaries
 
@@ -125,13 +107,17 @@ responsable. Agent 365 passe a la gouvernance a l'echelle du tenant. »
 - Agent 365 starts at 11:15 and covers tenant-wide governance.
 - No Agent ID objects, mailbox, OBO exchange, write tool or approval queue are
   deployed. Managed identity hosting is not an Agent ID deployment.
+- The hosted demo uses service managed identity with Mcp.Backend.Read.
+  Authorized callers see the same fictional tickets; no per-ticket ACLs or
+  user-specific filtering are implemented.
 - For a real tool call, return to [Session 1's lab](../01-mcp-fondamentaux/presentation.html#lab).
   Protected calls remain terminal-only; follow the repository's existing setup.
-- Old links to auth, tokens, security-lab and tool-policy resolve to the new
+- Old links to auth, tokens, token-hops, security-lab and tool-policy resolve to the remaining
   slides, without adding old chapters or extra sidebar entries.
 
 ## References
 
+- [Agent 365: observe, govern and secure](https://learn.microsoft.com/microsoft-agent-365/overview)
 - [Blueprints and credentials](https://learn.microsoft.com/entra/agent-id/agent-blueprint)
 - [Declared, granted and inherited permissions](https://learn.microsoft.com/entra/agent-id/concept-inheritable-permissions)
 - [Agent identity and agent user accounts](https://learn.microsoft.com/microsoft-agent-365/developer/identity)

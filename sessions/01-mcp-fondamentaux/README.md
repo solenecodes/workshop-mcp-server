@@ -111,7 +111,7 @@ source are omitted; technical overstatements are corrected rather than repeated.
 
 Next goes directly to the existing real Tickets lab: list tools, list records,
 read CT-1001, then edit the command to request CT-1002. There is no intervening
-theory chapter. Session 3 follows as four concise slides; detailed explanations
+theory chapter. Session 3 follows as three concise slides; detailed explanations
 are in its [presenter notes](../03-security/README.md), not extra page panels.
 
 The tables and visuals are static and readable with reduced motion or
