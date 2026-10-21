@@ -1,0 +1,4 @@
+/* "Slides" button in the top bar of the session pages (sessions/slides-link.js). */
+.slides-open { display:inline-flex; align-items:center; gap:6px; flex-shrink:0; text-decoration:none; white-space:nowrap; }
+.topbar .slides-open + .parking-open { margin-left:8px; }
+@media print { .slides-open { display:none !important; } }
