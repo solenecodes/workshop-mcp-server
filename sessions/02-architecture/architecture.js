@@ -1,4 +1,4 @@
-import { demoCommands, demoSettings, doorEdges, doorSteps, tokenEdges, tokenSteps } from './architecture-steps.mjs?v=session-2-main-6';
+import { demoCommands, demoSettings, doorEdges, doorSteps, tokenEdges, tokenSteps } from './architecture-steps.mjs?v=session-2-main-7';
 import { initializeAgenda } from '../01-mcp-fondamentaux/presentation-agenda.mjs?v=agenda-collapse-1';
 
 const $ = (selector, root = document) => root.querySelector(selector);

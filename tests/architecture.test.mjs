@@ -136,3 +136,12 @@ test('the demo carries presenter notes and the deployed-architecture diagram gen
   assert.match(html, /class="presenter-notes"[\s\S]*never reaches the Container Apps[\s\S]*isError: false/);
   assert.match(html, /src="diagrams\/deployed-architecture\.svg"/);
 });
+
+test('Lesson 2 shows API Management as a no-code MCP source, not as a host for code', () => {
+  const hosting = html.slice(html.indexOf('<section id="hosting"'), html.indexOf('<section id="front-door"'));
+  assert.match(hosting, /<article class="gateway"><h3>Azure API Management<\/h3><p>Not a host for your code\./);
+  assert.match(hosting, /on the fly from a REST API it already manages, one operation per tool/);
+  assert.match(hosting, /learn\.microsoft\.com\/azure\/api-management\/mcp-server-overview/);
+  const patterns = html.slice(html.indexOf('<section id="patterns"'), html.indexOf('<section id="discover"'));
+  assert.match(patterns, /any REST API managed in API Management, including APIs imported from Azure resources/);
+});

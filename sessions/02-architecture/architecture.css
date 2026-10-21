@@ -21,6 +21,7 @@
 .host-grid article { border:1px solid var(--border); border-radius:var(--radius); background:white; padding:18px; }
 .host-grid h3 { font-size:.98rem; margin:0 0 6px; }
 .host-grid p { font-size:.82rem; margin:0 0 12px; }
+.host-grid article.gateway { border:1px dashed #0063b1; background:#f5f9fd; }
 
 /* Front-door walk-through: same look as the Session 1 call flow, with fixed places per node. */
 .door-diagram { grid-template-columns:repeat(4,minmax(0,1fr)); grid-template-areas:
