@@ -4,8 +4,8 @@
 Short chapters: why MCP exists, its architecture, an animated call, MCP vs
 API, a guided three-step live lab (copy an editable curl command or run it from the page),
 and access controls. **[Session 3](sessions/01-mcp-fondamentaux/presentation.html#rights)**
-continues in the same page and theme with four concise slides: acting identity,
-OBO versus service access, MCP risks and controls, and Entra Agent ID.
+continues in the same page and theme with three concise slides: acting identity,
+MCP risks and controls, and Entra Agent ID.
 The 15-minute sequence keeps explanations in the
 [presenter notes](sessions/03-security/README.md), not in extra panels or a
 duplicate lab. The real browser calls remain in Session 1; protected requests

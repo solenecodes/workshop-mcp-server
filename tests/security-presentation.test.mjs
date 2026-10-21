@@ -13,17 +13,20 @@ const chapter = (id) => {
 };
 const text = (value) => value.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
 
-test('session 3 is exactly four concise slides, timed 3/4/4/4, with the old content removed', () => {
+test('session 3 is exactly three concise slides, timed 3/4/4, with the API access slide removed', () => {
   assert.deepEqual(securityChapters, [
-    { id: 'rights', minutes: 3 }, { id: 'token-hops', minutes: 4 },
+    { id: 'rights', minutes: 3 },
     { id: 'mcp-threats', minutes: 4 }, { id: 'agent-identities', minutes: 4 },
   ]);
-  assert.equal(securityChapters.reduce((sum, slide) => sum + slide.minutes, 0), 15);
+  assert.equal(securityChapters.reduce((sum, slide) => sum + slide.minutes, 0), 11);
+  assert.match(notes, /11:11–11:15.*Questions and discussion/);
+  assert.doesNotMatch(html, /<section id="token-hops"|Should the API see Alice or the service\?|OBO or service access\?/);
   assert.deepEqual([...html.matchAll(/<section id="([^"]+)" class="chapter security-slide" data-session="session-3"/g)].map(([, id]) => id), securityChapters.map(({ id }) => id));
   let totalWords = 0;
   for (const [index, { id, minutes }] of securityChapters.entries()) {
     const slide = chapter(id);
-    assert.match(slide, new RegExp(`Slide ${index + 1} of 4 · ${minutes} minutes`));
+    assert.match(slide, new RegExp(`Slide ${index + 1} of 3 · ${minutes} minutes`));
+    assert.match(html, new RegExp(`href="#${id}"[^\\n]*Slide ${index + 1} · ${minutes} min`));
     const words = text(slide).split(/\s+/).length;
     assert.ok(words <= 115, `${id}: ${words} words exceeds the 115-word slide budget`);
     totalWords += words;
@@ -40,11 +43,6 @@ test('each slide answers the assigned questions and labels implemented versus il
   for (const phrase of ['Delegated access', 'Dedicated application identity', 'Agent user account', 'Optional · prerequisites apply', 'LLM does not grant permissions']) {
     assert.ok(rights.includes(phrase), phrase);
   }
-  const hops = chapter('token-hops');
-  assert.equal((hops.match(/class="security-route"/g) ?? []).length, 2);
-  for (const phrase of ['Design option', "enforce Alice's rights", 'Managed identity', 'Mcp.Backend.Read', 'A token for MCP is not a token for a separate API', 'No OBO or per-ticket ACLs']) {
-    assert.ok(hops.includes(phrase), phrase);
-  }
   const threats = chapter('mcp-threats');
   assert.equal((threats.match(/<dt>/g) ?? []).length, 4);
   for (const phrase of ['Data, not an instruction', 'Least privilege + record checks', 'human approval + audit', 'Approved servers + dependency review', 'get_ticket', 'Read · implemented', 'close_ticket', 'Write · not implemented']) {
@@ -52,18 +50,18 @@ test('each slide answers the assigned questions and labels implemented versus il
   }
   const agents = chapter('agent-identities');
   assert.equal((agents.match(/<article>/g) ?? []).length, 4);
-  for (const phrase of ['Blueprint', 'Agent identity', 'Sponsor', 'Lifecycle', 'shared credentials', 'An identity is not a data-access policy', 'no Agent ID deployment', '#day-session-4']) {
+  for (const phrase of ['Blueprint', 'Agent identity', 'Sponsor', 'Lifecycle', 'shared credentials', 'identify the agent', 'observe, govern and secure agents across the organization', 'Data-access checks still apply', 'no Agent ID deployment', '#day-session-4']) {
     assert.ok(agents.includes(phrase), phrase);
   }
   for (const phrase of ['Frontier', 'consent', 'approval', 'issued tokens', 'blueprint']) assert.ok(notes.includes(phrase), `Presenter notes retain ${phrase}`);
 });
 
-test('old links resolve to the four slides without retaining old lessons in navigation', () => {
+test('old links resolve to the three remaining slides without retaining old lessons in navigation', () => {
   const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map(([, id]) => id);
   assert.equal(ids.length, new Set(ids).size);
   for (const [, id] of html.matchAll(/href="#([^"]+)"/g)) assert.ok(ids.includes(id), `Unresolved #${id}`);
   assert.deepEqual(securityAliases, {
-    auth: 'rights', 'security-lab': 'rights', tokens: 'token-hops', 'tool-policy': 'mcp-threats',
+    auth: 'rights', 'security-lab': 'rights', tokens: 'rights', 'token-hops': 'rights', 'tool-policy': 'mcp-threats',
   });
   for (const [oldId, target] of Object.entries(securityAliases)) {
     assert.ok(ids.includes(oldId));
